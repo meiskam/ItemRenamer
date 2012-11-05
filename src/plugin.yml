@@ -1,0 +1,20 @@
+name: LanguagePack
+version: 0.1.0001
+description: Rename all blocks and items
+author: meiskam
+
+main: org.shininet.bukkit.languagepack.LanguagePack
+database: false
+
+commands:
+  LanguagePack:
+    description: general LanguagePack command
+
+permissions:
+  languagepack.*:
+    description: Gives all LanguagePack permissions
+    children:
+      languagepack.update: true
+  languagepack.update:
+    description: Allows user to update the plugin and view update notices
+    default: op
