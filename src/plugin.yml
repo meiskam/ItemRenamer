@@ -1,10 +1,11 @@
 name: LanguagePack
-version: 0.1.0001
-description: Rename all blocks and items
+version: 0.1.0002
+description: Custom default item names
 author: meiskam
 
 main: org.shininet.bukkit.languagepack.LanguagePack
 database: false
+depend: [ProtocolLib]
 
 commands:
   LanguagePack:
@@ -15,6 +16,18 @@ permissions:
     description: Gives all LanguagePack permissions
     children:
       languagepack.update: true
+      languagepack.config.*: true
+languagepack.config.*:
+    description: Allows user to edit, save, or reload configs
+    children:
+      languagepack.config.get: true
+      languagepack.config.set: true
+  languagepack.config.get:
+    description: Allows user to get configs
+    default: op
+  languagepack.config.set:
+    description: Allows user to set or reload configs
+    default: op
   languagepack.update:
     description: Allows user to update the plugin and view update notices
     default: op

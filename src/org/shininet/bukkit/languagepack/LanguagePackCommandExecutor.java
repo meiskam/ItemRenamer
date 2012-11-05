@@ -3,7 +3,6 @@ package org.shininet.bukkit.languagepack;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.shininet.bukkit.languagepack.LanguagePack;
 
 public class LanguagePackCommandExecutor implements CommandExecutor {
 	
@@ -15,14 +14,94 @@ public class LanguagePackCommandExecutor implements CommandExecutor {
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-		if (!cmd.getName().equalsIgnoreCase("PlayerHeads")) {
+		if (!cmd.getName().equalsIgnoreCase("LanguagePack")) {
 			return false;
 		}
 		if (args.length == 0) {
-			sender.sendMessage("["+label+"] Subcommand: update");
+			sender.sendMessage("["+label+"] Subcommand: config, update");
 			return true;
 		}
-		if (args[0].equalsIgnoreCase("update")) {
+		if (args[0].equalsIgnoreCase("config")) {
+			if (args.length == 1) {
+				sender.sendMessage("["+label+":config] Subcommands: get, set, reload");
+				return true;
+			}
+			if (args[1].equalsIgnoreCase("get") || args[1].equalsIgnoreCase("view")) {
+				if (!sender.hasPermission("languagepack.config.get")) {
+					sender.sendMessage("["+label+":config:get] You don't have permission to use that command");
+					return true;
+				}
+				if (args.length == 2) {
+					sender.sendMessage("["+label+":config:get] Config variables: "+LanguagePack.configKeysString);
+				} else if (args.length == 3) {
+					String key = args[2].toLowerCase();
+					sender.sendMessage("["+label+":config:get] "+key+": "+plugin.configFile.get(key));
+				} else {
+					sender.sendMessage("["+label+":config:get] Syntax: "+label+" config get [variable]");
+				}
+				return true;
+			} else if (args[1].equalsIgnoreCase("set")) {
+				if (!sender.hasPermission("languagepack.config.set")) {
+					sender.sendMessage("["+label+":config:set] You don't have permission to use that command");
+					return true;
+				}
+				if (args.length == 2 || args.length == 3) {
+					sender.sendMessage("["+label+":config:set] Config variables: "+LanguagePack.configKeysString);
+					return true;
+				} else if (args.length == 4) {
+					String key = args[2].toLowerCase();
+					String value = args[3].toLowerCase();
+					boolean keyFound = false;
+					
+					for (String keySet : LanguagePack.configKeys.keySet()) {
+						if (key.equals(keySet.toLowerCase())) {
+							keyFound = true;
+							switch (LanguagePack.configKeys.get(keySet.toLowerCase())) {
+							case BOOLEAN:
+								if (value.equals("false") || value.equals("no") || value.equals("0")) {
+									plugin.configFile.set(key, false);
+								} else {
+									plugin.configFile.set(key, true);
+								}
+								break;
+							case DOUBLE:
+								try {
+									plugin.configFile.set(key, Double.parseDouble(value));
+								} catch (NumberFormatException e) {
+									sender.sendMessage("["+label+":config:set] ERROR: Can not convert "+value+" to a number");
+								}
+								break;
+							default:
+								plugin.logger.warning("configType \""+LanguagePack.configKeys.get(keySet.toLowerCase())+"\" unrecognised - this is a bug");
+								break;
+							}
+							break;
+						}
+					}
+					if (!keyFound) {
+						plugin.configFile.set(key, value);
+					}
+					plugin.saveConfig();
+					sender.sendMessage("["+label+":config:set] "+key+": "+plugin.configFile.get(key));
+					return true;
+				} else {
+					sender.sendMessage("["+label+":config:set] Syntax: "+label+" config set [variable] [value]");
+					return true;
+				}
+			} else if (args[1].equalsIgnoreCase("reload")) {
+				if (!sender.hasPermission("languagepack.config.set")) {
+					sender.sendMessage("["+label+":config:reload] You don't have permission to use that command");
+					return true;
+				}
+				plugin.reloadConfig();
+				plugin.configFile = plugin.getConfig();
+				sender.sendMessage("["+label+":config:reload] Config reloaded");
+				return true;
+			} else {
+				sender.sendMessage("["+label+":config:??] Invalid subcommand");
+				return true;
+			}
+		} else if (args[0].equalsIgnoreCase("update")) {
 			if (!sender.hasPermission("languagepack.update")) {
 				sender.sendMessage("["+label+":update] You don't have permission to use that command");
 				return true;

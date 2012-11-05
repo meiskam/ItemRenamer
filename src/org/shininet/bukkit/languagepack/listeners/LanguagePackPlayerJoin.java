@@ -1,15 +1,16 @@
-package org.shininet.bukkit.languagepack;
+package org.shininet.bukkit.languagepack.listeners;
 
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.shininet.bukkit.languagepack.LanguagePack;
 
-public class LanguagePackListener implements Listener {
+public class LanguagePackPlayerJoin implements Listener {
 	
 	private LanguagePack plugin;
 	
-	public LanguagePackListener(LanguagePack plugin) {
+	public LanguagePackPlayerJoin(LanguagePack plugin) {
 		this.plugin = plugin;
 	}
 	
