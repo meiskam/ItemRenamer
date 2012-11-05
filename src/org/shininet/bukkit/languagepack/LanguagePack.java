@@ -52,17 +52,22 @@ public class LanguagePack extends JavaPlugin {
 		configFile = getConfig();
 		configFile.options().copyDefaults(true);
 		saveConfig();
+		this.saveResource("config.example.yml", false);
 		try {
 		    Metrics metrics = new Metrics(this);
 		    metrics.start();
 		} catch (Exception e) {
 			logger.warning("Failed to start Metrics");
 		}
-		if (configFile.getBoolean("autoupdate") && !(updateReady)) {
-			Updater updater = new Updater(this, updateSlug, this.getFile(), Updater.UpdateType.NO_DOWNLOAD, false); // Start Updater but just do a version check
-			updateReady = updater.getResult() == Updater.UpdateResult.UPDATE_AVAILABLE; // Determine if there is an update ready for us
-			updateName = updater.getLatestVersionString(); // Get the latest version
-			updateSize = updater.getFileSize(); // Get latest size
+		try {
+			if (configFile.getBoolean("autoupdate") && !(updateReady)) {
+				Updater updater = new Updater(this, updateSlug, this.getFile(), Updater.UpdateType.NO_DOWNLOAD, false); // Start Updater but just do a version check
+				updateReady = updater.getResult() == Updater.UpdateResult.UPDATE_AVAILABLE; // Determine if there is an update ready for us
+				updateName = updater.getLatestVersionString(); // Get the latest version
+				updateSize = updater.getFileSize(); // Get latest size
+			}
+		} catch (Exception e) {
+			logger.warning("Failed to start Updater");
 		}
 		
 		protocolManager = ProtocolLibrary.getProtocolManager();

@@ -1,5 +1,5 @@
 name: LanguagePack
-version: 0.1.0003
+version: 0.1.0004
 description: Custom default item names
 author: meiskam
 
@@ -17,7 +17,7 @@ permissions:
     children:
       languagepack.update: true
       languagepack.config.*: true
-languagepack.config.*:
+  languagepack.config.*:
     description: Allows user to edit, save, or reload configs
     children:
       languagepack.config.get: true

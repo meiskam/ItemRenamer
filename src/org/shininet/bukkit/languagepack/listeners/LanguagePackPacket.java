@@ -3,10 +3,6 @@ package org.shininet.bukkit.languagepack.listeners;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.bukkit.Server;
-import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.shininet.bukkit.languagepack.LanguagePack;
 
 import com.comphenix.protocol.ProtocolManager;
@@ -32,47 +28,26 @@ public class LanguagePackPacket {
 	
 	public void addListener() {
 
-		protocolManager.addPacketListener(packetAdapter = new PacketAdapter(myPlugin, ConnectionSide.SERVER_SIDE, 0x05, 0x00) {
+		protocolManager.addPacketListener(packetAdapter = new PacketAdapter(myPlugin, ConnectionSide.SERVER_SIDE, 0x67, 0x68) {
 			@Override
 			public void onPacketSending(PacketEvent event) {
 				PacketContainer packet = event.getPacket();
 				
-/*				try {
+				try {
 					switch (event.getPacketID()) {
-					case 0x05:
-						if (packet.getSpecificModifier(int.class).size() >= 2 && packet.getItemModifier().size() >= 1) {
-							int id = packet.getSpecificModifier(int.class).read(0);
-							int slot = packet.getSpecificModifier(int.class).read(1);
-							if (slot == 4) {
-								ItemStack item = packet.getItemModifier().read(0);
-								if (item == null) {
-									event.setCancelled(true);
-									return;
-								}
-								for (Player player : myPlugin.getServer().getOnlinePlayers()) {
-									//logger.info(player.getEntityId()+" == "+id+" ?");
-									if (player.getEntityId() == id) {
-										//ItemStack item = packet.getItemModifier().read(0);
-										item.setTypeId(myPlugin.hat);
-										item.setDurability(myPlugin.damage);
-										item.setAmount(1);
-										//item = new ItemStack(((FakeHat)plugin).hat, 1, ((FakeHat)plugin).damage);
-										//logger.info("id: "+id+" .. slot: "+slot+" .. item: "+item.toString());
-										break;
-									}
-								}
-							}
-						}
+					case 0x67:
+						myPlugin.process(packet.getItemModifier().read(0));
 						break;
-						
-					case 0x00:
+
+					case 0x68:
+						myPlugin.process(packet.getItemArrayModifier().read(0));
 						break;
-					}
 				
+					}
 				} catch (FieldAccessException e) {
-					logger.log(Level.SEVERE, "Couldn't access field.", e);
+					logger.log(Level.WARNING, "Couldn't access field.", e);
 				}
-*/			}
+			}
 		});
 	}
 	
