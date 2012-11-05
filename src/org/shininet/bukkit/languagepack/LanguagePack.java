@@ -5,11 +5,19 @@
 package org.shininet.bukkit.languagepack;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import net.minecraft.server.NBTTagCompound;
+import net.minecraft.server.NBTTagList;
+import net.minecraft.server.NBTTagString;
+
+import org.bukkit.command.CommandExecutor;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.craftbukkit.inventory.CraftItemStack;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.shininet.bukkit.languagepack.listeners.LanguagePackPacket;
 import org.shininet.bukkit.languagepack.listeners.LanguagePackPlayerJoin;
@@ -25,6 +33,7 @@ public class LanguagePack extends JavaPlugin {
 	private static long updateSize = 0;
 	private static final String updateSlug = "languagepack";
 	private LanguagePackCommandExecutor commandExecutor;
+	private CommandExecutor oldCommandExecutor;
 	private LanguagePackPlayerJoin listenerPlayerJoin;
 	private LanguagePackPacket listenerPacket;
 	private ProtocolManager protocolManager;
@@ -62,6 +71,7 @@ public class LanguagePack extends JavaPlugin {
 		listenerPlayerJoin = new LanguagePackPlayerJoin(this);
 		getServer().getPluginManager().registerEvents(listenerPlayerJoin, this);
 		
+		oldCommandExecutor = getCommand("LanguagePack").getExecutor();
 		commandExecutor = new LanguagePackCommandExecutor(this);
 		getCommand("LanguagePack").setExecutor(commandExecutor);
 	}
@@ -70,7 +80,7 @@ public class LanguagePack extends JavaPlugin {
 	public void onDisable() {
 		listenerPacket.unregister();
 		listenerPlayerJoin.unregister();
-		//getCommand("LanguagePack").setExecutor(null);
+		getCommand("LanguagePack").setExecutor(oldCommandExecutor);
 	}
 
 	public boolean getUpdateReady() {
@@ -97,5 +107,63 @@ public class LanguagePack extends JavaPlugin {
 			output.append(key);
 		}
 		return output.toString();
+	}
+
+	private NBTTagString packName(int id, int damage) {
+		String output;
+		if (((output = configFile.getString("pack."+id+".all.name")) == null) &&
+				((output = configFile.getString("pack."+id+"."+damage+".name")) == null) &&
+				((output = configFile.getString("pack."+id+".other.name")) == null)) {
+			return null;
+		}
+		return new NBTTagString(null,"§r"+output);
+	}
+	
+	private NBTTagList packLore(int id, int damage) {
+		List<String> output;
+		if (((output = configFile.getStringList("pack."+id+".all.lore")) == null) &&
+				((output = configFile.getStringList("pack."+id+"."+damage+".lore")) == null) &&
+				((output = configFile.getStringList("pack."+id+".other.lore")) == null)) {
+			return null;
+		}
+		NBTTagList tagList = new NBTTagList();
+		for (String line : output) {
+			tagList.add(new NBTTagString(null,line));
+		}
+		return tagList;
+	}
+
+	public void process(ItemStack input) {
+		NBTTagCompound tag = ((CraftItemStack)input).getHandle().tag;
+		int id = input.getTypeId();
+		int damage = input.getDurability();
+		NBTTagCompound tagDisplay;
+		NBTTagString name = packName(id, damage);
+		NBTTagList lore = packLore(id, damage);
+		
+		if ((name == null) && (lore == null)) {
+			return;
+		}
+		if (tag == null) {
+			tag = new NBTTagCompound();
+		}
+		if (tag.hasKey("display")) {
+			tagDisplay = tag.getCompound("display");
+		} else {
+			tagDisplay = new NBTTagCompound();
+			tag.set("display", tagDisplay);
+		}
+		if ((!tagDisplay.hasKey("Name")) && (name != null)) {
+			tagDisplay.set("Name", name);
+		}
+		if ((!tagDisplay.hasKey("Lore")) && (lore != null)) {
+			tagDisplay.set("Lore", lore);
+		}
+	}
+	
+	public void process(ItemStack[] input) {
+		for (ItemStack stack : input) {
+			process(stack);
+		}
 	}
 }
