@@ -11,9 +11,6 @@ pack:
     0:
       name: Bounty
       lore: [the quicker picker-upper]
-  34:
-    0:
-      name: MISSINGNO.§k###
   35:
     all:
       lore: [For the artist in you]
@@ -49,6 +46,9 @@ pack:
       name: Red
     15:
       name: Black
+  36:
+    0:
+      name: MISSINGNO.§k###
   264:
     0:
       name: §lDIAMOND
@@ -59,7 +59,7 @@ pack:
     0:
       name: Slimer
       lore: [Gross.. wipe that on something]
-  368
+  368:
     1: 
       name: Grenade Lv2
     2: 
@@ -73,6 +73,6 @@ pack:
   280:
     0:
       name: Magic
-  398
+  398:
     all:
       name: Pigpole

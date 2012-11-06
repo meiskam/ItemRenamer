@@ -36,11 +36,11 @@ public class LanguagePackPacket {
 				try {
 					switch (event.getPacketID()) {
 					case 0x67:
-						myPlugin.process(packet.getItemModifier().read(0));
+						myPlugin.process(packet.getSpecificModifier(net.minecraft.server.ItemStack.class).read(0));
 						break;
 
 					case 0x68:
-						myPlugin.process(packet.getItemArrayModifier().read(0));
+						myPlugin.process(packet.getSpecificModifier(net.minecraft.server.ItemStack[].class).read(0));
 						break;
 				
 					}

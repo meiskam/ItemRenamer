@@ -16,8 +16,6 @@ import net.minecraft.server.NBTTagString;
 
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.craftbukkit.inventory.CraftItemStack;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.shininet.bukkit.languagepack.listeners.LanguagePackPacket;
 import org.shininet.bukkit.languagepack.listeners.LanguagePackPlayerJoin;
@@ -85,7 +83,9 @@ public class LanguagePack extends JavaPlugin {
 	public void onDisable() {
 		listenerPacket.unregister();
 		listenerPlayerJoin.unregister();
-		getCommand("LanguagePack").setExecutor(oldCommandExecutor);
+		if (oldCommandExecutor != null) {
+			getCommand("LanguagePack").setExecutor(oldCommandExecutor);
+		}
 	}
 
 	public boolean getUpdateReady() {
@@ -138,10 +138,13 @@ public class LanguagePack extends JavaPlugin {
 		return tagList;
 	}
 
-	public void process(ItemStack input) {
-		NBTTagCompound tag = ((CraftItemStack)input).getHandle().tag;
-		int id = input.getTypeId();
-		int damage = input.getDurability();
+	public void process(net.minecraft.server.ItemStack input) {
+		//CraftItemStack cis = ((CraftItemStack)input);
+		//net.minecraft.server.ItemStack is = cis.getHandle();
+		//net.minecraft.server.ItemStack itemStack = CraftItemStack.createNMSItemStack(input);
+		NBTTagCompound tag = input.tag;
+		int id = input.id;
+		int damage = input.getData();
 		NBTTagCompound tagDisplay;
 		NBTTagString name = packName(id, damage);
 		NBTTagList lore = packLore(id, damage);
@@ -166,8 +169,8 @@ public class LanguagePack extends JavaPlugin {
 		}
 	}
 	
-	public void process(ItemStack[] input) {
-		for (ItemStack stack : input) {
+	public void process(net.minecraft.server.ItemStack[] input) {
+		for (net.minecraft.server.ItemStack stack : input) {
 			process(stack);
 		}
 	}
