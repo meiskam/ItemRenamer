@@ -1,33 +1,33 @@
-name: LanguagePack
+name: ItemRenamer
 version: 0.1.0005
 description: Custom default item names
 author: meiskam
 
-main: org.shininet.bukkit.languagepack.LanguagePack
+main: org.shininet.bukkit.itemrenamer.ItemRenamer
 database: false
 depend: [ProtocolLib]
 
 commands:
-  LanguagePack:
-    description: general LanguagePack command
+  ItemRenamer:
+    description: general ItemRenamer command
 
 permissions:
-  languagepack.*:
-    description: Gives all LanguagePack permissions
+  itemrenamer.*:
+    description: Gives all ItemRenamer permissions
     children:
-      languagepack.update: true
-      languagepack.config.*: true
-  languagepack.config.*:
+      itemrenamer.update: true
+      itemrenamer.config.*: true
+  itemrenamer.config.*:
     description: Allows user to edit, save, or reload configs
     children:
-      languagepack.config.get: true
-      languagepack.config.set: true
-  languagepack.config.get:
+      itemrenamer.config.get: true
+      itemrenamer.config.set: true
+  itemrenamer.config.get:
     description: Allows user to get configs
     default: op
-  languagepack.config.set:
+  itemrenamer.config.set:
     description: Allows user to set or reload configs
     default: op
-  languagepack.update:
+  itemrenamer.update:
     description: Allows user to update the plugin and view update notices
     default: op

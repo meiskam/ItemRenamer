@@ -1,9 +1,9 @@
-package org.shininet.bukkit.languagepack.listeners;
+package org.shininet.bukkit.itemrenamer.listeners;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.shininet.bukkit.languagepack.LanguagePack;
+import org.shininet.bukkit.itemrenamer.ItemRenamer;
 
 import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.events.ConnectionSide;
@@ -12,14 +12,14 @@ import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.reflect.FieldAccessException;
 
-public class LanguagePackPacket {
+public class ItemRenamerPacket {
 
-	private LanguagePack myPlugin;
+	private ItemRenamer myPlugin;
 	private ProtocolManager protocolManager;
 	private final Logger logger;
 	private PacketAdapter packetAdapter;
 
-	public LanguagePackPacket(LanguagePack myPlugin, ProtocolManager protocolManager, Logger logger) {
+	public ItemRenamerPacket(ItemRenamer myPlugin, ProtocolManager protocolManager, Logger logger) {
 		this.myPlugin = myPlugin;
 		this.protocolManager = protocolManager;
 		this.logger = logger;

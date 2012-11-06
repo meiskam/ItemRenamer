@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package org.shininet.bukkit.languagepack;
+package org.shininet.bukkit.itemrenamer;
 
 import java.util.HashMap;
 import java.util.List;
@@ -17,23 +17,23 @@ import net.minecraft.server.NBTTagString;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.shininet.bukkit.languagepack.listeners.LanguagePackPacket;
-import org.shininet.bukkit.languagepack.listeners.LanguagePackPlayerJoin;
+import org.shininet.bukkit.itemrenamer.listeners.ItemRenamerPacket;
+import org.shininet.bukkit.itemrenamer.listeners.ItemRenamerPlayerJoin;
 
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
 
-public class LanguagePack extends JavaPlugin {
+public class ItemRenamer extends JavaPlugin {
 	public Logger logger;
 	public FileConfiguration configFile;
 	private static boolean updateReady = false;
 	private static String updateName = "";
 	private static long updateSize = 0;
-	private static final String updateSlug = "languagepack";
-	private LanguagePackCommandExecutor commandExecutor;
+	private static final String updateSlug = "itemrenamer";
+	private ItemRenamerCommandExecutor commandExecutor;
 	private CommandExecutor oldCommandExecutor;
-	private LanguagePackPlayerJoin listenerPlayerJoin;
-	private LanguagePackPacket listenerPacket;
+	private ItemRenamerPlayerJoin listenerPlayerJoin;
+	private ItemRenamerPacket listenerPacket;
 	private ProtocolManager protocolManager;
 	public static enum configType {DOUBLE, BOOLEAN};
 	@SuppressWarnings("serial")
@@ -69,14 +69,14 @@ public class LanguagePack extends JavaPlugin {
 		}
 		
 		protocolManager = ProtocolLibrary.getProtocolManager();
-		listenerPacket = new LanguagePackPacket(this, protocolManager, logger);
+		listenerPacket = new ItemRenamerPacket(this, protocolManager, logger);
 		
-		listenerPlayerJoin = new LanguagePackPlayerJoin(this);
+		listenerPlayerJoin = new ItemRenamerPlayerJoin(this);
 		getServer().getPluginManager().registerEvents(listenerPlayerJoin, this);
 		
-		oldCommandExecutor = getCommand("LanguagePack").getExecutor();
-		commandExecutor = new LanguagePackCommandExecutor(this);
-		getCommand("LanguagePack").setExecutor(commandExecutor);
+		oldCommandExecutor = getCommand("ItemRenamer").getExecutor();
+		commandExecutor = new ItemRenamerCommandExecutor(this);
+		getCommand("ItemRenamer").setExecutor(commandExecutor);
 	}
 
 	@Override
@@ -84,7 +84,7 @@ public class LanguagePack extends JavaPlugin {
 		listenerPacket.unregister();
 		listenerPlayerJoin.unregister();
 		if (oldCommandExecutor != null) {
-			getCommand("LanguagePack").setExecutor(oldCommandExecutor);
+			getCommand("ItemRenamer").setExecutor(oldCommandExecutor);
 		}
 	}
 

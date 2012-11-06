@@ -1,20 +1,20 @@
-package org.shininet.bukkit.languagepack;
+package org.shininet.bukkit.itemrenamer;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
-public class LanguagePackCommandExecutor implements CommandExecutor {
+public class ItemRenamerCommandExecutor implements CommandExecutor {
 	
-	private LanguagePack plugin;
+	private ItemRenamer plugin;
 	
-	public LanguagePackCommandExecutor(LanguagePack plugin) {
+	public ItemRenamerCommandExecutor(ItemRenamer plugin) {
 		this.plugin = plugin;
 	}
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-		if (!cmd.getName().equalsIgnoreCase("LanguagePack")) {
+		if (!cmd.getName().equalsIgnoreCase("ItemRenamer")) {
 			return false;
 		}
 		if (args.length == 0) {
@@ -27,12 +27,12 @@ public class LanguagePackCommandExecutor implements CommandExecutor {
 				return true;
 			}
 			if (args[1].equalsIgnoreCase("get") || args[1].equalsIgnoreCase("view")) {
-				if (!sender.hasPermission("languagepack.config.get")) {
+				if (!sender.hasPermission("itemrenamer.config.get")) {
 					sender.sendMessage("["+label+":config:get] You don't have permission to use that command");
 					return true;
 				}
 				if (args.length == 2) {
-					sender.sendMessage("["+label+":config:get] Config variables: "+LanguagePack.configKeysString);
+					sender.sendMessage("["+label+":config:get] Config variables: "+ItemRenamer.configKeysString);
 				} else if (args.length == 3) {
 					String key = args[2].toLowerCase();
 					sender.sendMessage("["+label+":config:get] "+key+": "+plugin.configFile.get(key));
@@ -41,22 +41,22 @@ public class LanguagePackCommandExecutor implements CommandExecutor {
 				}
 				return true;
 			} else if (args[1].equalsIgnoreCase("set")) {
-				if (!sender.hasPermission("languagepack.config.set")) {
+				if (!sender.hasPermission("itemrenamer.config.set")) {
 					sender.sendMessage("["+label+":config:set] You don't have permission to use that command");
 					return true;
 				}
 				if (args.length == 2 || args.length == 3) {
-					sender.sendMessage("["+label+":config:set] Config variables: "+LanguagePack.configKeysString);
+					sender.sendMessage("["+label+":config:set] Config variables: "+ItemRenamer.configKeysString);
 					return true;
 				} else if (args.length == 4) {
 					String key = args[2].toLowerCase();
 					String value = args[3].toLowerCase();
 					boolean keyFound = false;
 					
-					for (String keySet : LanguagePack.configKeys.keySet()) {
+					for (String keySet : ItemRenamer.configKeys.keySet()) {
 						if (key.equals(keySet.toLowerCase())) {
 							keyFound = true;
-							switch (LanguagePack.configKeys.get(keySet.toLowerCase())) {
+							switch (ItemRenamer.configKeys.get(keySet.toLowerCase())) {
 							case BOOLEAN:
 								if (value.equals("false") || value.equals("no") || value.equals("0")) {
 									plugin.configFile.set(key, false);
@@ -72,7 +72,7 @@ public class LanguagePackCommandExecutor implements CommandExecutor {
 								}
 								break;
 							default:
-								plugin.logger.warning("configType \""+LanguagePack.configKeys.get(keySet.toLowerCase())+"\" unrecognised - this is a bug");
+								plugin.logger.warning("configType \""+ItemRenamer.configKeys.get(keySet.toLowerCase())+"\" unrecognised - this is a bug");
 								break;
 							}
 							break;
@@ -89,7 +89,7 @@ public class LanguagePackCommandExecutor implements CommandExecutor {
 					return true;
 				}
 			} else if (args[1].equalsIgnoreCase("reload")) {
-				if (!sender.hasPermission("languagepack.config.set")) {
+				if (!sender.hasPermission("itemrenamer.config.set")) {
 					sender.sendMessage("["+label+":config:reload] You don't have permission to use that command");
 					return true;
 				}
@@ -102,7 +102,7 @@ public class LanguagePackCommandExecutor implements CommandExecutor {
 				return true;
 			}
 		} else if (args[0].equalsIgnoreCase("update")) {
-			if (!sender.hasPermission("languagepack.update")) {
+			if (!sender.hasPermission("itemrenamer.update")) {
 				sender.sendMessage("["+label+":update] You don't have permission to use that command");
 				return true;
 			}
