@@ -48,7 +48,7 @@ public class ItemRenamerCommandExecutor implements CommandExecutor {
 				if (args.length == 2 || args.length == 3) {
 					sender.sendMessage("["+label+":config:set] Config variables: "+ItemRenamer.configKeysString);
 					return true;
-				} else if (args.length == 4) {
+				} else if (args.length >= 4) {
 					String key = args[2].toLowerCase();
 					String value = args[3].toLowerCase();
 					boolean keyFound = false;
@@ -79,7 +79,11 @@ public class ItemRenamerCommandExecutor implements CommandExecutor {
 						}
 					}
 					if (!keyFound) {
-						plugin.configFile.set(key, value);
+						value = "";
+						for (int i = 3; i<args.length; i++) {
+							value += args[i] + " ";
+						}
+						plugin.configFile.set(key, value.trim());
 					}
 					plugin.saveConfig();
 					sender.sendMessage("["+label+":config:set] "+key+": "+plugin.configFile.get(key));

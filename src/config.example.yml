@@ -1,78 +1,99 @@
 pack:
-  7:
-    0:
-      lore: [I can make your bedrock]
-  17:
-    0:
+  '7':
+    '0':
+      lore:
+      - I can make your bedrock
+  '12':
+    '0':
+      name: Beach
+  '17':
+    '0':
       name: Normal logs
     other:
       name: Crap logs
-  19:
-    0:
+  '19':
+    '0':
       name: Bounty
-      lore: [the quicker picker-upper]
-  35:
+      lore:
+      - the quicker picker-upper
+  '35':
     all:
       lore: [For the artist in you]
-    0:
+    '0':
       name: White
-    1:
+    '1':
       name: Orange
-    2:
+    '2':
       name: Magenta
-    3:
+    '3':
       name: Light Blue
-    4:
+    '4':
       name: Yellow
-    5:
+    '5':
       name: Lime
-    6:
+    '6':
       name: Pink
-    7:
+    '7':
       name: Gray
-    8:
+    '8':
       name: Light Gray
-    9:
+    '9':
       name: Cyan
-    10:
+    '10':
       name: Purple
-    11:
+    '11':
       name: Blue
-    12:
+    '12':
       name: Brown
-    13:
+    '13':
       name: Green
-    14:
+    '14':
       name: Red
-    15:
+    '15':
       name: Black
-  36:
-    0:
+  '36':
+    '0':
       name: MISSINGNO.§k###
-  264:
-    0:
+  '90':
+    '0':
+      lore:
+      - §r§6Now you're thinking
+  '264':
+    '0':
       name: §lDIAMOND
       lore:
       - The mighty diamond
       - Look how it shines
-  341:
-    0:
-      name: Slimer
-      lore: [Gross.. wipe that on something]
-  368:
-    1: 
+  '341':
+    '0':
+      name: §2Slimer
+      lore:
+      - Gross.. wipe that on something
+  '354':
+    '0':
+      name: Jaffa Cake
+  '368':
+    '1':
       name: Grenade Lv2
-    2: 
+    '2':
       name: Grenade Lv3
-    3: 
+    '3':
       name: Grenade Lv4
-    4: 
+    '4':
       name: Grenade Lv5
     other:
       name: Grenade
-  280:
-    0:
+  '280':
+    '0':
       name: Magic
-  398:
+  '373':
+    '0':
+      lore: [§r§7Instant Awesome]
+  '398':
     all:
       name: Pigpole
+  '400':
+    '1':
+      name: Sweet Potato Pie
+    '2':
+      name: Pecan Pie

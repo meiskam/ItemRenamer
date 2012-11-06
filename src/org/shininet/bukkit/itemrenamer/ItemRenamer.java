@@ -50,7 +50,7 @@ public class ItemRenamer extends JavaPlugin {
 		configFile = getConfig();
 		configFile.options().copyDefaults(true);
 		saveConfig();
-		this.saveResource("config.example.yml", false);
+		this.saveResource("config.example.yml", true);
 		try {
 		    Metrics metrics = new Metrics(this);
 		    metrics.start();
@@ -121,28 +121,29 @@ public class ItemRenamer extends JavaPlugin {
 				((output = configFile.getString("pack."+id+".other.name")) == null)) {
 			return null;
 		}
-		return new NBTTagString(null,"§r"+output);
+		return new NBTTagString(null,"§r"+output+"§r");
 	}
 	
 	private NBTTagList packLore(int id, int damage) {
 		List<String> output;
-		if (((output = configFile.getStringList("pack."+id+".all.lore")) == null) &&
-				((output = configFile.getStringList("pack."+id+"."+damage+".lore")) == null) &&
-				((output = configFile.getStringList("pack."+id+".other.lore")) == null)) {
+		if (((output = configFile.getStringList("pack."+id+".all.lore")).isEmpty()) &&
+				((output = configFile.getStringList("pack."+id+"."+damage+".lore")).isEmpty()) &&
+				((output = configFile.getStringList("pack."+id+".other.lore")).isEmpty())) {
 			return null;
 		}
 		NBTTagList tagList = new NBTTagList();
 		for (String line : output) {
-			tagList.add(new NBTTagString(null,line));
+			tagList.add(new NBTTagString(null,line+"§r"));
 		}
 		return tagList;
 	}
 
 	public void process(net.minecraft.server.ItemStack input) {
-		//CraftItemStack cis = ((CraftItemStack)input);
-		//net.minecraft.server.ItemStack is = cis.getHandle();
-		//net.minecraft.server.ItemStack itemStack = CraftItemStack.createNMSItemStack(input);
-		NBTTagCompound tag = input.tag;
+
+		if (input == null) {
+			return;
+		}
+		NBTTagCompound tag;
 		int id = input.id;
 		int damage = input.getData();
 		NBTTagCompound tagDisplay;
@@ -152,7 +153,9 @@ public class ItemRenamer extends JavaPlugin {
 		if ((name == null) && (lore == null)) {
 			return;
 		}
-		if (tag == null) {
+		if (input.tag != null) {
+			tag = input.tag;
+		} else {
 			tag = new NBTTagCompound();
 		}
 		if (tag.hasKey("display")) {
@@ -167,11 +170,15 @@ public class ItemRenamer extends JavaPlugin {
 		if ((!tagDisplay.hasKey("Lore")) && (lore != null)) {
 			tagDisplay.set("Lore", lore);
 		}
+		input.tag = tag;
 	}
 	
 	public void process(net.minecraft.server.ItemStack[] input) {
+		if (input == null) {
+			return;
+		}
 		for (net.minecraft.server.ItemStack stack : input) {
-			process(stack);
+			process(stack);	
 		}
 	}
 }

@@ -3,6 +3,8 @@ package org.shininet.bukkit.itemrenamer.listeners;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import net.minecraft.server.ItemStack;
+
 import org.shininet.bukkit.itemrenamer.ItemRenamer;
 
 import com.comphenix.protocol.ProtocolManager;
@@ -36,11 +38,11 @@ public class ItemRenamerPacket {
 				try {
 					switch (event.getPacketID()) {
 					case 0x67:
-						myPlugin.process(packet.getSpecificModifier(net.minecraft.server.ItemStack.class).read(0));
+						myPlugin.process(packet.getSpecificModifier(ItemStack.class).read(0));
 						break;
 
 					case 0x68:
-						myPlugin.process(packet.getSpecificModifier(net.minecraft.server.ItemStack[].class).read(0));
+						myPlugin.process(packet.getSpecificModifier(ItemStack[].class).read(0));
 						break;
 				
 					}
