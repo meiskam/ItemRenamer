@@ -20,7 +20,7 @@ public class ItemRenamerPlayerJoin implements Listener {
 		Player player = event.getPlayer();
 		if(player.hasPermission("itemrenamer.update") && plugin.getUpdateReady())
 		{
-			player.sendMessage("[ItemRenamer] An update is available: " + plugin.getUpdateName() + "(" + plugin.getUpdateSize() + " bytes");
+			player.sendMessage("[ItemRenamer] An update is available: " + plugin.getUpdateName() + "(" + plugin.getUpdateSize() + " bytes)");
 			player.sendMessage("[ItemRenamer] Type \"/ItemRenamer update\" if you would like to update.");
 		}
 	}

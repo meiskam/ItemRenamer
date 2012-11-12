@@ -14,6 +14,7 @@ import net.minecraft.server.NBTTagCompound;
 import net.minecraft.server.NBTTagList;
 import net.minecraft.server.NBTTagString;
 
+import org.bukkit.ChatColor;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -49,7 +50,7 @@ public class ItemRenamer extends JavaPlugin {
 		logger = getLogger();
 		configFile = getConfig();
 		configFile.options().copyDefaults(true);
-		saveConfig();
+		this.saveDefaultConfig();
 		this.saveResource("config.example.yml", true);
 		try {
 		    Metrics metrics = new Metrics(this);
@@ -121,7 +122,7 @@ public class ItemRenamer extends JavaPlugin {
 				((output = configFile.getString("pack."+id+".other.name")) == null)) {
 			return null;
 		}
-		return new NBTTagString(null,"§r"+output+"§r");
+		return new NBTTagString(null,ChatColor.RESET+ChatColor.translateAlternateColorCodes('&', output)+ChatColor.RESET);
 	}
 	
 	private NBTTagList packLore(int id, int damage) {
@@ -133,7 +134,7 @@ public class ItemRenamer extends JavaPlugin {
 		}
 		NBTTagList tagList = new NBTTagList();
 		for (String line : output) {
-			tagList.add(new NBTTagString(null,line+"§r"));
+			tagList.add(new NBTTagString(null,ChatColor.translateAlternateColorCodes('&', line)+ChatColor.RESET));
 		}
 		return tagList;
 	}

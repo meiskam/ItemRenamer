@@ -18,7 +18,8 @@ pack:
       - the quicker picker-upper
   '35':
     all:
-      lore: [For the artist in you]
+      lore:
+      - For the artist in you
     '0':
       name: White
     '1':
@@ -53,34 +54,59 @@ pack:
       name: Black
   '36':
     '0':
-      name: MISSINGNO.§k###
+      name: MISSINGNO.&k###
   '90':
     '0':
       lore:
-      - §r§6Now you're thinking
+      - '&r&6Now you''re thinking'
   '264':
     '0':
-      name: §lDIAMOND
+      name: '&lDIAMOND'
       lore:
       - The mighty diamond
       - Look how it shines
+  '290':
+    '0':
+      name: Wooden Hoe
+    other:
+      name: Dirty Hoe (Wood)
+  '291':
+    '0':
+      name: Stone Hoe
+    other:
+      name: Dirty Hoe (Stone)
+  '292':
+    '0':
+      name: Iron Hoe
+    other:
+      name: Dirty Hoe (Iron)
+  '294':
+    '0':
+      name: Golden Hoe
+    other:
+      name: Dirty Hoe (Gold)
+  '293':
+    '0':
+      name: Diamond Hoe
+    other:
+      name: Dirty Hoe (Diamond)
   '341':
     '0':
-      name: §2Slimer
+      name: '&2Slimer'
       lore:
-      - Gross.. wipe that on something
+      - Gross, wipe that on something
   '354':
     '0':
       name: Jaffa Cake
   '368':
     '1':
-      name: Grenade Lv2
+      name: 'Grenade Lv: 2'
     '2':
-      name: Grenade Lv3
+      name: 'Grenade Lv: 3'
     '3':
-      name: Grenade Lv4
+      name: 'Grenade Lv: 4'
     '4':
-      name: Grenade Lv5
+      name: 'Grenade Lv: 5'
     other:
       name: Grenade
   '280':
@@ -88,7 +114,8 @@ pack:
       name: Magic
   '373':
     '0':
-      lore: [§r§7Instant Awesome]
+      lore:
+      - '&r&7Instant Awesome'
   '398':
     all:
       name: Pigpole
