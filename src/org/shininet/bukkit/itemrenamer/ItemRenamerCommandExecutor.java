@@ -1,17 +1,24 @@
 package org.shininet.bukkit.itemrenamer;
 
+import java.util.List;
+
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.Constructor;
+import org.yaml.snakeyaml.error.YAMLException;
 
 public class ItemRenamerCommandExecutor implements CommandExecutor {
 	
 	private ItemRenamer plugin;
+	private Yaml yaml = new Yaml(new Constructor(List.class));
 	
 	public ItemRenamerCommandExecutor(ItemRenamer plugin) {
 		this.plugin = plugin;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		if (!cmd.getName().equalsIgnoreCase("ItemRenamer")) {
@@ -83,7 +90,29 @@ public class ItemRenamerCommandExecutor implements CommandExecutor {
 						for (int i = 3; i<args.length; i++) {
 							value += args[i] + " ";
 						}
-						plugin.configFile.set(key, value.trim());
+						value = value.trim();
+						if (key.endsWith(".lore")) {
+							List<String> valueList;
+							try {
+								valueList = yaml.loadAs(value, List.class);
+							} catch (YAMLException e) {
+								sender.sendMessage("["+label+":config:set] Error setting "+key+", be sure to surround lore in [square brackets] and [\"quotes\"] if you're using special characters");
+								return true;
+							}
+							try {
+								plugin.configFile.set(key, valueList);
+							} catch (IllegalArgumentException e) {
+								sender.sendMessage("["+label+":config:set] Error setting "+key);
+								return true;
+							}
+						} else {
+							try {
+								plugin.configFile.set(key, value);
+							} catch (IllegalArgumentException e) {
+								sender.sendMessage("["+label+":config:set] Error setting "+key);
+								return true;
+							}
+						}
 					}
 					plugin.saveConfig();
 					sender.sendMessage("["+label+":config:set] "+key+": "+plugin.configFile.get(key));
