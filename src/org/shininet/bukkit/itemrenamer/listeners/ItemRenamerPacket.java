@@ -7,8 +7,7 @@ package org.shininet.bukkit.itemrenamer.listeners;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import net.minecraft.server.ItemStack;
-
+import org.bukkit.inventory.ItemStack;
 import org.shininet.bukkit.itemrenamer.ItemRenamer;
 
 import com.comphenix.protocol.ProtocolManager;
@@ -17,6 +16,7 @@ import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.reflect.FieldAccessException;
+import com.comphenix.protocol.reflect.StructureModifier;
 
 public class ItemRenamerPacket {
 
@@ -42,11 +42,13 @@ public class ItemRenamerPacket {
 				try {
 					switch (event.getPacketID()) {
 					case 0x67:
-						myPlugin.process(packet.getSpecificModifier(ItemStack.class).read(0));
+						StructureModifier<ItemStack> sm = packet.getSpecificModifier(ItemStack.class);
+						sm.write(0, myPlugin.process(sm.read(0).clone()));
 						break;
 
 					case 0x68:
-						myPlugin.process(packet.getSpecificModifier(ItemStack[].class).read(0));
+						StructureModifier<ItemStack[]> smArray = packet.getSpecificModifier(ItemStack[].class);
+						smArray.write(0, myPlugin.process(smArray.read(0).clone()));
 						break;
 				
 					}

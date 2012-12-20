@@ -10,13 +10,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
-import net.minecraft.server.NBTTagCompound;
-import net.minecraft.server.NBTTagList;
-import net.minecraft.server.NBTTagString;
-
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.shininet.bukkit.itemrenamer.listeners.ItemRenamerPacket;
 import org.shininet.bukkit.itemrenamer.listeners.ItemRenamerPlayerJoin;
@@ -115,71 +113,47 @@ public class ItemRenamer extends JavaPlugin {
 		return output.toString();
 	}
 
-	private NBTTagString packName(int id, int damage) {
+	private void packName(ItemMeta itemMeta, int id, int damage) {
 		String output;
 		if (((output = configFile.getString("pack."+id+".all.name")) == null) &&
 				((output = configFile.getString("pack."+id+"."+damage+".name")) == null) &&
 				((output = configFile.getString("pack."+id+".other.name")) == null)) {
-			return null;
+			return;
 		}
-		return new NBTTagString(null,ChatColor.RESET+ChatColor.translateAlternateColorCodes('&', output)+ChatColor.RESET);
+		itemMeta.setDisplayName(ChatColor.RESET+ChatColor.translateAlternateColorCodes('&', output)+ChatColor.RESET);
 	}
 	
-	private NBTTagList packLore(int id, int damage) {
+	private void packLore(ItemMeta itemMeta, int id, int damage) {
 		List<String> output;
 		if (((output = configFile.getStringList("pack."+id+".all.lore")).isEmpty()) &&
 				((output = configFile.getStringList("pack."+id+"."+damage+".lore")).isEmpty()) &&
 				((output = configFile.getStringList("pack."+id+".other.lore")).isEmpty())) {
-			return null;
+			return;
 		}
-		NBTTagList tagList = new NBTTagList();
-		for (String line : output) {
-			tagList.add(new NBTTagString(null,ChatColor.translateAlternateColorCodes('&', line)+ChatColor.RESET));
+		for (int i = 0; i < output.size(); i++) {
+			output.set(i, ChatColor.translateAlternateColorCodes('&', output.get(i))+ChatColor.RESET);
 		}
-		return tagList;
+		itemMeta.setLore(output);
 	}
 
-	public void process(net.minecraft.server.ItemStack input) {
-
+	public ItemStack process(ItemStack input) {
 		if (input == null) {
-			return;
+			return input;
 		}
-		NBTTagCompound tag;
-		int id = input.id;
-		int damage = input.getData();
-		NBTTagCompound tagDisplay;
-		NBTTagString name = packName(id, damage);
-		NBTTagList lore = packLore(id, damage);
-		
-		if ((name == null) && (lore == null)) {
-			return;
-		}
-		if (input.tag != null) {
-			tag = input.tag;
-		} else {
-			tag = new NBTTagCompound();
-		}
-		if (tag.hasKey("display")) {
-			tagDisplay = tag.getCompound("display");
-		} else {
-			tagDisplay = new NBTTagCompound();
-			tag.set("display", tagDisplay);
-		}
-		if ((!tagDisplay.hasKey("Name")) && (name != null)) {
-			tagDisplay.set("Name", name);
-		}
-		if ((!tagDisplay.hasKey("Lore")) && (lore != null)) {
-			tagDisplay.set("Lore", lore);
-		}
-		input.tag = tag;
+		ItemMeta itemMeta = input.getItemMeta();
+		packName(itemMeta, input.getTypeId(), input.getDurability());
+		packLore(itemMeta, input.getTypeId(), input.getDurability());
+		input.setItemMeta(itemMeta);
+		return input;
 	}
 	
-	public void process(net.minecraft.server.ItemStack[] input) {
+	public ItemStack[] process(ItemStack[] input) {
 		if (input == null) {
-			return;
+			return input;
 		}
-		for (net.minecraft.server.ItemStack stack : input) {
-			process(stack);	
+		for (int i = 0; i < input.length; i++) {
+			input[i] = process(input[i]);
 		}
+		return input;
 	}
 }
