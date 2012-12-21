@@ -137,22 +137,21 @@ public class ItemRenamer extends JavaPlugin {
 	}
 
 	public ItemStack process(ItemStack input) {
-		if (input == null) {
-			return input;
+		if (input != null) {
+			input = input.clone();
+			ItemMeta itemMeta = input.getItemMeta();
+			packName(itemMeta, input.getTypeId(), input.getDurability());
+			packLore(itemMeta, input.getTypeId(), input.getDurability());
+			input.setItemMeta(itemMeta);
 		}
-		ItemMeta itemMeta = input.getItemMeta();
-		packName(itemMeta, input.getTypeId(), input.getDurability());
-		packLore(itemMeta, input.getTypeId(), input.getDurability());
-		input.setItemMeta(itemMeta);
 		return input;
 	}
 	
 	public ItemStack[] process(ItemStack[] input) {
-		if (input == null) {
-			return input;
-		}
-		for (int i = 0; i < input.length; i++) {
-			input[i] = process(input[i]);
+		if (input != null) {
+			for (int i = 0; i < input.length; i++) {
+				input[i] = process(input[i]);
+			}
 		}
 		return input;
 	}

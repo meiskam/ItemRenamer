@@ -42,13 +42,17 @@ public class ItemRenamerPacket {
 				try {
 					switch (event.getPacketID()) {
 					case 0x67:
-						StructureModifier<ItemStack> sm = packet.getSpecificModifier(ItemStack.class);
-						sm.write(0, myPlugin.process(sm.read(0).clone()));
+						StructureModifier<ItemStack> sm = packet.getItemModifier();
+						for (int i = 0; i < sm.size(); i++) {
+							sm.write(i, myPlugin.process(sm.read(i)));
+						}
 						break;
 
 					case 0x68:
-						StructureModifier<ItemStack[]> smArray = packet.getSpecificModifier(ItemStack[].class);
-						smArray.write(0, myPlugin.process(smArray.read(0).clone()));
+						StructureModifier<ItemStack[]> smArray = packet.getItemArrayModifier();
+						for (int i = 0; i < smArray.size(); i++) {
+							smArray.write(i, myPlugin.process(smArray.read(i)));
+						}
 						break;
 				
 					}
