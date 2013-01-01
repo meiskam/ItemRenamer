@@ -1,3 +1,132 @@
 # LanguagePack Configuration
 
 autoupdate: true
+worlds:
+  world: example
+packs:
+  example:
+    '7':
+      '0':
+        lore:
+        - I can make your bedrock
+    '12':
+      '0':
+        name: Beach
+    '17':
+      '0':
+        name: Normal logs
+      other:
+        name: Crap logs
+    '19':
+      '0':
+        name: Bounty
+        lore:
+        - the quicker picker-upper
+    '35':
+      all:
+        lore:
+        - For the artist in you
+      '0':
+        name: White
+      '1':
+        name: Orange
+      '2':
+        name: Magenta
+      '3':
+        name: Light Blue
+      '4':
+        name: Yellow
+      '5':
+        name: Lime
+      '6':
+        name: Pink
+      '7':
+        name: Gray
+      '8':
+        name: Light Gray
+      '9':
+        name: Cyan
+      '10':
+        name: Purple
+      '11':
+        name: Blue
+      '12':
+        name: Brown
+      '13':
+        name: Green
+      '14':
+        name: Red
+      '15':
+        name: Black
+    '36':
+      '0':
+        name: MISSINGNO.&k###
+    '90':
+      '0':
+        lore:
+        - '&r&6Now you''re thinking'
+    '264':
+      '0':
+        name: '&lDIAMOND'
+        lore:
+        - The mighty diamond
+        - Look how it shines
+    '290':
+      '0':
+        name: Wooden Hoe
+      other:
+        name: Dirty Hoe (Wood)
+    '291':
+      '0':
+        name: Stone Hoe
+      other:
+        name: Dirty Hoe (Stone)
+    '292':
+      '0':
+        name: Iron Hoe
+      other:
+        name: Dirty Hoe (Iron)
+    '294':
+      '0':
+        name: Golden Hoe
+      other:
+        name: Dirty Hoe (Gold)
+    '293':
+      '0':
+        name: Diamond Hoe
+      other:
+        name: Dirty Hoe (Diamond)
+    '341':
+      '0':
+        name: '&2Slimer'
+        lore:
+        - Gross, wipe that on something
+    '354':
+      '0':
+        name: Jaffa Cake
+    '368':
+      '1':
+        name: 'Grenade Lv: 2'
+      '2':
+        name: 'Grenade Lv: 3'
+      '3':
+        name: 'Grenade Lv: 4'
+      '4':
+        name: 'Grenade Lv: 5'
+      other:
+        name: Grenade
+    '280':
+      '0':
+        name: Magic
+    '373':
+      '0':
+        lore:
+        - '&r&7Instant Awesome'
+    '398':
+      all:
+        name: Pigpole
+    '400':
+      '1':
+        name: Sweet Potato Pie
+      '2':
+        name: Pecan Pie

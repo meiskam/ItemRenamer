@@ -49,7 +49,11 @@ public class ItemRenamer extends JavaPlugin {
 		configFile = getConfig();
 		configFile.options().copyDefaults(true);
 		this.saveDefaultConfig();
-		this.saveResource("config.example.yml", true);
+		if ((configFile.contains("pack")) && (!configFile.contains("packs.converted"))) { //conversion ftw
+			configFile.set("packs.converted", configFile.getConfigurationSection("pack"));
+			configFile.set("pack", null);
+			saveConfig();
+		}
 		try {
 		    BukkitMetrics metrics = new BukkitMetrics(this);
 		    metrics.start();
@@ -113,21 +117,21 @@ public class ItemRenamer extends JavaPlugin {
 		return output.toString();
 	}
 
-	private void packName(ItemMeta itemMeta, int id, int damage) {
+	private void packName(String pack, ItemMeta itemMeta, int id, int damage) {
 		String output;
-		if (((output = configFile.getString("pack."+id+".all.name")) == null) &&
-				((output = configFile.getString("pack."+id+"."+damage+".name")) == null) &&
-				((output = configFile.getString("pack."+id+".other.name")) == null)) {
+		if (((output = configFile.getString("packs."+pack+"."+id+".all.name")) == null) &&
+				((output = configFile.getString("packs."+pack+"."+id+"."+damage+".name")) == null) &&
+				((output = configFile.getString("packs."+pack+"."+id+".other.name")) == null)) {
 			return;
 		}
 		itemMeta.setDisplayName(ChatColor.RESET+ChatColor.translateAlternateColorCodes('&', output)+ChatColor.RESET);
 	}
 	
-	private void packLore(ItemMeta itemMeta, int id, int damage) {
+	private void packLore(String pack, ItemMeta itemMeta, int id, int damage) {
 		List<String> output;
-		if (((output = configFile.getStringList("pack."+id+".all.lore")).isEmpty()) &&
-				((output = configFile.getStringList("pack."+id+"."+damage+".lore")).isEmpty()) &&
-				((output = configFile.getStringList("pack."+id+".other.lore")).isEmpty())) {
+		if (((output = configFile.getStringList("packs."+pack+"."+id+".all.lore")).isEmpty()) &&
+				((output = configFile.getStringList("packs."+pack+"."+id+"."+damage+".lore")).isEmpty()) &&
+				((output = configFile.getStringList("packs."+pack+"."+id+".other.lore")).isEmpty())) {
 			return;
 		}
 		for (int i = 0; i < output.size(); i++) {
@@ -136,21 +140,22 @@ public class ItemRenamer extends JavaPlugin {
 		itemMeta.setLore(output);
 	}
 
-	public ItemStack process(ItemStack input) {
-		if (input != null) {
+	public ItemStack process(String world, ItemStack input) {
+		String pack;
+		if ((input != null) && ((pack = configFile.getString("worlds."+world)) != null)) {
 			input = input.clone();
 			ItemMeta itemMeta = input.getItemMeta();
-			packName(itemMeta, input.getTypeId(), input.getDurability());
-			packLore(itemMeta, input.getTypeId(), input.getDurability());
+			packName(pack, itemMeta, input.getTypeId(), input.getDurability());
+			packLore(pack, itemMeta, input.getTypeId(), input.getDurability());
 			input.setItemMeta(itemMeta);
 		}
 		return input;
 	}
 	
-	public ItemStack[] process(ItemStack[] input) {
+	public ItemStack[] process(String world, ItemStack[] input) {
 		if (input != null) {
 			for (int i = 0; i < input.length; i++) {
-				input[i] = process(input[i]);
+				input[i] = process(world, input[i]);
 			}
 		}
 		return input;

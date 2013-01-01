@@ -44,14 +44,14 @@ public class ItemRenamerPacket {
 					case 0x67:
 						StructureModifier<ItemStack> sm = packet.getItemModifier();
 						for (int i = 0; i < sm.size(); i++) {
-							sm.write(i, myPlugin.process(sm.read(i)));
+							sm.write(i, myPlugin.process(event.getPlayer().getWorld().getName(), sm.read(i)));
 						}
 						break;
 
 					case 0x68:
 						StructureModifier<ItemStack[]> smArray = packet.getItemArrayModifier();
 						for (int i = 0; i < smArray.size(); i++) {
-							smArray.write(i, myPlugin.process(smArray.read(i)));
+							smArray.write(i, myPlugin.process(event.getPlayer().getWorld().getName(), smArray.read(i)));
 						}
 						break;
 				
