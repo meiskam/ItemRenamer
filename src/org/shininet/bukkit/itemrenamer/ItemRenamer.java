@@ -16,6 +16,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.shininet.bukkit.itemrenamer.listeners.ItemRenamerGameModeChange;
 import org.shininet.bukkit.itemrenamer.listeners.ItemRenamerPacket;
 import org.shininet.bukkit.itemrenamer.listeners.ItemRenamerPlayerJoin;
 
@@ -32,6 +33,7 @@ public class ItemRenamer extends JavaPlugin {
 	private ItemRenamerCommandExecutor commandExecutor;
 	private CommandExecutor oldCommandExecutor;
 	private ItemRenamerPlayerJoin listenerPlayerJoin;
+	private ItemRenamerGameModeChange listenerGameModeChange;
 	private ItemRenamerPacket listenerPacket;
 	private ProtocolManager protocolManager;
 	public static enum configType {DOUBLE, BOOLEAN};
@@ -39,6 +41,7 @@ public class ItemRenamer extends JavaPlugin {
 	public static final Map<String, configType> configKeys = new HashMap<String, configType>(){
 		{
 			put("autoupdate", configType.BOOLEAN);
+			put("creativedisable", configType.BOOLEAN);
 		}
 	};
 	public static final String configKeysString = implode(configKeys.keySet(), ", ");
@@ -77,6 +80,9 @@ public class ItemRenamer extends JavaPlugin {
 		listenerPlayerJoin = new ItemRenamerPlayerJoin(this);
 		getServer().getPluginManager().registerEvents(listenerPlayerJoin, this);
 		
+		listenerGameModeChange = new ItemRenamerGameModeChange(this);
+		getServer().getPluginManager().registerEvents(listenerGameModeChange, this);
+		
 		oldCommandExecutor = getCommand("ItemRenamer").getExecutor();
 		commandExecutor = new ItemRenamerCommandExecutor(this);
 		getCommand("ItemRenamer").setExecutor(commandExecutor);
@@ -86,6 +92,7 @@ public class ItemRenamer extends JavaPlugin {
 	public void onDisable() {
 		listenerPacket.unregister();
 		listenerPlayerJoin.unregister();
+		listenerGameModeChange.unregister();
 		if (oldCommandExecutor != null) {
 			getCommand("ItemRenamer").setExecutor(oldCommandExecutor);
 		}

@@ -7,6 +7,7 @@ package org.shininet.bukkit.itemrenamer.listeners;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.bukkit.GameMode;
 import org.bukkit.inventory.ItemStack;
 import org.shininet.bukkit.itemrenamer.ItemRenamer;
 
@@ -38,7 +39,9 @@ public class ItemRenamerPacket {
 			@Override
 			public void onPacketSending(PacketEvent event) {
 				PacketContainer packet = event.getPacket();
-				
+				if ((myPlugin.configFile.getBoolean("creativedisable")) && (event.getPlayer().getGameMode() == GameMode.CREATIVE)) {
+					return;
+				}
 				try {
 					switch (event.getPacketID()) {
 					case 0x67:

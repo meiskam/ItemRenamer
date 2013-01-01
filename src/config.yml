@@ -1,6 +1,7 @@
 # LanguagePack Configuration
 
 autoupdate: true
+creativedisable: true
 worlds:
   world: example
 packs:
