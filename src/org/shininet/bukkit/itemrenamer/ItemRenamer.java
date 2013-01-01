@@ -51,7 +51,7 @@ public class ItemRenamer extends JavaPlugin {
 		this.saveDefaultConfig();
 		this.saveResource("config.example.yml", true);
 		try {
-		    Metrics metrics = new Metrics(this);
+		    BukkitMetrics metrics = new BukkitMetrics(this);
 		    metrics.start();
 		} catch (Exception e) {
 			logger.warning("Failed to start Metrics");
