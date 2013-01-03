@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 package org.shininet.bukkit.itemrenamer.merchant;
 
 import org.bukkit.inventory.ItemStack;
@@ -7,7 +11,7 @@ public class MerchantRecipe {
     private ItemStack secondItemToBuy;
     private ItemStack itemToSell;
 
-    // Whether or not this recipie can be used
+    // Whether or not this recipe can be used
     private boolean canUse;
     
 	public MerchantRecipe(ItemStack itemToBuy, ItemStack secondItemToBuy, ItemStack itemToSell, boolean canUse) {
