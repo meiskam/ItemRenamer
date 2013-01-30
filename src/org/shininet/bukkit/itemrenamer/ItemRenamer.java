@@ -149,14 +149,18 @@ public class ItemRenamer extends JavaPlugin {
 
 	public ItemStack process(String world, ItemStack input) {
 		String pack;
+		ItemStack output = null;
 		if ((input != null) && ((pack = configFile.getString("worlds."+world)) != null)) {
-			input = input.clone();
-			ItemMeta itemMeta = input.getItemMeta();
-			packName(pack, itemMeta, input.getTypeId(), input.getDurability());
-			packLore(pack, itemMeta, input.getTypeId(), input.getDurability());
-			input.setItemMeta(itemMeta);
+			output = input.clone();
+			ItemMeta itemMeta = output.getItemMeta();
+			if ((itemMeta.hasDisplayName()) || (itemMeta.hasLore())) {
+				return input;
+			}
+			packName(pack, itemMeta, output.getTypeId(), output.getDurability());
+			packLore(pack, itemMeta, output.getTypeId(), output.getDurability());
+			output.setItemMeta(itemMeta);
 		}
-		return input;
+		return output;
 	}
 	
 	public ItemStack[] process(String world, ItemStack[] input) {
