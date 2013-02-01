@@ -159,8 +159,9 @@ public class ItemRenamer extends JavaPlugin {
 			packName(pack, itemMeta, output.getTypeId(), output.getDurability());
 			packLore(pack, itemMeta, output.getTypeId(), output.getDurability());
 			output.setItemMeta(itemMeta);
+			return output;
 		}
-		return output;
+		return input;
 	}
 	
 	public ItemStack[] process(String world, ItemStack[] input) {
