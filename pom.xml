@@ -1,0 +1,107 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.shininet.bukkit</groupId>
+  <artifactId>ItemRenamer</artifactId>
+  <version>1.5.0021</version>
+  <packaging>jar</packaging>
+  <description>Change the name of every item or block on the server.</description>
+  
+  <properties>
+    <project.build.sourceEncoding>cp1252</project.build.sourceEncoding>
+  </properties>
+
+  <repositories>
+    <repository>
+      <id>bukkit-rep</id>
+      <url>http://repo.bukkit.org/content/groups/public</url>
+    </repository>
+    <repository>
+      <id>comphenix-releases</id>
+      <name>Comphenix Maven Releases</name>
+      <url>http://repo.comphenix.net/content/repositories/releases/</url>
+    </repository>
+  </repositories>
+ 
+  <build>
+    <defaultGoal>clean install</defaultGoal>
+    <sourceDirectory>src/main/java</sourceDirectory>
+    <testSourceDirectory>src/test/java</testSourceDirectory>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <excludes>
+          <exclude>**/*.java</exclude>
+        </excludes>
+      </resource>
+    </resources>
+    
+    <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>2.3.2</version>
+        <configuration>
+          <source>1.6</source>
+          <target>1.6</target>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+  
+  <url>http://dev.bukkit.org/server-mods/itemrenamer/</url>
+  <name>ItemRenamer</name>
+  
+  <scm>
+    <connection>scm:git:git://github.com/meiskam/ItemRenamer.git</connection>
+    <developerConnection>scm:git:git@github.com:meiskam/ItemRenamer.git</developerConnection>
+    <url>https://github.com/meiskam/ItemRenamer</url>
+  </scm>
+  
+  <licenses>
+    <license>
+      <name>GNU GENERAL PUBLIC LICENSE - Version 2, June 1991</name>
+      <url>http://www.gnu.org/licenses/gpl-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  
+  <developers>
+    <developer>
+      <id>meiskam</id>
+      <roles>
+        <role>author</role>
+        <role>maintainer</role>
+      </roles>
+    </developer>
+    <developer>
+      <id>aadnk</id>
+      <name>Kristian S. Stangeland</name>
+      <email>kr_stang@hotmail.com</email>
+      <url>http://comphenix.net/</url>
+      <roles>
+        <role>developer</role>
+      </roles>
+      <timezone>1</timezone>
+    </developer>
+  </developers>
+  
+  <dependencies>
+  	<dependency>
+  		<groupId>org.bukkit</groupId>
+  		<artifactId>craftbukkit</artifactId>
+  		<version>1.4.7-R1.0</version>
+  		<scope>provided</scope>
+  	</dependency>
+  	<dependency>
+  		<groupId>junit</groupId>
+  		<artifactId>junit</artifactId>
+  		<version>4.10</version>
+  		<scope>test</scope>
+  	</dependency>
+  	<dependency>
+  		<groupId>com.comphenix.protocol</groupId>
+  		<artifactId>ProtocolLib</artifactId>
+  		<version>2.1.0</version>
+  		<scope>provided</scope>
+  	</dependency>
+  </dependencies>
+</project>
