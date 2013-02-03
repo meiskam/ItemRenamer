@@ -29,7 +29,7 @@ public class ItemRenamer extends JavaPlugin {
 	private static boolean updateReady = false;
 	private static String updateName = "";
 	private static long updateSize = 0;
-	private static final String updateSlug = "itemrenamer";
+	public static final String updateSlug = "itemrenamer";
 	private ItemRenamerCommandExecutor commandExecutor;
 	private CommandExecutor oldCommandExecutor;
 	private ItemRenamerPlayerJoin listenerPlayerJoin;
@@ -108,10 +108,6 @@ public class ItemRenamer extends JavaPlugin {
 
 	public long getUpdateSize() {
 		return updateSize;
-	}
-
-	public void update() {
-		new Updater(this, updateSlug, getFile(), Updater.UpdateType.NO_VERSION_CHECK, true);
 	}
 	
 	public static String implode(Set<String> input, String glue) {
