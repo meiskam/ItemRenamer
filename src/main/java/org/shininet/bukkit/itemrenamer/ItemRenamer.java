@@ -14,10 +14,12 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.shininet.bukkit.itemrenamer.listeners.ItemRenamerGameModeChange;
 import org.shininet.bukkit.itemrenamer.listeners.ItemRenamerPacket;
 import org.shininet.bukkit.itemrenamer.listeners.ItemRenamerPlayerJoin;
+import org.shininet.bukkit.itemrenamer.listeners.ItemRenamerStackRestrictor;
 
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
@@ -38,6 +40,8 @@ public class ItemRenamer extends JavaPlugin {
 	private ItemRenamerPlayerJoin listenerPlayerJoin;
 	private ItemRenamerGameModeChange listenerGameModeChange;
 	private ItemRenamerPacket listenerPacket;
+	private ItemRenamerStackRestrictor stackRestrictor;
+	
 	private ProtocolManager protocolManager;
 	
 	public static enum configType {
@@ -83,15 +87,18 @@ public class ItemRenamer extends JavaPlugin {
 		} catch (Exception e) {
 			logger.warning("Failed to start Updater");
 		}
-		
+		// Managers
+		PluginManager plugins = getServer().getPluginManager();
 		protocolManager = ProtocolLibrary.getProtocolManager();
+		
 		listenerPacket = new ItemRenamerPacket(this, protocolManager, logger);
-		
 		listenerPlayerJoin = new ItemRenamerPlayerJoin(this);
-		getServer().getPluginManager().registerEvents(listenerPlayerJoin, this);
-		
 		listenerGameModeChange = new ItemRenamerGameModeChange(this);
-		getServer().getPluginManager().registerEvents(listenerGameModeChange, this);
+		stackRestrictor = new ItemRenamerStackRestrictor(this);
+		
+		plugins.registerEvents(listenerPlayerJoin, this);
+		plugins.registerEvents(listenerGameModeChange, this);
+		plugins.registerEvents(stackRestrictor, this);
 		
 		oldCommandExecutor = getCommand("ItemRenamer").getExecutor();
 		commandExecutor = new ItemRenamerCommandExecutor(this);
