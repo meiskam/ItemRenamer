@@ -22,6 +22,7 @@ import org.shininet.bukkit.itemrenamer.listeners.ItemRenamerPlayerJoin;
 
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
+import com.google.common.base.Joiner;
 
 public class ItemRenamer extends JavaPlugin {
 	public Logger logger;
@@ -36,7 +37,12 @@ public class ItemRenamer extends JavaPlugin {
 	private ItemRenamerGameModeChange listenerGameModeChange;
 	private ItemRenamerPacket listenerPacket;
 	private ProtocolManager protocolManager;
-	public static enum configType {DOUBLE, BOOLEAN};
+	
+	public static enum configType {
+		DOUBLE, 
+		BOOLEAN
+	};
+	
 	@SuppressWarnings("serial")
 	public static final Map<String, configType> configKeys = new HashMap<String, configType>(){
 		{
@@ -44,7 +50,7 @@ public class ItemRenamer extends JavaPlugin {
 			put("creativedisable", configType.BOOLEAN);
 		}
 	};
-	public static final String configKeysString = implode(configKeys.keySet(), ", ");
+	public static final String configKeysString = Joiner.on(", ").join(configKeys.keySet());
 	
 	@Override
 	public void onEnable(){
@@ -114,16 +120,6 @@ public class ItemRenamer extends JavaPlugin {
 		new Updater(this, updateSlug, getFile(), Updater.UpdateType.NO_VERSION_CHECK, true);
 	}
 	
-	public static String implode(Set<String> input, String glue) {
-		int i = 0;
-		StringBuilder output = new StringBuilder();
-		for (String key : input) {
-			if (i++ != 0) output.append(glue);
-			output.append(key);
-		}
-		return output.toString();
-	}
-
 	private void packName(String pack, ItemMeta itemMeta, int id, int damage) {
 		String output;
 		if (((output = configFile.getString("packs."+pack+"."+id+".all.name")) == null) &&
