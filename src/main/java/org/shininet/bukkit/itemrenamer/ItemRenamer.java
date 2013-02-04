@@ -7,7 +7,6 @@ package org.shininet.bukkit.itemrenamer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Logger;
 
 import org.bukkit.ChatColor;
@@ -27,10 +26,12 @@ import com.google.common.base.Joiner;
 public class ItemRenamer extends JavaPlugin {
 	public Logger logger;
 	public FileConfiguration configFile;
+	
 	private static boolean updateReady = false;
 	private static String updateName = "";
 	private static long updateSize = 0;
 	private static final String updateSlug = "itemrenamer";
+	
 	private ItemRenamerCommandExecutor commandExecutor;
 	private CommandExecutor oldCommandExecutor;
 	private ItemRenamerPlayerJoin listenerPlayerJoin;
@@ -53,16 +54,18 @@ public class ItemRenamer extends JavaPlugin {
 	public static final String configKeysString = Joiner.on(", ").join(configKeys.keySet());
 	
 	@Override
-	public void onEnable(){
+	public void onEnable() {
 		logger = getLogger();
 		configFile = getConfig();
 		configFile.options().copyDefaults(true);
 		this.saveDefaultConfig();
+		
 		if ((configFile.contains("pack")) && (!configFile.contains("packs.converted"))) { //conversion ftw
 			configFile.set("packs.converted", configFile.getConfigurationSection("pack"));
 			configFile.set("pack", null);
 			saveConfig();
 		}
+		
 		try {
 		    BukkitMetrics metrics = new BukkitMetrics(this);
 		    metrics.start();

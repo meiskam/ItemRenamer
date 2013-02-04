@@ -100,7 +100,8 @@ public class ItemRenamerCommandExecutor implements CommandExecutor {
 							try {
 								valueList = yaml.loadAs(value, List.class);
 							} catch (YAMLException e) {
-								sender.sendMessage("["+label+":config:set] Error setting "+key+", be sure to surround lore in [square brackets] and [\"quotes\"] if you're using special characters");
+								sender.sendMessage("["+label+":config:set] Error setting "+key+", " +
+										"be sure to surround lore in [square brackets] and [\"quotes\"] if you're using special characters");
 								return true;
 							}
 							try {
