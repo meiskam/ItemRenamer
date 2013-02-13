@@ -8,7 +8,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import com.google.common.collect.Maps;
 
 /**
- * Store the rename pack from a configuration file.
+ * Store the rename packs from a configuration file.
  * 
  * @author Kristian
  */

@@ -72,7 +72,7 @@ class MemoryDamageLookup implements DamageLookup {
 	public RenameRule getOtherRule() {
 		return other;
 	}
-	
+
 	@Override
 	public void setOtherRule(RenameRule rule) {
 		this.other = rule;

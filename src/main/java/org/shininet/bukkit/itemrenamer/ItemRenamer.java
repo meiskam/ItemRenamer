@@ -35,7 +35,7 @@ public class ItemRenamer extends JavaPlugin {
 
 	public static final String updateSlug = "itemrenamer";
 
-	private ItemRenamerCommandExecutor commandExecutor;
+	private ItemRenamerCommands commandExecutor;
 	private CommandExecutor oldCommandExecutor;
 	private ItemRenamerPlayerJoin listenerPlayerJoin;
 	private ItemRenamerGameModeChange listenerGameModeChange;
@@ -87,6 +87,7 @@ public class ItemRenamer extends JavaPlugin {
 		} catch (Exception e) {
 			logger.warning("Failed to start Updater");
 		}
+		
 		// Managers
 		PluginManager plugins = getServer().getPluginManager();
 		protocolManager = ProtocolLibrary.getProtocolManager();
@@ -101,8 +102,8 @@ public class ItemRenamer extends JavaPlugin {
 		plugins.registerEvents(stackRestrictor, this);
 		
 		oldCommandExecutor = getCommand("ItemRenamer").getExecutor();
-		commandExecutor = new ItemRenamerCommandExecutor(this);
-		getCommand("ItemRenamer").setExecutor(commandExecutor);
+
+		
 	}
 
 	@Override

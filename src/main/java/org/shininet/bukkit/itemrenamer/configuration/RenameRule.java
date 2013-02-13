@@ -1,5 +1,6 @@
 package org.shininet.bukkit.itemrenamer.configuration;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -121,5 +122,31 @@ public class RenameRule {
 			}
 			return rule;
 		}
+	}
+	
+	/**
+	 * Modify the given rename rule by setting a new name.
+	 * @param original - the original rename rule.
+	 * @param newName - the new name.
+	 * @return The modified rename rule.
+	 */
+	public static RenameRule withName(RenameRule original, String newName) {
+		if (original == null)
+			return new RenameRule(newName, null);
+		else
+			return original.withName(newName);
+	}
+	
+	/**
+	 * Modify the given rename rule by setting a new name.
+	 * @param original - the original rename rule.
+	 * @param newName - the new name.
+	 * @return The modified rename rule.
+	 */
+	public static RenameRule withAdditionalLore(RenameRule original, String newLore) {
+		if (original == null)
+			return new RenameRule("", Arrays.asList(newLore));
+		else
+			return original.withAdditionalLore(Arrays.asList(newLore));
 	}
 }
