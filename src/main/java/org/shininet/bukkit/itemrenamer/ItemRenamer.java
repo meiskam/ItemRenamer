@@ -20,6 +20,8 @@ import org.shininet.bukkit.itemrenamer.listeners.ItemRenamerGameModeChange;
 import org.shininet.bukkit.itemrenamer.listeners.ItemRenamerPacket;
 import org.shininet.bukkit.itemrenamer.listeners.ItemRenamerPlayerJoin;
 import org.shininet.bukkit.itemrenamer.listeners.ItemRenamerStackRestrictor;
+import org.shininet.bukkit.itemrenamer.metrics.BukkitMetrics;
+import org.shininet.bukkit.itemrenamer.metrics.Updater;
 
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;

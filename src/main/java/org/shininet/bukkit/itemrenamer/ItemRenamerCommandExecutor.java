@@ -4,24 +4,180 @@
 
 package org.shininet.bukkit.itemrenamer;
 
+import java.util.Arrays;
+import java.util.Deque;
+import java.util.LinkedList;
 import java.util.List;
 
+import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.shininet.bukkit.itemrenamer.configuration.ItemRenamerConfiguration;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.error.YAMLException;
 
+import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
+
 public class ItemRenamerCommandExecutor implements CommandExecutor {
+	// Different permissions
+	private static final String PERM_GET = "itemrenamer.config.get";
+	private static final String PERM_SET= "itemrenamer.config.set";
+	
+	// The super command
+	private static final Object COMMAND_ITEMRENAMER = "itemrenamer";
+	
+	// Recognized sub-commands
+	public enum Commands {
+		GET_AUTO_UPDATE,
+		GET_CREATIVE_DISABLE, 
+		SET_AUTO_UPDATE,
+		SET_CREATIVE_DISABLE,
+		GET_WORLD_PACK, 
+		SET_WORLD_PACK,
+		DELETE_PACK,
+		SET_NAME,
+	}
 	
 	private ItemRenamer plugin;
-	private Yaml yaml = new Yaml(new Constructor(List.class));
+	private ItemRenamerConfiguration config;
 	
-	public ItemRenamerCommandExecutor(ItemRenamer plugin) {
+	private CommandMatcher<Commands> matcher;
+	
+	public ItemRenamerCommandExecutor(ItemRenamer plugin, ItemRenamerConfiguration config) {
 		this.plugin = plugin;
+		this.matcher = registerCommands();
+		this.config = config;
+	}
+	
+	private CommandMatcher<Commands> registerCommands() {
+		CommandMatcher<Commands> output = new CommandMatcher<Commands>();
+		output.registerCommand(Commands.GET_AUTO_UPDATE, PERM_GET, "get autoupdate");
+		output.registerCommand(Commands.GET_CREATIVE_DISABLE, PERM_GET, "get creativedisable");
+		output.registerCommand(Commands.SET_AUTO_UPDATE, PERM_SET, "set autoupdate");
+		output.registerCommand(Commands.SET_CREATIVE_DISABLE, PERM_SET, "set creativedisable");
+		output.registerCommand(Commands.GET_WORLD_PACK, PERM_GET, "get world");
+		output.registerCommand(Commands.SET_WORLD_PACK, PERM_SET, "set world");
+		output.registerCommand(Commands.DELETE_PACK, PERM_SET, "delete pack");
+		output.registerCommand(Commands.SET_NAME, PERM_GET, "set name");
+		
+		return output;
+	}
+	
+	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] arguments) {
+		if (cmd.getName().equals(COMMAND_ITEMRENAMER)) {
+			LinkedList<String> input = Lists.newLinkedList(Arrays.asList(arguments));
+			
+			// See which node is closest
+			CommandMatcher<Commands>.CommandNode node = matcher.matchClosest(input);
+			
+			if (node.isCommand()) {
+				try {
+					sender.sendMessage(ChatColor.GOLD + performCommand(node.getCommand(), input));
+				} catch (CommandErrorException e) {
+					sender.sendMessage(ChatColor.RED + e.getMessage());
+				}
+			} else {
+				sender.sendMessage(ChatColor.RED + "Available sub commands are: " + 
+									Joiner.on(", ").join(node.getChildren()));
+			}
+			
+			// It's still somewhat correct
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	private String performCommand(Commands command, Deque<String> args) {
+		switch (command) {
+			case GET_AUTO_UPDATE: 
+				expectCommandCount(args, 0);
+				return formatBoolean("Auto update is %s.", config.isAutoUpdate()); 
+			case GET_CREATIVE_DISABLE: 
+				expectCommandCount(args, 0);
+				return formatBoolean("Creative disable is %s.", config.isCreativeDisabled());
+			case SET_AUTO_UPDATE:
+				expectCommandCount(args, 1);
+				config.setAutoUpdate(parseBoolean(args.poll()));
+				return "Updated auto update.";
+			case SET_CREATIVE_DISABLE:
+				expectCommandCount(args, 1);
+				config.setCreativeDisabled(parseBoolean(args.poll()));
+				return "Updated creative disable.";
+			case GET_WORLD_PACK: 
+				expectCommandCount(args, 1);
+				return getWorldPack(args);
+			case SET_WORLD_PACK:
+				expectCommandCount(args, 2);
+				return setWorldPack(args);
+			case DELETE_PACK:
+				expectCommandCount(args, 1);
+				return deleteWorldPack(args);
+			case SET_NAME:
+				expectCommandCount(args, 2);
+				return setItemName(args);
+			default:
+				throw new CommandErrorException("Unrecognized sub command: " + command);
+		}
+	}
+	
+	private String setItemName(Deque<String> args) {
+
+		
+		
 	}
 
+	private String deleteWorldPack(Deque<String> args) {
+		String pack = args.poll();
+		
+		config.getRenameConfig().removePack(pack);
+		return "Deleted pack " + pack;
+	}
+
+	private void expectCommandCount(Deque<String> args, int expected) {
+		if (expected == args.size())
+			throw new CommandErrorException((args.size() - expected) + " too many arguments.");
+	}
+	
+	private String getWorldPack(Deque<String> args) {
+		String world = args.poll();
+		
+		// Retrieve world pack
+		return "Item pack for " + world + ": " + config.getWorldPack(world);
+	}
+
+	public String setWorldPack(Deque<String> args) {
+		String world = checkWorld(args.poll()), pack = args.poll();
+		
+		config.setWorldPack(world, pack);
+		return "Set the item pack in world " + world + " to " + pack;
+	}
+	
+	private String checkWorld(String world) {
+		// Ensure the world exists
+		if (plugin.getServer().getWorld(world) == null)
+			throw new CommandErrorException("Cannot find world " + world);
+		return world;
+	}
+	
+	private String formatBoolean(String format, boolean value) {
+		return String.format(format, value ? "enabled" : "disabled");
+	}
+	
+	// Simple boolean parsing
+	private boolean parseBoolean(String value) {
+		if (Arrays.asList("true", "yes", "enabled", "on", "1").contains(value))
+			return true;
+		else if (Arrays.asList("false", "no", "disabled", "off", "0").contains(value)) {
+			return false;
+		} else {
+			throw new CommandErrorException("Cannot parse " + value + " as a boolean (yes/no)");
+		}
+	}
+	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
@@ -38,7 +194,7 @@ public class ItemRenamerCommandExecutor implements CommandExecutor {
 				return true;
 			}
 			if (args[1].equalsIgnoreCase("get") || args[1].equalsIgnoreCase("view")) {
-				if (!sender.hasPermission("itemrenamer.config.get")) {
+				if (!sender.hasPermission(PERM_GET)) {
 					sender.sendMessage("["+label+":config:get] You don't have permission to use that command");
 					return true;
 				}

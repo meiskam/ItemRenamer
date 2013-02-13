@@ -30,6 +30,7 @@ public class ItemRenamerConfiguration {
 	
 	public void save() {
 		// Save and reload
+		renameConfig.saveAll();
 		plugin.saveConfig();
 		config = plugin.getConfig();
 	}

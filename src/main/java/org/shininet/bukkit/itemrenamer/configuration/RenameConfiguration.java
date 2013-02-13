@@ -5,6 +5,7 @@ import java.util.Map.Entry;
 
 import org.bukkit.configuration.ConfigurationSection;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 /**
@@ -70,6 +71,15 @@ public class RenameConfiguration {
 		}
 		return itemLookup;
 	}
+	
+	/**
+	 * Determine if the given pack exists.
+	 * @param pack - the pack to lookup.
+	 * @return TRUE if it does, FALSE otherwise.
+	 */
+	public boolean hasPack(String pack) {
+		return loadPack(pack) != null;
+	}
 
 	/**
 	 * Create a new damage lookup, or load the existing damage value if it exists.
@@ -95,6 +105,15 @@ public class RenameConfiguration {
 	}
 	
 	/**
+	 * Delete the pack with the given name.
+	 * @param pack
+	 */
+	public boolean removePack(String pack) {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	/**
 	 * Save the given name pack to the configuration file.
 	 * @param pack - name pack.
 	 */
@@ -117,6 +136,11 @@ public class RenameConfiguration {
 	 * Save every name pack and every setting.
 	 */
 	public void saveAll() {
+		// Reset everything first
+		for (String key : Lists.newArrayList(section.getKeys(false))) {
+			section.set(key, null);
+		}
+		
 		for (String pack : memoryLookup.keySet()) {
 			saveLookup(pack);
 		}
