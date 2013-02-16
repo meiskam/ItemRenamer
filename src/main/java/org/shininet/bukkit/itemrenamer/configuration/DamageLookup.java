@@ -2,6 +2,7 @@ package org.shininet.bukkit.itemrenamer.configuration;
 
 import java.util.Map;
 
+import com.google.common.base.Function;
 import com.google.common.collect.Range;
 
 public interface DamageLookup {
@@ -30,12 +31,19 @@ public interface DamageLookup {
 	public abstract void setOtherRule(RenameRule rule);
 
 	/**
+	 * Apply a transform function to a certain range or class of damage values.
+	 * @param value - the range of damage values to modify.
+	 * @param function - the method to apply to every defined and undefined value in this range.
+	 */
+	public abstract void setTransform(DamageValues value, Function<RenameRule, RenameRule> function);
+	
+	/**
 	 * Associate a given damage value with a certain rename rule
 	 * @param damage - the damage value.
 	 * @param rule - the rename rule.
 	 */
 	public abstract void setRule(int damage, RenameRule rule);
-
+	
 	/**
 	 * Associate a given range of damage value with a certain rename rule.
 	 * @param lowerDamage - the minimum damage (inclusive).

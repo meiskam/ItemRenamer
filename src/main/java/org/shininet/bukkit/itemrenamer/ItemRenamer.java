@@ -4,18 +4,12 @@
 
 package org.shininet.bukkit.itemrenamer;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.logging.Logger;
 
-import org.bukkit.ChatColor;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.shininet.bukkit.itemrenamer.configuration.ItemRenamerConfiguration;
 import org.shininet.bukkit.itemrenamer.listeners.ItemRenamerGameModeChange;
 import org.shininet.bukkit.itemrenamer.listeners.ItemRenamerPacket;
 import org.shininet.bukkit.itemrenamer.listeners.ItemRenamerPlayerJoin;
@@ -25,7 +19,6 @@ import org.shininet.bukkit.itemrenamer.metrics.Updater;
 
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
-import com.google.common.base.Joiner;
 
 public class ItemRenamer extends JavaPlugin {
 	public Logger logger;
@@ -38,84 +31,83 @@ public class ItemRenamer extends JavaPlugin {
 	public static final String updateSlug = "itemrenamer";
 
 	private ItemRenamerCommands commandExecutor;
-	private CommandExecutor oldCommandExecutor;
+	private ItemRenamerConfiguration configuration;
+	private RenameProcessor processor;
+	
 	private ItemRenamerPlayerJoin listenerPlayerJoin;
 	private ItemRenamerGameModeChange listenerGameModeChange;
+	
 	private ItemRenamerPacket listenerPacket;
 	private ItemRenamerStackRestrictor stackRestrictor;
 	
 	private ProtocolManager protocolManager;
 	
-	public static enum configType {
-		DOUBLE, 
-		BOOLEAN
-	};
-	
-	@SuppressWarnings("serial")
-	public static final Map<String, configType> configKeys = new HashMap<String, configType>(){
-		{
-			put("autoupdate", configType.BOOLEAN);
-			put("creativedisable", configType.BOOLEAN);
-		}
-	};
-	public static final String configKeysString = Joiner.on(", ").join(configKeys.keySet());
-	
 	@Override
 	public void onEnable() {
 		logger = getLogger();
-		configFile = getConfig();
-		configFile.options().copyDefaults(true);
-		this.saveDefaultConfig();
+		configuration = new ItemRenamerConfiguration(this);
+		processor = new RenameProcessor(configuration);
 		
-		if ((configFile.contains("pack")) && (!configFile.contains("packs.converted"))) { //conversion ftw
-			configFile.set("packs.converted", configFile.getConfigurationSection("pack"));
-			configFile.set("pack", null);
-			saveConfig();
-		}
+		startMetrics();
+		startUpdater();
 		
-		try {
-		    BukkitMetrics metrics = new BukkitMetrics(this);
-		    metrics.start();
-		} catch (Exception e) {
-			logger.warning("Failed to start Metrics");
-		}
+		// Managers
+		PluginManager plugins = getServer().getPluginManager();
+		protocolManager = ProtocolLibrary.getProtocolManager();
+		
+		listenerPacket = new ItemRenamerPacket(this, configuration, processor, protocolManager, logger);
+		listenerPlayerJoin = new ItemRenamerPlayerJoin(this);
+		listenerGameModeChange = new ItemRenamerGameModeChange(this);
+		stackRestrictor = new ItemRenamerStackRestrictor(processor);
+		
+		plugins.registerEvents(listenerPlayerJoin, this);
+		plugins.registerEvents(listenerGameModeChange, this);
+		plugins.registerEvents(stackRestrictor, this);
+		
+		commandExecutor = new ItemRenamerCommands(this, configuration);
+		getCommand("ItemRenamer").setExecutor(commandExecutor);
+	}
+
+	private void startUpdater() {
 		try {
 			if (configFile.getBoolean("autoupdate") && !(updateReady)) {
-				Updater updater = new Updater(this, updateSlug, this.getFile(), Updater.UpdateType.NO_DOWNLOAD, false); // Start Updater but just do a version check
-				updateReady = updater.getResult() == Updater.UpdateResult.UPDATE_AVAILABLE; // Determine if there is an update ready for us
+				
+				// Start Updater but just do a version check
+				Updater updater = new Updater(this, updateSlug, this.getFile(), Updater.UpdateType.NO_DOWNLOAD, false); 
+				
+				// Determine if there is an update ready for us
+				updateReady = updater.getResult() == Updater.UpdateResult.UPDATE_AVAILABLE; 
 				updateName = updater.getLatestVersionString(); // Get the latest version
 				updateSize = updater.getFileSize(); // Get latest size
 			}
 		} catch (Exception e) {
 			logger.warning("Failed to start Updater");
 		}
-		
-		// Managers
-		PluginManager plugins = getServer().getPluginManager();
-		protocolManager = ProtocolLibrary.getProtocolManager();
-		
-		listenerPacket = new ItemRenamerPacket(this, protocolManager, logger);
-		listenerPlayerJoin = new ItemRenamerPlayerJoin(this);
-		listenerGameModeChange = new ItemRenamerGameModeChange(this);
-		stackRestrictor = new ItemRenamerStackRestrictor(this);
-		
-		plugins.registerEvents(listenerPlayerJoin, this);
-		plugins.registerEvents(listenerGameModeChange, this);
-		plugins.registerEvents(stackRestrictor, this);
-		
-		oldCommandExecutor = getCommand("ItemRenamer").getExecutor();
-
-		
 	}
 
+	private void startMetrics() {
+		try {
+		    BukkitMetrics metrics = new BukkitMetrics(this);
+		    metrics.start();
+		} catch (Exception e) {
+			logger.warning("Failed to start Metrics");
+		}
+	}
+
+	// TODO: Determine if this is necessary
+	public void performConversion() {
+		if ((configFile.contains("pack")) && (!configFile.contains("packs.converted"))) { //conversion ftw
+			configFile.set("packs.converted", configFile.getConfigurationSection("pack"));
+			configFile.set("pack", null);
+			saveConfig();
+		}
+	}
+	
 	@Override
 	public void onDisable() {
 		listenerPacket.unregister();
 		listenerPlayerJoin.unregister();
 		listenerGameModeChange.unregister();
-		if (oldCommandExecutor != null) {
-			getCommand("ItemRenamer").setExecutor(oldCommandExecutor);
-		}
 	}
 
 	public boolean getUpdateReady() {
@@ -128,54 +120,5 @@ public class ItemRenamer extends JavaPlugin {
 
 	public long getUpdateSize() {
 		return updateSize;
-	}
-	
-	private void packName(String pack, ItemMeta itemMeta, int id, int damage) {
-		String output;
-		if (((output = configFile.getString("packs."+pack+"."+id+".all.name")) == null) &&
-				((output = configFile.getString("packs."+pack+"."+id+"."+damage+".name")) == null) &&
-				((output = configFile.getString("packs."+pack+"."+id+".other.name")) == null)) {
-			return;
-		}
-		itemMeta.setDisplayName(ChatColor.RESET+ChatColor.translateAlternateColorCodes('&', output)+ChatColor.RESET);
-	}
-	
-	private void packLore(String pack, ItemMeta itemMeta, int id, int damage) {
-		List<String> output;
-		if (((output = configFile.getStringList("packs."+pack+"."+id+".all.lore")).isEmpty()) &&
-				((output = configFile.getStringList("packs."+pack+"."+id+"."+damage+".lore")).isEmpty()) &&
-				((output = configFile.getStringList("packs."+pack+"."+id+".other.lore")).isEmpty())) {
-			return;
-		}
-		for (int i = 0; i < output.size(); i++) {
-			output.set(i, ChatColor.translateAlternateColorCodes('&', output.get(i))+ChatColor.RESET);
-		}
-		itemMeta.setLore(output);
-	}
-
-	public ItemStack process(String world, ItemStack input) {
-		String pack;
-		ItemStack output = null;
-		if ((input != null) && ((pack = configFile.getString("worlds."+world)) != null)) {
-			output = input.clone();
-			ItemMeta itemMeta = output.getItemMeta();
-			if ((itemMeta.hasDisplayName()) || (itemMeta.hasLore())) {
-				return input;
-			}
-			packName(pack, itemMeta, output.getTypeId(), output.getDurability());
-			packLore(pack, itemMeta, output.getTypeId(), output.getDurability());
-			output.setItemMeta(itemMeta);
-			return output;
-		}
-		return input;
-	}
-	
-	public ItemStack[] process(String world, ItemStack[] input) {
-		if (input != null) {
-			for (int i = 0; i < input.length; i++) {
-				input[i] = process(world, input[i]);
-			}
-		}
-		return input;
 	}
 }

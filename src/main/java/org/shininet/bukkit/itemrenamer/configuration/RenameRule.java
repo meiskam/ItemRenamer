@@ -20,6 +20,10 @@ public class RenameRule {
 	private final String name;
 	private final ImmutableList<String> loreSections;
 	
+	public RenameRule() {
+		this(null, null);
+	}
+	
 	/**
 	 * Construct a new immutable item rename rule.
 	 * @param name - the new name.

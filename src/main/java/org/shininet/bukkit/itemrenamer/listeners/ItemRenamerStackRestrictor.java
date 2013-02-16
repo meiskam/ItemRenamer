@@ -6,13 +6,13 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
-import org.shininet.bukkit.itemrenamer.ItemRenamer;
+import org.shininet.bukkit.itemrenamer.RenameProcessor;
 
 public class ItemRenamerStackRestrictor implements Listener {
-	private ItemRenamer renamer;
+	private RenameProcessor processor;
 	
-	public ItemRenamerStackRestrictor(ItemRenamer renamer) {
-		this.renamer = renamer;
+	public ItemRenamerStackRestrictor(RenameProcessor processor) {
+		this.processor = processor;
 	}
 
 	@EventHandler(ignoreCancelled = true, priority = EventPriority.LOW)
@@ -37,9 +37,9 @@ public class ItemRenamerStackRestrictor implements Listener {
 	}
 
 	private boolean isValid(World world, ItemStack current, ItemStack cursor) {
-		renamer.process(world.getName(), current);
-		renamer.process(world.getName(), cursor);
+		ItemStack modCurrent = processor.process(world.getName(), current.clone());
+		ItemStack modCursor = processor.process(world.getName(), cursor.clone());
 		
-		return !current.equals(cursor);
+		return !modCurrent.equals(modCursor);
 	}
 }

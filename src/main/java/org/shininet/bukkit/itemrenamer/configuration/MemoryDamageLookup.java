@@ -2,8 +2,10 @@ package org.shininet.bukkit.itemrenamer.configuration;
 
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.comphenix.protocol.concurrency.AbstractIntervalTree;
+import com.google.common.base.Function;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Range;
 
@@ -73,6 +75,39 @@ class MemoryDamageLookup implements DamageLookup {
 		return other;
 	}
 
+	@Override
+	public void setTransform(DamageValues value, Function<RenameRule, RenameRule> function) {
+		if (value == DamageValues.ALL) {
+			setAllRule(function.apply(getAllRule() != null ? getAllRule() : new RenameRule()));	
+		} else if (value == DamageValues.OTHER) {
+			setOtherRule(function.apply(getOtherRule() != null ? getOtherRule() : new RenameRule()));	
+		} else {
+			setTransformed(value.getRange().lowerEndpoint(), value.getRange().upperEndpoint(), function);
+		}
+	}
+	
+	/**
+	 * Set all the rules in a given range by applying a transform to any existing rules.
+	 * <p>
+	 * Ranges that are not already defined will be set with the default rule after a transform.
+	 * @param minimum - the minimum value in the range.
+	 * @param maximum - the maximum value in the range
+	 * @param ruleTransform - the transform to apply in this range, including the default value.
+	 */
+	public void setTransformed(int minimum, int maximum, Function<RenameRule, RenameRule> ruleTransform) {
+		Set<IntegerInterval.Entry> removed = tree.remove(minimum, maximum, true);
+		RenameRule defaultRule = ruleTransform.apply(new RenameRule(null, null));
+		
+		// Set everything to default
+		setRule(minimum, maximum, defaultRule);
+		
+		// Then set the applied version of every previous rule in this range
+		for (IntegerInterval.Entry rule : removed) {
+			setRule(rule.getKey().lowerEndpoint(), rule.getKey().upperEndpoint(),
+					ruleTransform.apply(rule.getValue()));
+		}
+	}
+	
 	@Override
 	public void setOtherRule(RenameRule rule) {
 		this.other = rule;

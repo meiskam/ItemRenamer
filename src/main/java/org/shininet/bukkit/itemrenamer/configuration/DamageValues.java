@@ -1,10 +1,8 @@
 package org.shininet.bukkit.itemrenamer.configuration;
 
-import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Range;
 import com.google.common.collect.Ranges;
 
@@ -17,15 +15,14 @@ public class DamageValues {
 	public static final DamageValues ALL = new DamageValues((byte) -1);
 	public static final DamageValues OTHER = new DamageValues((byte) -2);
 
-	private final List<Range<Integer>> ranges;
+	private final Range<Integer> range;
 	
 	/**
 	 * Construct a special damage value that is not otherwise legal.
 	 * @param key - special damage value.
 	 */
-	@SuppressWarnings("unchecked")
 	private DamageValues(byte key) {
-		this.ranges = Lists.newArrayList(Ranges.singleton((int) key));
+		this.range = Ranges.singleton((int) key);
 	}
 	
 	public DamageValues(int value) {
@@ -36,14 +33,7 @@ public class DamageValues {
 		validateValue(minimumValue, "minimumValue");
 		validateValue(maximumValue, "maximumValue");
 		
-		this.ranges = singleton(Ranges.closed(minimumValue, maximumValue));
-	}
-	
-	private List<Range<Integer>> singleton(Range<Integer> range) {
-		List<Range<Integer>> result = Lists.newArrayList();
-		
-		result.add(range);
-		return result;
+		this.range = Ranges.closed(minimumValue, maximumValue);
 	}
 	
 	private void validateValue(int value, String name) {
@@ -53,10 +43,16 @@ public class DamageValues {
 			throw new IllegalArgumentException("Value " + name + " cannot be greater than SHORT.MAX_VALUE (" + value + ")");
 	}
 
-	public Iterable<Range<Integer>> getRanges() {
-		return ranges;
+	public Range<Integer> getRange() {
+		return range;
 	}
 	
+	/**
+	 * Parse a given argument list to a damage value.
+	 * @param arguments - the argument list.
+	 * @return The parsed damage value.
+	 * @throws IllegalArgumentException If we were unable to find a constant or integer range.
+ 	 */
 	public static DamageValues parse(Deque<String> arguments) {
 		String clean = arguments.peekFirst().trim();
 		
@@ -65,7 +61,24 @@ public class DamageValues {
 		} else if (clean.equalsIgnoreCase("OTHER")) {
 			return OTHER;
 		} else {
-
+			List<Integer> range = ConfigParsers.getIntegers(arguments, 2, Ranges.closed(0, (int) Short.MAX_VALUE));
+			
+			if (range.size() == 1)
+				return new DamageValues(range.get(0));
+			else if (range.size() == 2)
+				return new DamageValues(range.get(0), range.get(1));
+			else
+				throw new IllegalArgumentException("No integer range or value found.");
 		}
+	}
+	
+	@Override
+	public String toString() {
+		if (this == ALL)
+			return "ALL";
+		else if (this == OTHER)
+			return "OTHER";
+		else
+			return range.toString();
 	}
 }

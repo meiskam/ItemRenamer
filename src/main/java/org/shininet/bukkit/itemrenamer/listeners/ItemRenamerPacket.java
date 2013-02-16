@@ -14,7 +14,9 @@ import java.util.logging.Logger;
 
 import org.bukkit.GameMode;
 import org.bukkit.inventory.ItemStack;
-import org.shininet.bukkit.itemrenamer.ItemRenamer;
+import org.bukkit.plugin.Plugin;
+import org.shininet.bukkit.itemrenamer.RenameProcessor;
+import org.shininet.bukkit.itemrenamer.configuration.ItemRenamerConfiguration;
 import org.shininet.bukkit.itemrenamer.merchant.MerchantRecipe;
 import org.shininet.bukkit.itemrenamer.merchant.MerchantRecipeList;
 
@@ -28,27 +30,35 @@ import com.comphenix.protocol.reflect.StructureModifier;
 
 public class ItemRenamerPacket {
 
-	private ItemRenamer myPlugin;
+	private RenameProcessor processor;
 	private ProtocolManager protocolManager;
+	private ItemRenamerConfiguration config;
+	
 	private final Logger logger;
 	private PacketAdapter packetAdapter;
 
-	public ItemRenamerPacket(ItemRenamer myPlugin, ProtocolManager protocolManager, Logger logger) {
-		this.myPlugin = myPlugin;
+	// Possibly change to a builder
+	public ItemRenamerPacket(Plugin plugin, ItemRenamerConfiguration config, RenameProcessor processor, 
+							 ProtocolManager protocolManager, Logger logger) {
+		this.config = config;
+		this.processor = processor;
+	
 		this.protocolManager = protocolManager;
 		this.logger = logger;
-		addListener();
+		addListener(plugin);
 	}
 	
-	public void addListener() {
-
-		protocolManager.addPacketListener(packetAdapter = new PacketAdapter(myPlugin, ConnectionSide.SERVER_SIDE, 0x67, 0x68, 0xFA) {
+	public void addListener(final Plugin plugin) {
+		protocolManager.addPacketListener(packetAdapter = new PacketAdapter(plugin, ConnectionSide.SERVER_SIDE, 0x67, 0x68, 0xFA) {
 			@Override
 			public void onPacketSending(PacketEvent event) {
 				PacketContainer packet = event.getPacket();
-				if ((myPlugin.configFile.getBoolean("creativedisable")) && (event.getPlayer().getGameMode() == GameMode.CREATIVE)) {
+				
+				// HACK: Disable creative mode
+				if (config.isCreativeDisabled() && (event.getPlayer().getGameMode() == GameMode.CREATIVE)) {
 					return;
 				}
+				
 				try {
 					String world = event.getPlayer().getWorld().getName();
 					
@@ -56,14 +66,14 @@ public class ItemRenamerPacket {
 					case 0x67:
 						StructureModifier<ItemStack> sm = packet.getItemModifier();
 						for (int i = 0; i < sm.size(); i++) {
-							sm.write(i, myPlugin.process(world, sm.read(i)));
+							processor.process(world, sm.read(i));
 						}
 						break;
 
 					case 0x68:
 						StructureModifier<ItemStack[]> smArray = packet.getItemArrayModifier();
 						for (int i = 0; i < smArray.size(); i++) {
-							smArray.write(i, myPlugin.process(world, smArray.read(i)));
+							processor.process(world, smArray.read(i));
 						}
 						break;
 				
@@ -97,9 +107,9 @@ public class ItemRenamerPacket {
 		
 		// Process each and every item stack
 		for (MerchantRecipe recipe : list) {
-			recipe.setItemToBuy(myPlugin.process(world, recipe.getItemToBuy()) );
-			recipe.setSecondItemToBuy(myPlugin.process(world, recipe.getSecondItemToBuy()) );
-			recipe.setItemToSell(myPlugin.process(world, recipe.getItemToSell()) );
+			recipe.setItemToBuy(processor.process(world, recipe.getItemToBuy()) );
+			recipe.setSecondItemToBuy(processor.process(world, recipe.getSecondItemToBuy()) );
+			recipe.setItemToSell(processor.process(world, recipe.getItemToSell()) );
 		}
 		
 		// Write the result back

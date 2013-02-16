@@ -106,11 +106,11 @@ public class RenameConfiguration {
 	
 	/**
 	 * Delete the pack with the given name.
-	 * @param pack
+	 * @param pack - the pack to remove.
+	 * @return TRUE if a pack was removed, FALSE otherwise.
 	 */
 	public boolean removePack(String pack) {
-		// TODO Auto-generated method stub
-		
+		return memoryLookup.remove(pack) != null;
 	}
 	
 	/**

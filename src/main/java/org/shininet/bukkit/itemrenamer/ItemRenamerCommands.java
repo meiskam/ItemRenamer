@@ -9,19 +9,23 @@ import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 
+import javax.annotation.Nullable;
+
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.shininet.bukkit.itemrenamer.configuration.ConfigParsers;
+import org.shininet.bukkit.itemrenamer.configuration.DamageLookup;
+import org.shininet.bukkit.itemrenamer.configuration.DamageValues;
 import org.shininet.bukkit.itemrenamer.configuration.ItemRenamerConfiguration;
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.Constructor;
-import org.yaml.snakeyaml.error.YAMLException;
-
+import org.shininet.bukkit.itemrenamer.configuration.RenameRule;
+import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Ranges;
 
-public class ItemRenamerCommandExecutor implements CommandExecutor {
+public class ItemRenamerCommands implements CommandExecutor {
 	// Different permissions
 	private static final String PERM_GET = "itemrenamer.config.get";
 	private static final String PERM_SET= "itemrenamer.config.set";
@@ -37,8 +41,12 @@ public class ItemRenamerCommandExecutor implements CommandExecutor {
 		SET_CREATIVE_DISABLE,
 		GET_WORLD_PACK, 
 		SET_WORLD_PACK,
+		GET_RENAME,
 		DELETE_PACK,
-		SET_NAME,
+		SET_NAME, 
+		ADD_LORE, 
+		CLEAR_LORE,
+		RELOAD
 	}
 	
 	private ItemRenamer plugin;
@@ -46,7 +54,7 @@ public class ItemRenamerCommandExecutor implements CommandExecutor {
 	
 	private CommandMatcher<Commands> matcher;
 	
-	public ItemRenamerCommandExecutor(ItemRenamer plugin, ItemRenamerConfiguration config) {
+	public ItemRenamerCommands(ItemRenamer plugin, ItemRenamerConfiguration config) {
 		this.plugin = plugin;
 		this.matcher = registerCommands();
 		this.config = config;
@@ -61,8 +69,11 @@ public class ItemRenamerCommandExecutor implements CommandExecutor {
 		output.registerCommand(Commands.GET_WORLD_PACK, PERM_GET, "get world");
 		output.registerCommand(Commands.SET_WORLD_PACK, PERM_SET, "set world");
 		output.registerCommand(Commands.DELETE_PACK, PERM_SET, "delete pack");
-		output.registerCommand(Commands.SET_NAME, PERM_GET, "set name");
-		
+		output.registerCommand(Commands.GET_RENAME, PERM_GET, "get rename");
+		output.registerCommand(Commands.SET_NAME, PERM_SET, "set name");
+		output.registerCommand(Commands.ADD_LORE, PERM_SET, "add lore");
+		output.registerCommand(Commands.CLEAR_LORE, PERM_SET, "clear lore");
+		output.registerCommand(Commands.CLEAR_LORE, PERM_SET, "reload");
 		return output;
 	}
 	
@@ -116,20 +127,118 @@ public class ItemRenamerCommandExecutor implements CommandExecutor {
 			case DELETE_PACK:
 				expectCommandCount(args, 1);
 				return deleteWorldPack(args);
+			case GET_RENAME:
+				return getRename(args);
 			case SET_NAME:
-				expectCommandCount(args, 2);
 				return setItemName(args);
-			default:
-				throw new CommandErrorException("Unrecognized sub command: " + command);
+			case ADD_LORE:
+				return addLore(args);
+			case CLEAR_LORE:
+				return clearLore(args);
+			case RELOAD:
+				config.reload();
 		}
+		throw new CommandErrorException("Unrecognized sub command: " + command);
+	}
+	
+	private String getRename(Deque<String> args) {
+		// Get all the arguments before we begin
+		final DamageLookup lookup = getLookup(args);
+		final DamageValues damage = getDamageValues(args);
+		
+		if (damage == DamageValues.ALL)
+			return "Rename: " + lookup.getAllRule();
+		if (damage == DamageValues.ALL)
+			return "Rename: " + lookup.getAllRule();
+		else if (damage.getRange().lowerEndpoint() == damage.getRange().upperEndpoint()) 
+			return "Rename: " + lookup.getDefinedRule(damage.getRange().lowerEndpoint());
+		else
+			throw new CommandErrorException("Cannot parse damage. Must be a single value, ALL or OTHER.");
 	}
 	
 	private String setItemName(Deque<String> args) {
-
+		// Get all the arguments before we begin
+		final DamageLookup lookup = getLookup(args);
+		final DamageValues damage = getDamageValues(args);
+		final String name = Joiner.on(" ").join(args);
 		
+		lookup.setTransform(damage, new Function<RenameRule, RenameRule>() {
+			@Override
+			public RenameRule apply(@Nullable RenameRule input) {
+				return input.withName(name);
+			}
+		});
 		
+		return String.format("Set the name of every item %s.", name);
+	}
+	
+	private String addLore(Deque<String> args) {
+		// Get all the arguments before we begin
+		final DamageLookup lookup = getLookup(args);
+		final DamageValues damage = getDamageValues(args);
+		final String lore = Joiner.on(" ").join(args);
+		
+		// Apply the change
+		lookup.setTransform(damage, new Function<RenameRule, RenameRule>() {
+			@Override
+			public RenameRule apply(@Nullable RenameRule input) {
+				return input.withAdditionalLore(Arrays.asList(lore));
+			}
+		});
+		
+		return String.format("Set the lore of every item to %s.", lore);
+	}
+	
+	private String clearLore(Deque<String> args) {
+		// Get all the arguments before we begin
+		final DamageLookup lookup = getLookup(args);
+		final DamageValues damage = getDamageValues(args);
+		
+		// Apply the change
+		lookup.setTransform(damage, new Function<RenameRule, RenameRule>() {
+			@Override
+			public RenameRule apply(@Nullable RenameRule input) {
+				return new RenameRule(input.getName(), null);
+			}
+		});
+		return "Reset the lore of every item.";
 	}
 
+	/**
+	 * Retrieve the damage lookup based on the item pack and item ID in the parameter stack.
+	 * @param args - the parameter stack.
+	 * @return The corresponding damage lookup.
+	 */
+	private DamageLookup getLookup(Deque<String> args) {
+		String pack = args.pollFirst();
+		Integer itemID = getItemID(args);
+		
+		return config.getRenameConfig().getLookup(pack, itemID);
+	}
+	
+	private DamageValues getDamageValues(Deque<String> args) {
+		try {
+			return DamageValues.parse(args);
+		} catch (IllegalArgumentException e) {
+			// Wrap it in a more specific exception
+			throw new CommandErrorException(e.getMessage(), e);
+		}
+	}
+	
+	private int getItemID(Deque<String> args) {
+		try {
+			List<Integer> result = ConfigParsers.getIntegers(args, 1, Ranges.closed(0, 4096));
+			
+			if (result.size() == 1) {
+				return result.get(0);
+			} else {
+				throw new CommandErrorException("Cannot find item ID.");
+			}
+		} catch (IllegalArgumentException e) {
+			throw new CommandErrorException(e.getMessage(), e);
+		}
+	}
+	
 	private String deleteWorldPack(Deque<String> args) {
 		String pack = args.poll();
 		
@@ -149,6 +258,11 @@ public class ItemRenamerCommandExecutor implements CommandExecutor {
 		return "Item pack for " + world + ": " + config.getWorldPack(world);
 	}
 
+	/**
+	 * Set the world pack we will use based on the input arguments.
+	 * @param args - the input arguments.
+	 * @return The message to return to the player.
+	 */
 	public String setWorldPack(Deque<String> args) {
 		String world = checkWorld(args.poll()), pack = args.poll();
 		
@@ -156,6 +270,12 @@ public class ItemRenamerCommandExecutor implements CommandExecutor {
 		return "Set the item pack in world " + world + " to " + pack;
 	}
 	
+	/**
+	 * Determine if the given world actually exists.
+	 * @param world - the world to test.
+	 * @return The name of the world.
+	 * @throws CommandErrorException If the world doesn't exist.
+	 */
 	private String checkWorld(String world) {
 		// Ensure the world exists
 		if (plugin.getServer().getWorld(world) == null)
@@ -177,131 +297,4 @@ public class ItemRenamerCommandExecutor implements CommandExecutor {
 			throw new CommandErrorException("Cannot parse " + value + " as a boolean (yes/no)");
 		}
 	}
-	
-	@SuppressWarnings("unchecked")
-	@Override
-	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-		if (!cmd.getName().equalsIgnoreCase("ItemRenamer")) {
-			return false;
-		}
-		if (args.length == 0) {
-			sender.sendMessage("["+label+"] Subcommand: config");
-			return true;
-		}
-		if (args[0].equalsIgnoreCase("config")) {
-			if (args.length == 1) {
-				sender.sendMessage("["+label+":config] Subcommands: get, set, reload");
-				return true;
-			}
-			if (args[1].equalsIgnoreCase("get") || args[1].equalsIgnoreCase("view")) {
-				if (!sender.hasPermission(PERM_GET)) {
-					sender.sendMessage("["+label+":config:get] You don't have permission to use that command");
-					return true;
-				}
-				if (args.length == 2) {
-					sender.sendMessage("["+label+":config:get] Config variables: "+ItemRenamer.configKeysString);
-				} else if (args.length == 3) {
-					String key = args[2].toLowerCase();
-					sender.sendMessage("["+label+":config:get] "+key+": "+plugin.configFile.get(key));
-				} else {
-					sender.sendMessage("["+label+":config:get] Syntax: "+label+" config get [variable]");
-				}
-				return true;
-			} else if (args[1].equalsIgnoreCase("set")) {
-				if (!sender.hasPermission("itemrenamer.config.set")) {
-					sender.sendMessage("["+label+":config:set] You don't have permission to use that command");
-					return true;
-				}
-				if (args.length == 2 || args.length == 3) {
-					sender.sendMessage("["+label+":config:set] Config variables: "+ItemRenamer.configKeysString);
-					return true;
-				} else if (args.length >= 4) {
-					String key = args[2].toLowerCase();
-					String value = args[3].toLowerCase();
-					boolean keyFound = false;
-					
-					for (String keySet : ItemRenamer.configKeys.keySet()) {
-						if (key.equals(keySet.toLowerCase())) {
-							keyFound = true;
-							switch (ItemRenamer.configKeys.get(keySet.toLowerCase())) {
-							case BOOLEAN:
-								if (value.equals("false") || value.equals("no") || value.equals("0")) {
-									plugin.configFile.set(key, false);
-								} else {
-									plugin.configFile.set(key, true);
-								}
-								break;
-							case DOUBLE:
-								try {
-									plugin.configFile.set(key, Double.parseDouble(value));
-								} catch (NumberFormatException e) {
-									sender.sendMessage("["+label+":config:set] ERROR: Can not convert "+value+" to a number");
-								}
-								break;
-							default:
-								plugin.logger.warning("configType \""+ItemRenamer.configKeys.get(keySet.toLowerCase())+"\" unrecognised - this is a bug");
-								break;
-							}
-							break;
-						}
-					}
-					if (!keyFound) {
-						value = "";
-						for (int i = 3; i<args.length; i++) {
-							value += args[i] + " ";
-						}
-						value = value.trim();
-						if (key.endsWith(".lore")) {
-							List<String> valueList;
-							try {
-								valueList = yaml.loadAs(value, List.class);
-							} catch (YAMLException e) {
-								sender.sendMessage("["+label+":config:set] Error setting "+key+", " +
-										"be sure to surround lore in [square brackets] and [\"quotes\"] if you're using special characters");
-								return true;
-							}
-							try {
-								plugin.configFile.set(key, valueList);
-							} catch (IllegalArgumentException e) {
-								sender.sendMessage("["+label+":config:set] Error setting "+key);
-								return true;
-							}
-						} else {
-							try {
-								plugin.configFile.set(key, value);
-							} catch (IllegalArgumentException e) {
-								sender.sendMessage("["+label+":config:set] Error setting "+key);
-								return true;
-							}
-						}
-					}
-					plugin.saveConfig();
-					sender.sendMessage("["+label+":config:set] "+key+": "+plugin.configFile.get(key));
-					return true;
-				} else {
-					sender.sendMessage("["+label+":config:set] Syntax: "+label+" config set [variable] [value]");
-					return true;
-				}
-			} else if (args[1].equalsIgnoreCase("reload")) {
-				if (!sender.hasPermission("itemrenamer.config.set")) {
-					sender.sendMessage("["+label+":config:reload] You don't have permission to use that command");
-					return true;
-				}
-				plugin.reloadConfig();
-				plugin.configFile = plugin.getConfig();
-				sender.sendMessage("["+label+":config:reload] Config reloaded");
-				return true;
-			} else {
-				sender.sendMessage("["+label+":config:??] Invalid subcommand");
-				return true;
-			}
-/*		} else if (args[0].equalsIgnoreCase("somethingelse")) {
-			sender.sendMessage("["+label+":??] moo");
-			return true;
-*/		} else {
-			sender.sendMessage("["+label+":??] Invalid subcommand");
-			return true;
-		}
-	}
-
 }
