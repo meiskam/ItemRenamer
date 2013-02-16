@@ -42,7 +42,7 @@ public class ItemRenamerConfiguration {
 		File backupFile = new File(backupFolder, "config" + System.currentTimeMillis() + ".yml");
 		
 		// Don't overwrite - rename
-		if ((backupFile.exists() || backupFolder.mkdirs()) && currentFile.renameTo(backupFile)) {
+		if ((backupFolder.exists() || backupFolder.mkdirs()) && currentFile.renameTo(backupFile)) {
 			// Save and reload
 			changed = false;
 			renameConfig.saveAll();

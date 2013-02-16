@@ -150,7 +150,7 @@ public class ItemRenamerCommands implements CommandExecutor {
 			return "Rename: " + lookup.getAllRule();
 		if (damage == DamageValues.ALL)
 			return "Rename: " + lookup.getAllRule();
-		else if (damage.getRange().lowerEndpoint() == damage.getRange().upperEndpoint()) 
+		else if (damage.getRange().lowerEndpoint().equals(damage.getRange().upperEndpoint())) 
 			return "Rename: " + lookup.getDefinedRule(damage.getRange().lowerEndpoint());
 		else
 			throw new CommandErrorException("Cannot parse damage. Must be a single value, ALL or OTHER.");

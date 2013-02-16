@@ -276,7 +276,7 @@ public class Updater
                 downloaded += count;
                 fout.write(data, 0, count);
                 int percent = (int) (downloaded * 100 / fileLength);
-                if(announce & (percent % 10 == 0))
+                if(announce && (percent % 10 == 0))
                 {
                     plugin.getLogger().info("Downloading update: " + percent + "% of " + fileLength + " bytes.");
                 }

@@ -54,6 +54,9 @@ public class DamageValues {
 	 * @throws IllegalArgumentException If we were unable to find a constant or integer range.
  	 */
 	public static DamageValues parse(Deque<String> arguments) {
+		if (arguments.isEmpty())
+			throw new IllegalArgumentException("Must specify a damage value.");
+		
 		String clean = arguments.peekFirst().trim();
 		
 		if (clean.equalsIgnoreCase("ALL")) {

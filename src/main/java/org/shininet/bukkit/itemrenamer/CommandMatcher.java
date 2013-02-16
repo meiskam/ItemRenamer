@@ -25,6 +25,7 @@ class CommandMatcher<TType extends Enum<TType>> {
 		private CommandNode(String permission, String name, TType command) {
 			this.name = name;
 			this.command = command;
+			this.permission = permission;
 		}
 
 		public String getName() {
