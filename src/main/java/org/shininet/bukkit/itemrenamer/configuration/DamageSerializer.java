@@ -17,7 +17,7 @@ import com.google.common.collect.Ranges;
  * 
  * @author Kristian
  */
-class DamageSerializer {
+public class DamageSerializer {
 	private static final String RULE_NAME = "name";
 	private static final String RULE_LORE = "lore";
 	
@@ -132,7 +132,8 @@ class DamageSerializer {
 	public void writeLookup(DamageLookup source) {
 		// Reset section
 		ConfigurationSection parent = section.getParent();
-		section = parent.createSection(section.getName());
+		if (parent != null)
+			section = parent.createSection(section.getName());
 		
 		writeRule(DAMAGE_ALL, source.getAllRule());
 		writeRule(DAMAGE_OTHER, source.getOtherRule());

@@ -23,7 +23,7 @@ public class ConfigParsers {
 				Integer value = Integer.parseInt(args.peekFirst().trim());
 				
 				// Make sure its within the range
-				if (range.contains(value)) {
+				if (range == null || range.contains(value)) {
 					values.add(value);
 					args.pollFirst(); // Consume it if we succeed
 				} else {

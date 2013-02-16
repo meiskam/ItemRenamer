@@ -15,8 +15,10 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.shininet.bukkit.itemrenamer.configuration.ConfigParsers;
 import org.shininet.bukkit.itemrenamer.configuration.DamageLookup;
+import org.shininet.bukkit.itemrenamer.configuration.DamageSerializer;
 import org.shininet.bukkit.itemrenamer.configuration.DamageValues;
 import org.shininet.bukkit.itemrenamer.configuration.ItemRenamerConfiguration;
 import org.shininet.bukkit.itemrenamer.configuration.RenameRule;
@@ -45,13 +47,17 @@ public class ItemRenamerCommands implements CommandExecutor {
 		ADD_LORE, 
 		DELETE_LORE,
 		RELOAD,
-		SAVE
+		SAVE,
+		PAGE,
 	}
 	
 	private ItemRenamer plugin;
 	private ItemRenamerConfiguration config;
 	
 	private CommandMatcher<Commands> matcher;
+	
+	// Paged output
+	private PagedMessage pagedMessage = new PagedMessage();
 	
 	public ItemRenamerCommands(ItemRenamer plugin, ItemRenamerConfiguration config) {
 		this.plugin = plugin;
@@ -72,6 +78,7 @@ public class ItemRenamerCommands implements CommandExecutor {
 		output.registerCommand(Commands.DELETE_LORE, PERM_SET, "delete", "lore");
 		output.registerCommand(Commands.RELOAD, PERM_SET, "reload");
 		output.registerCommand(Commands.SAVE, PERM_SET, "save");
+		output.registerCommand(Commands.PAGE, null, "page");
 		return output;
 	}
 	
@@ -89,7 +96,10 @@ public class ItemRenamerCommands implements CommandExecutor {
 				}
 				
 				try {
-					sender.sendMessage(ChatColor.GOLD + performCommand(node.getCommand(), input));
+					String result = performCommand(sender, node.getCommand(), input);
+					
+					if (result != null)
+						sender.sendMessage(ChatColor.GOLD + result);
 				} catch (CommandErrorException e) {
 					sender.sendMessage(ChatColor.RED + e.getMessage());
 				}
@@ -105,7 +115,7 @@ public class ItemRenamerCommands implements CommandExecutor {
 		}
 	}
 	
-	private String performCommand(Commands command, Deque<String> args) {
+	private String performCommand(CommandSender sender, Commands command, Deque<String> args) {
 		try {
 			switch (command) {
 				case GET_AUTO_UPDATE: 
@@ -125,7 +135,7 @@ public class ItemRenamerCommands implements CommandExecutor {
 					expectCommandCount(args, 1, "Need a world pack name.");
 					return deleteWorldPack(args);
 				case GET_ITEM:
-					return getItem(args);
+					return getItem(sender, args);
 				case SET_NAME:
 					return setItemName(args);
 				case ADD_LORE:
@@ -138,6 +148,15 @@ public class ItemRenamerCommands implements CommandExecutor {
 				case SAVE:
 					config.save();
 					return "Saving configuration to file.";
+				case PAGE:
+					List<Integer> pageNumber = ConfigParsers.getIntegers(args, 1, null);
+					
+					if (pageNumber.size() == 1) {
+						pagedMessage.printPage(sender, pageNumber.get(0));
+						return null; 
+					} else {
+						throw new CommandErrorException("Must specify a page number.");
+					}
 			}
 			
 		} catch (IllegalArgumentException e) {
@@ -146,9 +165,20 @@ public class ItemRenamerCommands implements CommandExecutor {
 		throw new CommandErrorException("Unrecognized sub command: " + command);
 	}
 	
-	private String getItem(Deque<String> args) {
+	private String getItem(CommandSender sender, Deque<String> args) {
 		// Get all the arguments before we begin
 		final DamageLookup lookup = getLookup(args);
+		
+		if (args.isEmpty()) {
+			YamlConfiguration yaml = new YamlConfiguration();
+			DamageSerializer serializer = new DamageSerializer(yaml);
+			serializer.writeLookup(lookup);
+			
+			// Display the lookup as a YAML
+			pagedMessage.sendPaged(sender, yaml.saveToString());
+			return null;
+		}
+		
 		final DamageValues damage = getDamageValues(args);
 		
 		if (damage == DamageValues.ALL)
@@ -225,6 +255,8 @@ public class ItemRenamerCommands implements CommandExecutor {
 		String pack = args.pollFirst();
 		Integer itemID = getItemID(args);
 		
+		if (pack == null || pack.length() == 0)
+			throw new IllegalArgumentException("Must specify an item pack.");
 		return config.getRenameConfig().getLookup(pack, itemID);
 	}
 	
