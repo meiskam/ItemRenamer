@@ -19,6 +19,9 @@ public class RenameConfiguration {
 	// Store of every loaded lookup
 	private Map<String, Map<Integer, DamageLookup>> memoryLookup = Maps.newHashMap();
 	
+	// Whether or not the rename configuration has changed
+	private boolean changed;
+	
 	public RenameConfiguration(ConfigurationSection section) {
 		this.section = section;
 	}
@@ -90,6 +93,9 @@ public class RenameConfiguration {
 	public DamageLookup createLookup(String pack, int itemID) {
 		Map<Integer, DamageLookup> itemLookup = loadPack(pack);
 		
+		// It has now changed
+		changed = true;
+		
 		// Create a new if we need to
 		if (itemLookup == null) {
 			memoryLookup.put(pack, itemLookup = Maps.newHashMap());
@@ -110,6 +116,7 @@ public class RenameConfiguration {
 	 * @return TRUE if a pack was removed, FALSE otherwise.
 	 */
 	public boolean removePack(String pack) {
+		changed = true;
 		return memoryLookup.remove(pack) != null;
 	}
 	
@@ -130,6 +137,25 @@ public class RenameConfiguration {
 		} else {
 			throw new IllegalArgumentException("Cannot save " + pack + ": It doesn't exist.");
 		}
+	}
+	
+	/**
+	 * Determine if this configuration has changed.
+	 * @return TRUE if it has, FALSE otherwise.
+	 */
+	public boolean hasChanged() {
+		if (changed)
+			return true;
+		
+		for (Map<Integer, DamageLookup> pack : memoryLookup.values()) {
+			for (DamageLookup lookup : pack.values()) {
+				if (lookup.hasChanged()) {
+					return true;
+				}
+			}
+		}
+		// Unchanged
+		return false;
 	}
 	
 	/**

@@ -36,6 +36,9 @@ class MemoryDamageLookup implements DamageLookup {
 	
 	private RenameRule all;
 	private RenameRule other;
+
+	// Whether or not the lookup has changed
+	private boolean changed;
 	
 	/**
 	 * Construct a new memory damage lookup.
@@ -67,12 +70,19 @@ class MemoryDamageLookup implements DamageLookup {
 
 	@Override
 	public void setAllRule(RenameRule rule) {
+		this.changed = true;
 		this.all = rule;
 	}
 	
 	@Override
 	public RenameRule getOtherRule() {
 		return other;
+	}
+	
+	@Override
+	public void setOtherRule(RenameRule rule) {
+		this.changed = true;
+		this.other = rule;
 	}
 
 	@Override
@@ -98,6 +108,9 @@ class MemoryDamageLookup implements DamageLookup {
 		Set<IntegerInterval.Entry> removed = tree.remove(minimum, maximum, true);
 		RenameRule defaultRule = ruleTransform.apply(new RenameRule(null, null));
 		
+		// It's been changed
+		changed = true;
+		
 		// Set everything to default
 		setRule(minimum, maximum, defaultRule);
 		
@@ -106,11 +119,6 @@ class MemoryDamageLookup implements DamageLookup {
 			setRule(rule.getKey().lowerEndpoint(), rule.getKey().upperEndpoint(),
 					ruleTransform.apply(rule.getValue()));
 		}
-	}
-	
-	@Override
-	public void setOtherRule(RenameRule rule) {
-		this.other = rule;
 	}
 	
 	@Override
@@ -146,6 +154,8 @@ class MemoryDamageLookup implements DamageLookup {
 	public void setRule(int damage, RenameRule rule) {
 		if (damage < 0)
 			throw new IllegalArgumentException("Damage cannot be less than zero.");
+		
+		changed = true;
 		tree.put(damage, damage, rule);
 	}
 	
@@ -156,6 +166,16 @@ class MemoryDamageLookup implements DamageLookup {
 		if (lowerDamage > upperDamage)
 			throw new IllegalArgumentException("Lower damage must be less than upper damage.");
 		
+		changed = true;
 		tree.put(lowerDamage, upperDamage, rule);
+	}
+	
+	/**
+	 * Determine if the current lookup has changed.
+	 * @return TRUE if it has, FALSE otherwise.
+	 */
+	@Override
+	public boolean hasChanged() {
+		return changed;
 	}
 }

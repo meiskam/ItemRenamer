@@ -71,4 +71,10 @@ public interface DamageLookup {
 	 * @return The correct rename rule.
 	 */
 	public abstract RenameRule getRule(int damage);
+
+	/**
+	 * Determine if this lookup has changed.
+	 * @return TRUE if it has, FALSE otherwise.
+	 */
+	public abstract boolean hasChanged();
 }

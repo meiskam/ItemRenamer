@@ -13,10 +13,12 @@ public class ItemRenamerConfiguration {
 	private static final String AUTO_UPDATE = "autoupdate";
 	private static final String WORLD_PACKS = "worlds";
 	
+	private RenameConfiguration renameConfig;
 	private FileConfiguration config;
 	private ItemRenamer plugin;
 	
-	private RenameConfiguration renameConfig;
+	// Store whether or not the top level has changed
+	private boolean changed;
 	
 	public ItemRenamerConfiguration(ItemRenamer plugin) {
 		this.plugin = plugin;
@@ -29,12 +31,14 @@ public class ItemRenamerConfiguration {
 	
 	public void save() {
 		// Save and reload
+		changed = false;
 		renameConfig.saveAll();
 		plugin.saveConfig();
 		config = plugin.getConfig();
 	}
 	
 	public void reload() {
+		changed = false;
 		plugin.reloadConfig();
 		initializeConfig();
 	}
@@ -49,6 +53,7 @@ public class ItemRenamerConfiguration {
 	}
 	
 	public void setAutoUpdate(boolean value) {
+		changed = true;
 		config.set(AUTO_UPDATE, value);
 	}
 	
@@ -58,6 +63,7 @@ public class ItemRenamerConfiguration {
 	 * @param pack - the pack name.
 	 */
 	public void setWorldPack(String world, String pack) {
+		changed = true;
 		config.set(WORLD_PACKS + "." + world, pack);
 	}
 	
@@ -68,6 +74,16 @@ public class ItemRenamerConfiguration {
 	 */
 	public String getWorldPack(String world) {
 		return config.getString(WORLD_PACKS + "." + world);
+	}
+	
+	/**
+	 * Determine if the configuration has changed in any way.
+	 * @return TRUE if it has, FALSE otherwise.
+	 */
+	public boolean hasChanged() {
+		if (changed)
+			return true;
+		return renameConfig.hasChanged();
 	}
 	
 	/**
