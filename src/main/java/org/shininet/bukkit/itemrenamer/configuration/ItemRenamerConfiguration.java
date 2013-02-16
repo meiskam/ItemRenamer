@@ -11,7 +11,6 @@ import org.shininet.bukkit.itemrenamer.ItemRenamer;
 public class ItemRenamerConfiguration {
 	// Locations in the configuration file
 	private static final String AUTO_UPDATE = "autoupdate";
-	private static final String CREATIVE_DISABLED = "creativedisabled";
 	private static final String WORLD_PACKS = "worlds";
 	
 	private FileConfiguration config;
@@ -51,14 +50,6 @@ public class ItemRenamerConfiguration {
 	
 	public void setAutoUpdate(boolean value) {
 		config.set(AUTO_UPDATE, value);
-	}
-	
-	public boolean isCreativeDisabled() {
-		return config.getBoolean(CREATIVE_DISABLED);
-	}
-	
-	public void setCreativeDisabled(boolean value) {
-		config.set(CREATIVE_DISABLED, value);
 	}
 	
 	/**

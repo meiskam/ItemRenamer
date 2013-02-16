@@ -10,7 +10,6 @@ import java.util.logging.Logger;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.shininet.bukkit.itemrenamer.configuration.ItemRenamerConfiguration;
-import org.shininet.bukkit.itemrenamer.listeners.ItemRenamerGameModeChange;
 import org.shininet.bukkit.itemrenamer.listeners.ItemRenamerPacket;
 import org.shininet.bukkit.itemrenamer.listeners.ItemRenamerPlayerJoin;
 import org.shininet.bukkit.itemrenamer.listeners.ItemRenamerStackRestrictor;
@@ -34,8 +33,6 @@ public class ItemRenamer extends JavaPlugin {
 	private RenameProcessor processor;
 	
 	private ItemRenamerPlayerJoin listenerPlayerJoin;
-	private ItemRenamerGameModeChange listenerGameModeChange;
-	
 	private ItemRenamerPacket listenerPacket;
 	private ItemRenamerStackRestrictor stackRestrictor;
 	
@@ -56,11 +53,9 @@ public class ItemRenamer extends JavaPlugin {
 		
 		listenerPacket = new ItemRenamerPacket(this, processor, protocolManager, logger);
 		listenerPlayerJoin = new ItemRenamerPlayerJoin(this);
-		listenerGameModeChange = new ItemRenamerGameModeChange(this, config);
 		stackRestrictor = new ItemRenamerStackRestrictor(processor);
 		
 		plugins.registerEvents(listenerPlayerJoin, this);
-		plugins.registerEvents(listenerGameModeChange, this);
 		plugins.registerEvents(stackRestrictor, this);
 		
 		commandExecutor = new ItemRenamerCommands(this, config);
@@ -109,7 +104,6 @@ public class ItemRenamer extends JavaPlugin {
 		
 		listenerPacket.unregister(this);
 		listenerPlayerJoin.unregister();
-		listenerGameModeChange.unregister();
 	}
 
 	public boolean getUpdateReady() {

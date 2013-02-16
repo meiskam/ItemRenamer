@@ -36,9 +36,7 @@ public class ItemRenamerCommands implements CommandExecutor {
 	// Recognized sub-commands
 	public enum Commands {
 		GET_AUTO_UPDATE,
-		GET_CREATIVE_DISABLE, 
 		SET_AUTO_UPDATE,
-		SET_CREATIVE_DISABLE,
 		GET_WORLD_PACK, 
 		SET_WORLD_PACK,
 		GET_ITEM,
@@ -64,9 +62,7 @@ public class ItemRenamerCommands implements CommandExecutor {
 	private CommandMatcher<Commands> registerCommands() {
 		CommandMatcher<Commands> output = new CommandMatcher<Commands>();
 		output.registerCommand(Commands.GET_AUTO_UPDATE, PERM_GET, "get", "setting", "autoupdate");
-		output.registerCommand(Commands.GET_CREATIVE_DISABLE, PERM_GET, "get", "setting", "creativedisable");
 		output.registerCommand(Commands.SET_AUTO_UPDATE, PERM_SET, "set", "setting", "autoupdate");
-		output.registerCommand(Commands.SET_CREATIVE_DISABLE, PERM_SET, "set", "setting", "creativedisable");
 		output.registerCommand(Commands.GET_WORLD_PACK, PERM_GET, "get", "world");
 		output.registerCommand(Commands.SET_WORLD_PACK, PERM_SET, "set", "world");
 		output.registerCommand(Commands.DELETE_PACK, PERM_SET, "delete", "pack");
@@ -110,17 +106,10 @@ public class ItemRenamerCommands implements CommandExecutor {
 				case GET_AUTO_UPDATE: 
 					expectCommandCount(args, 0, "No arguments needed.");
 					return formatBoolean("Auto update is %s.", config.isAutoUpdate()); 
-				case GET_CREATIVE_DISABLE: 
-					expectCommandCount(args, 0, "No arguments needed.");
-					return formatBoolean("Creative disable is %s.", config.isCreativeDisabled());
 				case SET_AUTO_UPDATE:
 					expectCommandCount(args, 1, "Need a yes/no argument.");
 					config.setAutoUpdate(parseBoolean(args.poll()));
 					return "Updated auto update.";
-				case SET_CREATIVE_DISABLE:
-					expectCommandCount(args, 1, "Need a yes/no argument.");
-					config.setCreativeDisabled(parseBoolean(args.poll()));
-					return "Updated creative disable.";
 				case GET_WORLD_PACK: 
 					expectCommandCount(args, 1, "Need a world name.");
 					return getWorldPack(args);
