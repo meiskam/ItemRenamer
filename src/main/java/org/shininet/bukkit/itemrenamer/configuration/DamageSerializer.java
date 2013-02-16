@@ -122,6 +122,7 @@ class DamageSerializer {
 				destination.setRule(range.lowerEndpoint(), range.upperEndpoint(), readRule(key));
 			}
 		}
+		destination.setChanged(false);
 	}
 
 	/**

@@ -77,4 +77,11 @@ public interface DamageLookup {
 	 * @return TRUE if it has, FALSE otherwise.
 	 */
 	public abstract boolean hasChanged();
+	
+	
+	/**
+	 * Set whether or not this lookup has changed.
+	 * @param value - TRUE if it has, FALSE otherwise.
+	 */
+	public abstract void setChanged(boolean value);
 }

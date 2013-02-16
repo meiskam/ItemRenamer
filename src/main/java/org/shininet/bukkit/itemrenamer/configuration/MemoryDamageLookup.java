@@ -179,4 +179,9 @@ class MemoryDamageLookup implements DamageLookup {
 	public boolean hasChanged() {
 		return changed;
 	}
+
+	@Override
+	public void setChanged(boolean value) {
+		this.changed = value;
+	}
 }
