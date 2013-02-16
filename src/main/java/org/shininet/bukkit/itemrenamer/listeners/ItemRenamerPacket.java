@@ -20,6 +20,7 @@ import org.shininet.bukkit.itemrenamer.configuration.ItemRenamerConfiguration;
 import org.shininet.bukkit.itemrenamer.merchant.MerchantRecipe;
 import org.shininet.bukkit.itemrenamer.merchant.MerchantRecipeList;
 
+import com.comphenix.net.sf.cglib.proxy.Factory;
 import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.events.ConnectionSide;
 import com.comphenix.protocol.events.PacketAdapter;
@@ -58,6 +59,9 @@ public class ItemRenamerPacket {
 				if (config.isCreativeDisabled() && (event.getPlayer().getGameMode() == GameMode.CREATIVE)) {
 					return;
 				}
+				// Skip temporary players
+				if (event.getPlayer() instanceof Factory)
+					return;
 				
 				try {
 					String world = event.getPlayer().getWorld().getName();
