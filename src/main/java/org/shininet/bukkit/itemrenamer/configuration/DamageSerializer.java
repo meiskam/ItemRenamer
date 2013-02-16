@@ -1,9 +1,14 @@
 package org.shininet.bukkit.itemrenamer.configuration;
 
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map.Entry;
 
 import org.bukkit.configuration.ConfigurationSection;
 
+import com.google.common.collect.ComparisonChain;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Range;
 import com.google.common.collect.Ranges;
 
@@ -131,8 +136,24 @@ class DamageSerializer {
 		writeRule(DAMAGE_ALL, source.getAllRule());
 		writeRule(DAMAGE_OTHER, source.getOtherRule());
 		
+		// Next, sort the ranges
+		List<Entry<Range<Integer>, RenameRule>> entries = Lists.newArrayList(source.toLookup().entrySet());
+		Collections.sort(entries, new Comparator<Entry<Range<Integer>, RenameRule>>() {
+			@Override
+			public int compare(Entry<Range<Integer>, RenameRule> a,
+							   Entry<Range<Integer>, RenameRule> b) {
+				Range<Integer> keyA = a.getKey();
+				Range<Integer> keyB = b.getKey();
+				
+				return ComparisonChain.start().
+					compare(keyA.lowerEndpoint(), keyB.lowerEndpoint()).
+					compare(keyA.upperEndpoint(), keyB.upperEndpoint()).
+				result();
+			}
+		});
+		
 		// Save all the rules
-		for (Entry<Range<Integer>, RenameRule> rules : source.toLookup().entrySet()) {
+		for (Entry<Range<Integer>, RenameRule> rules : entries) {
 			Range<Integer> range = rules.getKey();
 			
 			if (range.lowerEndpoint().equals(range.upperEndpoint())) {
