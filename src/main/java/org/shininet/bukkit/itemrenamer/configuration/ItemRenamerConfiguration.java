@@ -110,9 +110,6 @@ public class ItemRenamerConfiguration {
 	 * @return The number of modifications.
 	 */
 	public int getModificationCount() {
-		if (modCount > 0) {
-			System.out.println("[ItemRenamer] Main config has changed");
-		}
 		return modCount + renameConfig.getModificationCount();
 	}
 	

@@ -112,8 +112,10 @@ public class ItemRenamer extends JavaPlugin {
 	@Override
 	public void onDisable() {
 		// Save all changes if anything has changed
-		if (config.getModificationCount() != lastSaveCount)
+		if (config.getModificationCount() != lastSaveCount) {
 			config.save();
+			logger.info("Saving configuration.");
+		}
 		
 		listenerPacket.unregister(this);
 		listenerPlayerJoin.unregister();

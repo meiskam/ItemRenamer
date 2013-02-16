@@ -148,7 +148,6 @@ public class RenameConfiguration {
 		for (Entry<String, Map<Integer, DamageLookup>> packEntry : memoryLookup.entrySet()) {
 			for (DamageLookup lookup : packEntry.getValue().values()) {
 				if (lookup.getModificationCount() > 0) {
-					System.out.println("[ItemRenamer] Pack " + packEntry.getKey() + " has changed");
 					totalCount += lookup.getModificationCount();
 				}
 			}
