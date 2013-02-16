@@ -28,11 +28,17 @@ public class RenameProcessor {
 	}
 
 	private void packName(ItemMeta itemMeta, RenameRule rule) {
-		itemMeta.setDisplayName(ChatColor.RESET + 
-				ChatColor.translateAlternateColorCodes('&', rule.getName()) + ChatColor.RESET);
+		if (rule.getName() != null) {
+			itemMeta.setDisplayName(ChatColor.RESET + 
+					ChatColor.translateAlternateColorCodes('&', rule.getName()) + ChatColor.RESET);
+		}
 	}
 	
 	private void packLore(ItemMeta itemMeta, RenameRule rule) {
+		// Don't process empty rules
+		if (rule.getLoreSections().size() == 0)
+			return;
+		
 		List<String> output = Lists.newArrayList(rule.getLoreSections());
 		
 		// Translate color codes as well
