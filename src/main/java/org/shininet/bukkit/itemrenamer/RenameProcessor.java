@@ -9,10 +9,19 @@ import org.shininet.bukkit.itemrenamer.configuration.DamageLookup;
 import org.shininet.bukkit.itemrenamer.configuration.ItemRenamerConfiguration;
 import org.shininet.bukkit.itemrenamer.configuration.RenameRule;
 
+import com.comphenix.protocol.wrappers.nbt.NbtCompound;
+import com.comphenix.protocol.wrappers.nbt.NbtFactory;
 import com.google.common.collect.Lists;
 
 public class RenameProcessor {
+	private static final String MARKER_KEY = "com.comphenix.marker";
+
 	private ItemRenamerConfiguration config;
+	
+	/**
+	 * A marker telling us that this is ItemStack was renamed by ItemRenamer.
+	 */
+	private final int MARKER = 0xD17065B1;
 	
 	public RenameProcessor(ItemRenamerConfiguration config) {
 		this.config = config;
@@ -54,11 +63,44 @@ public class RenameProcessor {
 				packName(itemMeta, rule);
 				packLore(itemMeta, rule);
 				input.setItemMeta(itemMeta);
+				
+				// Add a simple marker allowing us to detect renamed items
+				// Note that this MUST be exected after ItemMeta
+				getCompound(input).put(MARKER_KEY, MARKER);
 			}
 		}
 		
 		// Just return it - for chaining
 		return input;
+	}
+	
+	/**
+	 * Undo a item rename, or leave as is.
+	 * @param stack - the stack to undo.
+	 * @return TRUE if we removed the rename and lore, FALSE otherwise.
+	 */
+	public boolean unprocess(ItemStack input) {
+		if (input != null) {
+			ItemMeta meta = input.getItemMeta();
+			
+			// It has not been touched by anyone
+			if (!meta.hasDisplayName() && !meta.hasLore())
+				return false;
+			NbtCompound data = getCompound(input);
+			
+			// Check for our marker
+			if (data.containsKey(MARKER_KEY) && data.getInteger(MARKER_KEY) == MARKER) {
+				// Not necessary today, but we will not assume it is in the future
+				data.getValue().remove(MARKER_KEY);
+				
+				// Remove name and lore modifications
+				meta.setDisplayName(null);
+				meta.setLore(null);
+				input.setItemMeta(meta); 
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	public ItemStack[] process(String world, ItemStack[] input) {
@@ -68,5 +110,10 @@ public class RenameProcessor {
 			}
 		}
 		return input;
+	}
+	
+	private NbtCompound getCompound(ItemStack stack) {
+		// It should have been a compound in the API ...
+		return NbtFactory.asCompound(NbtFactory.fromItemTag(stack));
 	}
 }

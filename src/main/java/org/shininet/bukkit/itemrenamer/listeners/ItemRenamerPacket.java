@@ -12,17 +12,17 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.bukkit.GameMode;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import org.shininet.bukkit.itemrenamer.RenameProcessor;
-import org.shininet.bukkit.itemrenamer.configuration.ItemRenamerConfiguration;
 import org.shininet.bukkit.itemrenamer.merchant.MerchantRecipe;
 import org.shininet.bukkit.itemrenamer.merchant.MerchantRecipeList;
 
 import com.comphenix.net.sf.cglib.proxy.Factory;
+import com.comphenix.protocol.Packets;
 import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.events.ConnectionSide;
+import com.comphenix.protocol.events.ListenerPriority;
 import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
@@ -30,35 +30,26 @@ import com.comphenix.protocol.reflect.FieldAccessException;
 import com.comphenix.protocol.reflect.StructureModifier;
 
 public class ItemRenamerPacket {
-
 	private RenameProcessor processor;
 	private ProtocolManager protocolManager;
-	private ItemRenamerConfiguration config;
-	
+
 	private final Logger logger;
-	private PacketAdapter packetAdapter;
 
 	// Possibly change to a builder
-	public ItemRenamerPacket(Plugin plugin, ItemRenamerConfiguration config, RenameProcessor processor, 
-							 ProtocolManager protocolManager, Logger logger) {
-		this.config = config;
+	public ItemRenamerPacket(Plugin plugin, RenameProcessor processor, ProtocolManager protocolManager, Logger logger) {
 		this.processor = processor;
-	
 		this.protocolManager = protocolManager;
 		this.logger = logger;
 		addListener(plugin);
 	}
 	
 	public void addListener(final Plugin plugin) {
-		protocolManager.addPacketListener(packetAdapter = new PacketAdapter(plugin, ConnectionSide.SERVER_SIDE, 0x67, 0x68, 0xFA) {
+		protocolManager.addPacketListener(
+				new PacketAdapter(plugin, ConnectionSide.SERVER_SIDE, ListenerPriority.HIGH, 0x67, 0x68, 0xFA) {
 			@Override
 			public void onPacketSending(PacketEvent event) {
 				PacketContainer packet = event.getPacket();
 				
-				// HACK: Disable creative mode
-				if (config.isCreativeDisabled() && (event.getPlayer().getGameMode() == GameMode.CREATIVE)) {
-					return;
-				}
 				// Skip temporary players
 				if (event.getPlayer() instanceof Factory)
 					return;
@@ -100,6 +91,29 @@ public class ItemRenamerPacket {
 				}
 			}
 		});
+		
+		// Prevent creative from overwriting the item stacks
+		protocolManager.addPacketListener(
+				new PacketAdapter(plugin, ConnectionSide.BOTH, ListenerPriority.HIGH, Packets.Client.SET_CREATIVE_SLOT) {
+			@Override
+			public void onPacketSending(PacketEvent event) {
+				if (event.getPacketID() == Packets.Client.SET_CREATIVE_SLOT) {
+					String worldName = event.getPlayer().getWorld().getName();
+					
+					// Process the slot data
+					processor.process(worldName, event.getPacket().getItemModifier().read(0));
+				}
+			}
+			
+			@Override
+			public void onPacketReceiving(PacketEvent event) {
+				// Thread safe too!
+				if (event.getPacketID() == Packets.Client.SET_CREATIVE_SLOT) {
+					// Do the opposite
+					processor.unprocess(event.getPacket().getItemModifier().read(0));
+				}
+			}
+		});
 	}
 	
 	private byte[] processMerchantList(String world, byte[] data) throws IOException {
@@ -125,8 +139,11 @@ public class ItemRenamerPacket {
 		return buffer.toByteArray();
 	}
 
-	public void unregister() {
-		protocolManager.removePacketListener(packetAdapter);
+	/**
+	 * Unregisters every packet listener.
+	 * @param plugin - our plugin reference.
+	 */
+	public void unregister(Plugin plugin) {
+		protocolManager.removePacketListeners(plugin);
 	}
-
 }

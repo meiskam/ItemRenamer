@@ -54,7 +54,7 @@ public class ItemRenamer extends JavaPlugin {
 		PluginManager plugins = getServer().getPluginManager();
 		protocolManager = ProtocolLibrary.getProtocolManager();
 		
-		listenerPacket = new ItemRenamerPacket(this, config, processor, protocolManager, logger);
+		listenerPacket = new ItemRenamerPacket(this, processor, protocolManager, logger);
 		listenerPlayerJoin = new ItemRenamerPlayerJoin(this);
 		listenerGameModeChange = new ItemRenamerGameModeChange(this, config);
 		stackRestrictor = new ItemRenamerStackRestrictor(processor);
@@ -107,7 +107,7 @@ public class ItemRenamer extends JavaPlugin {
 		// Save all changes
 		config.save();
 		
-		listenerPacket.unregister();
+		listenerPacket.unregister(this);
 		listenerPlayerJoin.unregister();
 		listenerGameModeChange.unregister();
 	}
