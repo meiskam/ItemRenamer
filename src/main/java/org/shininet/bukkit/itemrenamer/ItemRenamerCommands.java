@@ -204,15 +204,22 @@ public class ItemRenamerCommands implements CommandExecutor {
 		// Get all the arguments before we begin
 		final DamageLookup lookup = getLookup(args);
 		final DamageValues damage = getDamageValues(args);
+		final StringBuilder output = new StringBuilder();
 		
 		// Apply the change
 		lookup.setTransform(damage, new Function<RenameRule, RenameRule>() {
 			@Override
 			public RenameRule apply(@Nullable RenameRule input) {
+				output.append("Resetting lore for " + input);
 				return new RenameRule(input.getName(), null);
 			}
 		});
-		return "Reset the lore of every item.";
+		
+		// Inform the user
+		if (output.length() == 0)
+			return "No items found.";
+		else
+			return output.toString();
 	}
 
 	/**
