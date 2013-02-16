@@ -46,7 +46,8 @@ public class ItemRenamerCommands implements CommandExecutor {
 		SET_NAME, 
 		ADD_LORE, 
 		DELETE_LORE,
-		RELOAD
+		RELOAD,
+		SAVE
 	}
 	
 	private ItemRenamer plugin;
@@ -74,6 +75,7 @@ public class ItemRenamerCommands implements CommandExecutor {
 		output.registerCommand(Commands.ADD_LORE, PERM_SET, "add", "lore");
 		output.registerCommand(Commands.DELETE_LORE, PERM_SET, "delete", "lore");
 		output.registerCommand(Commands.RELOAD, PERM_SET, "reload");
+		output.registerCommand(Commands.SAVE, PERM_SET, "save");
 		return output;
 	}
 	
@@ -138,6 +140,10 @@ public class ItemRenamerCommands implements CommandExecutor {
 					return clearLore(args);
 				case RELOAD:
 					config.reload();
+					return "Reloading configuration.";
+				case SAVE:
+					config.save();
+					return "Saving configuration to file.";
 			}
 			
 		} catch (IllegalArgumentException e) {
@@ -191,7 +197,7 @@ public class ItemRenamerCommands implements CommandExecutor {
 			}
 		});
 		
-		return String.format("Set the lore of every item to %s.", lore);
+		return String.format("Add the lore '%s' to every item.", lore);
 	}
 	
 	private String clearLore(Deque<String> args) {

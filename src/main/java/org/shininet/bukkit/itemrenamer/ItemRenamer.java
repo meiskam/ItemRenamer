@@ -104,6 +104,9 @@ public class ItemRenamer extends JavaPlugin {
 	
 	@Override
 	public void onDisable() {
+		// Save all changes
+		config.save();
+		
 		listenerPacket.unregister();
 		listenerPlayerJoin.unregister();
 		listenerGameModeChange.unregister();
