@@ -148,10 +148,10 @@ public class RenameConfiguration {
 			return true;
 		}
 		
-		for (Map<Integer, DamageLookup> pack : memoryLookup.values()) {
-			for (DamageLookup lookup : pack.values()) {
+		for (Entry<String, Map<Integer, DamageLookup>> packEntry : memoryLookup.entrySet()) {
+			for (DamageLookup lookup : packEntry.getValue().values()) {
 				if (lookup.hasChanged()) {
-					System.out.println("[ItemRenamer] Pack " + pack + " has changed");
+					System.out.println("[ItemRenamer] Pack " + packEntry.getKey() + " has changed");
 					return true;
 				}
 			}

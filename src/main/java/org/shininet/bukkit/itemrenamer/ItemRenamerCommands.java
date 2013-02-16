@@ -83,6 +83,11 @@ public class ItemRenamerCommands implements CommandExecutor {
 			CommandMatcher<Commands>.CommandNode node = matcher.matchClosest(input);
 			
 			if (node.isCommand()) {
+				if (node.getPermission() != null && !sender.hasPermission(node.getPermission())) {
+					sender.sendMessage(ChatColor.RED + "You need permission " + node.getPermission());
+					return true;
+				}
+				
 				try {
 					sender.sendMessage(ChatColor.GOLD + performCommand(node.getCommand(), input));
 				} catch (CommandErrorException e) {

@@ -29,9 +29,11 @@ public class ItemRenamerConfiguration {
 		this.plugin = plugin;
 		this.path = path;
 		
-		// Copy over default values
-		plugin.getConfig().options().copyDefaults(true);
-		plugin.saveDefaultConfig();
+		// Copy over default values if it doesn't already exist
+		if (new File(path).exists()) {
+			plugin.getConfig().options().copyDefaults(true);
+			plugin.saveDefaultConfig();
+		}
 		initializeConfig();
 	}
 	
