@@ -31,7 +31,7 @@ public class RenameRule {
 	 */
 	public RenameRule(String name, List<String> loreSections) {
 		this.name = name;
-		
+
 		if (loreSections != null)
 			// If it's already an immutable list, no copy will be made
 			this.loreSections = ImmutableList.copyOf(loreSections);
@@ -79,7 +79,10 @@ public class RenameRule {
 	
 	@Override
 	public String toString() {
-		return String.format("[name: %s, lore: \n%s\n]]", Joiner.on("\n  -").join(loreSections));
+		if (loreSections != null && loreSections.size() > 0)
+			return String.format("[name: %s, lore: \n%s\n]]", name, Joiner.on("\n  -").join(loreSections));
+		else
+			return "[name: " + name + "]";
 	}
 	
 	/**

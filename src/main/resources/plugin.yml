@@ -9,6 +9,7 @@ depend: [ProtocolLib]
 
 commands:
   ItemRenamer:
+    aliases: [renamer]
     description: general ItemRenamer command
 
 permissions:

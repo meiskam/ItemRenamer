@@ -31,7 +31,7 @@ public class ItemRenamerCommands implements CommandExecutor {
 	private static final String PERM_SET= "itemrenamer.config.set";
 	
 	// The super command
-	private static final Object COMMAND_ITEMRENAMER = "itemrenamer";
+	private static final Object COMMAND_ITEMRENAMER = "ItemRenamer";
 	
 	// Recognized sub-commands
 	public enum Commands {
@@ -41,11 +41,11 @@ public class ItemRenamerCommands implements CommandExecutor {
 		SET_CREATIVE_DISABLE,
 		GET_WORLD_PACK, 
 		SET_WORLD_PACK,
-		GET_RENAME,
+		GET_ITEM,
 		DELETE_PACK,
 		SET_NAME, 
 		ADD_LORE, 
-		CLEAR_LORE,
+		DELETE_LORE,
 		RELOAD
 	}
 	
@@ -62,18 +62,18 @@ public class ItemRenamerCommands implements CommandExecutor {
 	
 	private CommandMatcher<Commands> registerCommands() {
 		CommandMatcher<Commands> output = new CommandMatcher<Commands>();
-		output.registerCommand(Commands.GET_AUTO_UPDATE, PERM_GET, "get autoupdate");
-		output.registerCommand(Commands.GET_CREATIVE_DISABLE, PERM_GET, "get creativedisable");
-		output.registerCommand(Commands.SET_AUTO_UPDATE, PERM_SET, "set autoupdate");
-		output.registerCommand(Commands.SET_CREATIVE_DISABLE, PERM_SET, "set creativedisable");
-		output.registerCommand(Commands.GET_WORLD_PACK, PERM_GET, "get world");
-		output.registerCommand(Commands.SET_WORLD_PACK, PERM_SET, "set world");
-		output.registerCommand(Commands.DELETE_PACK, PERM_SET, "delete pack");
-		output.registerCommand(Commands.GET_RENAME, PERM_GET, "get rename");
-		output.registerCommand(Commands.SET_NAME, PERM_SET, "set name");
-		output.registerCommand(Commands.ADD_LORE, PERM_SET, "add lore");
-		output.registerCommand(Commands.CLEAR_LORE, PERM_SET, "clear lore");
-		output.registerCommand(Commands.CLEAR_LORE, PERM_SET, "reload");
+		output.registerCommand(Commands.GET_AUTO_UPDATE, PERM_GET, "get", "setting", "autoupdate");
+		output.registerCommand(Commands.GET_CREATIVE_DISABLE, PERM_GET, "get", "setting", "creativedisable");
+		output.registerCommand(Commands.SET_AUTO_UPDATE, PERM_SET, "set", "setting", "autoupdate");
+		output.registerCommand(Commands.SET_CREATIVE_DISABLE, PERM_SET, "set", "setting", "creativedisable");
+		output.registerCommand(Commands.GET_WORLD_PACK, PERM_GET, "get", "world");
+		output.registerCommand(Commands.SET_WORLD_PACK, PERM_SET, "set", "world");
+		output.registerCommand(Commands.DELETE_PACK, PERM_SET, "delete", "pack");
+		output.registerCommand(Commands.GET_ITEM, PERM_GET, "get", "item");
+		output.registerCommand(Commands.SET_NAME, PERM_SET, "set", "name");
+		output.registerCommand(Commands.ADD_LORE, PERM_SET, "add", "lore");
+		output.registerCommand(Commands.DELETE_LORE, PERM_SET, "delete", "lore");
+		output.registerCommand(Commands.RELOAD, PERM_SET, "reload");
 		return output;
 	}
 	
@@ -91,7 +91,7 @@ public class ItemRenamerCommands implements CommandExecutor {
 					sender.sendMessage(ChatColor.RED + e.getMessage());
 				}
 			} else {
-				sender.sendMessage(ChatColor.RED + "Available sub commands are: " + 
+				sender.sendMessage(ChatColor.RED + "Sub commands: " + 
 									Joiner.on(", ").join(node.getChildren()));
 			}
 			
@@ -103,45 +103,50 @@ public class ItemRenamerCommands implements CommandExecutor {
 	}
 	
 	private String performCommand(Commands command, Deque<String> args) {
-		switch (command) {
-			case GET_AUTO_UPDATE: 
-				expectCommandCount(args, 0);
-				return formatBoolean("Auto update is %s.", config.isAutoUpdate()); 
-			case GET_CREATIVE_DISABLE: 
-				expectCommandCount(args, 0);
-				return formatBoolean("Creative disable is %s.", config.isCreativeDisabled());
-			case SET_AUTO_UPDATE:
-				expectCommandCount(args, 1);
-				config.setAutoUpdate(parseBoolean(args.poll()));
-				return "Updated auto update.";
-			case SET_CREATIVE_DISABLE:
-				expectCommandCount(args, 1);
-				config.setCreativeDisabled(parseBoolean(args.poll()));
-				return "Updated creative disable.";
-			case GET_WORLD_PACK: 
-				expectCommandCount(args, 1);
-				return getWorldPack(args);
-			case SET_WORLD_PACK:
-				expectCommandCount(args, 2);
-				return setWorldPack(args);
-			case DELETE_PACK:
-				expectCommandCount(args, 1);
-				return deleteWorldPack(args);
-			case GET_RENAME:
-				return getRename(args);
-			case SET_NAME:
-				return setItemName(args);
-			case ADD_LORE:
-				return addLore(args);
-			case CLEAR_LORE:
-				return clearLore(args);
-			case RELOAD:
-				config.reload();
+		try {
+			switch (command) {
+				case GET_AUTO_UPDATE: 
+					expectCommandCount(args, 0, "No arguments needed.");
+					return formatBoolean("Auto update is %s.", config.isAutoUpdate()); 
+				case GET_CREATIVE_DISABLE: 
+					expectCommandCount(args, 0, "No arguments needed.");
+					return formatBoolean("Creative disable is %s.", config.isCreativeDisabled());
+				case SET_AUTO_UPDATE:
+					expectCommandCount(args, 1, "Need a yes/no argument.");
+					config.setAutoUpdate(parseBoolean(args.poll()));
+					return "Updated auto update.";
+				case SET_CREATIVE_DISABLE:
+					expectCommandCount(args, 1, "Need a yes/no argument.");
+					config.setCreativeDisabled(parseBoolean(args.poll()));
+					return "Updated creative disable.";
+				case GET_WORLD_PACK: 
+					expectCommandCount(args, 1, "Need a world name.");
+					return getWorldPack(args);
+				case SET_WORLD_PACK:
+					expectCommandCount(args, 2, "Need a world name and a world pack name.");
+					return setWorldPack(args);
+				case DELETE_PACK:
+					expectCommandCount(args, 1, "Need a world pack name.");
+					return deleteWorldPack(args);
+				case GET_ITEM:
+					return getItem(args);
+				case SET_NAME:
+					return setItemName(args);
+				case ADD_LORE:
+					return addLore(args);
+				case DELETE_LORE:
+					return clearLore(args);
+				case RELOAD:
+					config.reload();
+			}
+			
+		} catch (IllegalArgumentException e) {
+			throw new CommandErrorException(e.getMessage(), e);
 		}
 		throw new CommandErrorException("Unrecognized sub command: " + command);
 	}
 	
-	private String getRename(Deque<String> args) {
+	private String getItem(Deque<String> args) {
 		// Get all the arguments before we begin
 		final DamageLookup lookup = getLookup(args);
 		final DamageValues damage = getDamageValues(args);
@@ -246,9 +251,9 @@ public class ItemRenamerCommands implements CommandExecutor {
 		return "Deleted pack " + pack;
 	}
 
-	private void expectCommandCount(Deque<String> args, int expected) {
-		if (expected == args.size())
-			throw new CommandErrorException((args.size() - expected) + " too many arguments.");
+	private void expectCommandCount(Deque<String> args, int expected, String error) {
+		if (expected != args.size())
+			throw new CommandErrorException("Error: " + error);
 	}
 	
 	private String getWorldPack(Deque<String> args) {

@@ -4,9 +4,9 @@
 
 package org.shininet.bukkit.itemrenamer;
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.shininet.bukkit.itemrenamer.configuration.ItemRenamerConfiguration;
@@ -22,8 +22,7 @@ import com.comphenix.protocol.ProtocolManager;
 
 public class ItemRenamer extends JavaPlugin {
 	public Logger logger;
-	public FileConfiguration configFile;
-	
+
 	private static boolean updateReady = false;
 	private static String updateName = "";
 	private static long updateSize = 0;
@@ -31,7 +30,7 @@ public class ItemRenamer extends JavaPlugin {
 	public static final String updateSlug = "itemrenamer";
 
 	private ItemRenamerCommands commandExecutor;
-	private ItemRenamerConfiguration configuration;
+	private ItemRenamerConfiguration config;
 	private RenameProcessor processor;
 	
 	private ItemRenamerPlayerJoin listenerPlayerJoin;
@@ -45,8 +44,8 @@ public class ItemRenamer extends JavaPlugin {
 	@Override
 	public void onEnable() {
 		logger = getLogger();
-		configuration = new ItemRenamerConfiguration(this);
-		processor = new RenameProcessor(configuration);
+		config = new ItemRenamerConfiguration(this);
+		processor = new RenameProcessor(config);
 		
 		startMetrics();
 		startUpdater();
@@ -55,22 +54,22 @@ public class ItemRenamer extends JavaPlugin {
 		PluginManager plugins = getServer().getPluginManager();
 		protocolManager = ProtocolLibrary.getProtocolManager();
 		
-		listenerPacket = new ItemRenamerPacket(this, configuration, processor, protocolManager, logger);
+		listenerPacket = new ItemRenamerPacket(this, config, processor, protocolManager, logger);
 		listenerPlayerJoin = new ItemRenamerPlayerJoin(this);
-		listenerGameModeChange = new ItemRenamerGameModeChange(this);
+		listenerGameModeChange = new ItemRenamerGameModeChange(this, config);
 		stackRestrictor = new ItemRenamerStackRestrictor(processor);
 		
 		plugins.registerEvents(listenerPlayerJoin, this);
 		plugins.registerEvents(listenerGameModeChange, this);
 		plugins.registerEvents(stackRestrictor, this);
 		
-		commandExecutor = new ItemRenamerCommands(this, configuration);
+		commandExecutor = new ItemRenamerCommands(this, config);
 		getCommand("ItemRenamer").setExecutor(commandExecutor);
 	}
 
 	private void startUpdater() {
 		try {
-			if (configFile.getBoolean("autoupdate") && !(updateReady)) {
+			if (config.isAutoUpdate() && !(updateReady)) {
 				
 				// Start Updater but just do a version check
 				Updater updater = new Updater(this, updateSlug, this.getFile(), Updater.UpdateType.NO_DOWNLOAD, false); 
@@ -81,7 +80,7 @@ public class ItemRenamer extends JavaPlugin {
 				updateSize = updater.getFileSize(); // Get latest size
 			}
 		} catch (Exception e) {
-			logger.warning("Failed to start Updater");
+			logger.log(Level.WARNING, "Failed to start Updater", e);
 		}
 	}
 
@@ -90,17 +89,17 @@ public class ItemRenamer extends JavaPlugin {
 		    BukkitMetrics metrics = new BukkitMetrics(this);
 		    metrics.start();
 		} catch (Exception e) {
-			logger.warning("Failed to start Metrics");
+			logger.log(Level.WARNING, "Failed to start Metrics", e);
 		}
 	}
 
 	// TODO: Determine if this is necessary
 	public void performConversion() {
-		if ((configFile.contains("pack")) && (!configFile.contains("packs.converted"))) { //conversion ftw
-			configFile.set("packs.converted", configFile.getConfigurationSection("pack"));
-			configFile.set("pack", null);
-			saveConfig();
-		}
+		//if ((configFile.contains("pack")) && (!configFile.contains("packs.converted"))) { //conversion ftw
+		//	configFile.set("packs.converted", configFile.getConfigurationSection("pack"));
+		//	configFile.set("pack", null);
+		//	saveConfig();
+		//}
 	}
 	
 	@Override

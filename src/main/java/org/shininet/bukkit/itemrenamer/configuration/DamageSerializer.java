@@ -72,7 +72,7 @@ class DamageSerializer {
 		
 		// Attempt to get a configuration section
 		if (ruleSection instanceof ConfigurationSection) {
-			return (ConfigurationSection) section;
+			return (ConfigurationSection) ruleSection;
 		} else if (ruleSection != null) {
 			// Warn the user about this corrupt file
 			throw new IllegalArgumentException(String.format("Expected a configuration section at %s.%s. Got %s.",
@@ -158,14 +158,17 @@ class DamageSerializer {
 		
 		try {
 			// Parse the range
-			if (values.length > 1) {
+			if (values.length == 1) {
 				return Ranges.singleton(Integer.parseInt(values[0].trim()));
-			} else {
+			} else if (values.length == 2) {
 				return Ranges.closed(
 						Integer.parseInt(values[0].trim()), 
 						Integer.parseInt(values[1].trim())
 				);
+			} else {
+				throw new IllegalArgumentException("Cannot parse range: " + text);
 			}
+			
 		} catch (NumberFormatException e) {
 			throw new IllegalArgumentException("Unable to parse range " + text);
 		}

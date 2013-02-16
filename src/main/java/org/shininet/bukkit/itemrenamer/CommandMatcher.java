@@ -18,7 +18,7 @@ class CommandMatcher<TType extends Enum<TType>> {
 		private String permission;
 		
 		private String name;
-		private String path;
+		private String path = "";
 		
 		private Map<String, CommandNode> children = Maps.newHashMap();
 		
@@ -40,6 +40,9 @@ class CommandMatcher<TType extends Enum<TType>> {
 		}
 		
 		public CommandNode addChild(CommandNode node) {
+			if (node == null)
+				throw new IllegalArgumentException("Node cannot be NULL.");
+			
 			node.path = (path.length() > 0 ? (path + " ") : "") + node.getName();
 			children.put(node.getName(), node);
 			return node;
