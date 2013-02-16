@@ -1,5 +1,7 @@
 package org.shininet.bukkit.itemrenamer.configuration;
 
+import java.io.File;
+
 import org.bukkit.configuration.file.FileConfiguration;
 import org.shininet.bukkit.itemrenamer.ItemRenamer;
 
@@ -17,11 +19,15 @@ public class ItemRenamerConfiguration {
 	private FileConfiguration config;
 	private ItemRenamer plugin;
 	
+	// Path to the configuration file
+	private String path;
+	
 	// Store whether or not the top level has changed
 	private boolean changed;
 	
-	public ItemRenamerConfiguration(ItemRenamer plugin) {
+	public ItemRenamerConfiguration(ItemRenamer plugin, String path) {
 		this.plugin = plugin;
+		this.path = path;
 		
 		// Copy over default values
 		plugin.getConfig().options().copyDefaults(true);
@@ -30,11 +36,21 @@ public class ItemRenamerConfiguration {
 	}
 	
 	public void save() {
-		// Save and reload
-		changed = false;
-		renameConfig.saveAll();
-		plugin.saveConfig();
-		config = plugin.getConfig();
+		// Backup the current configuration
+		File currentFile = new File(path);
+		File backupFolder = new File(currentFile.getParentFile(), "backup");
+		File backupFile = new File(backupFolder, "config" + System.currentTimeMillis() + ".yml");
+		
+		// Don't overwrite - rename
+		if ((backupFile.exists() || backupFolder.mkdirs()) && currentFile.renameTo(backupFile)) {
+			// Save and reload
+			changed = false;
+			renameConfig.saveAll();
+			plugin.saveConfig();
+			config = plugin.getConfig();
+		} else {
+			throw new RuntimeException("Cannot rename " + currentFile + " to " + backupFile + " for backup.");
+		}
 	}
 	
 	public void reload() {
@@ -81,8 +97,10 @@ public class ItemRenamerConfiguration {
 	 * @return TRUE if it has, FALSE otherwise.
 	 */
 	public boolean hasChanged() {
-		if (changed)
+		if (changed) {
+			System.out.println("[ItemRenamer] Main config has changed");
 			return true;
+		}
 		return renameConfig.hasChanged();
 	}
 	

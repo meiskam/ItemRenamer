@@ -61,6 +61,7 @@ class MemoryDamageLookup implements DamageLookup {
 			RenameRule rule = entry.getValue();
 			setRule(range.lowerEndpoint(), range.upperEndpoint(), rule);
 		}
+		changed = false;
 	}
 	
 	@Override

@@ -92,12 +92,10 @@ public class RenameConfiguration {
 	 */
 	public DamageLookup createLookup(String pack, int itemID) {
 		Map<Integer, DamageLookup> itemLookup = loadPack(pack);
-		
-		// It has now changed
-		changed = true;
-		
+				
 		// Create a new if we need to
 		if (itemLookup == null) {
+			changed = true;
 			memoryLookup.put(pack, itemLookup = Maps.newHashMap());
 		}
 		
@@ -105,6 +103,7 @@ public class RenameConfiguration {
 		DamageLookup lookup = itemLookup.get(itemID);
 		
 		if (lookup == null) {
+			changed = true;
 			itemLookup.put(itemID, lookup = new MemoryDamageLookup());
 		}
 		return lookup;
@@ -144,12 +143,15 @@ public class RenameConfiguration {
 	 * @return TRUE if it has, FALSE otherwise.
 	 */
 	public boolean hasChanged() {
-		if (changed)
+		if (changed) {
+			System.out.println("[ItemRenamer] Rename config has changed");
 			return true;
+		}
 		
 		for (Map<Integer, DamageLookup> pack : memoryLookup.values()) {
 			for (DamageLookup lookup : pack.values()) {
 				if (lookup.hasChanged()) {
+					System.out.println("[ItemRenamer] Pack " + pack + " has changed");
 					return true;
 				}
 			}

@@ -4,6 +4,7 @@
 
 package org.shininet.bukkit.itemrenamer;
 
+import java.io.File;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -41,7 +42,7 @@ public class ItemRenamer extends JavaPlugin {
 	@Override
 	public void onEnable() {
 		logger = getLogger();
-		config = new ItemRenamerConfiguration(this);
+		config = new ItemRenamerConfiguration(this, new File(getDataFolder(), "config.yml").getAbsolutePath());
 		processor = new RenameProcessor(config);
 		
 		startMetrics();
