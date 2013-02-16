@@ -19,8 +19,8 @@ public class RenameConfiguration {
 	// Store of every loaded lookup
 	private Map<String, Map<Integer, DamageLookup>> memoryLookup = Maps.newHashMap();
 	
-	// Whether or not the rename configuration has changed
-	private boolean changed;
+	// How many times this configuration has changed
+	private int modCount;
 	
 	public RenameConfiguration(ConfigurationSection section) {
 		this.section = section;
@@ -95,7 +95,7 @@ public class RenameConfiguration {
 				
 		// Create a new if we need to
 		if (itemLookup == null) {
-			changed = true;
+			modCount++;
 			memoryLookup.put(pack, itemLookup = Maps.newHashMap());
 		}
 		
@@ -103,7 +103,7 @@ public class RenameConfiguration {
 		DamageLookup lookup = itemLookup.get(itemID);
 		
 		if (lookup == null) {
-			changed = true;
+			modCount++;
 			itemLookup.put(itemID, lookup = new MemoryDamageLookup());
 		}
 		return lookup;
@@ -115,7 +115,7 @@ public class RenameConfiguration {
 	 * @return TRUE if a pack was removed, FALSE otherwise.
 	 */
 	public boolean removePack(String pack) {
-		changed = true;
+		modCount++;
 		return memoryLookup.remove(pack) != null;
 	}
 	
@@ -142,22 +142,18 @@ public class RenameConfiguration {
 	 * Determine if this configuration has changed.
 	 * @return TRUE if it has, FALSE otherwise.
 	 */
-	public boolean hasChanged() {
-		if (changed) {
-			System.out.println("[ItemRenamer] Rename config has changed");
-			return true;
-		}
+	public int getModificationCount() {
+		int totalCount = modCount;
 		
 		for (Entry<String, Map<Integer, DamageLookup>> packEntry : memoryLookup.entrySet()) {
 			for (DamageLookup lookup : packEntry.getValue().values()) {
-				if (lookup.hasChanged()) {
+				if (lookup.getModificationCount() > 0) {
 					System.out.println("[ItemRenamer] Pack " + packEntry.getKey() + " has changed");
-					return true;
+					totalCount += lookup.getModificationCount();
 				}
 			}
 		}
-		// Unchanged
-		return false;
+		return totalCount;
 	}
 	
 	/**

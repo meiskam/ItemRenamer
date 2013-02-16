@@ -22,8 +22,8 @@ public class ItemRenamerConfiguration {
 	// Path to the configuration file
 	private String path;
 	
-	// Store whether or not the top level has changed
-	private boolean changed;
+	// Number of times it has changed
+	private int modCount;
 	
 	public ItemRenamerConfiguration(ItemRenamer plugin, String path) {
 		this.plugin = plugin;
@@ -46,7 +46,9 @@ public class ItemRenamerConfiguration {
 		// Don't overwrite - rename
 		if ((backupFolder.exists() || backupFolder.mkdirs()) && currentFile.renameTo(backupFile)) {
 			// Save and reload
-			changed = false;
+			modCount = 0;
+			onSynchronized();
+			
 			renameConfig.saveAll();
 			plugin.saveConfig();
 			config = plugin.getConfig();
@@ -55,10 +57,19 @@ public class ItemRenamerConfiguration {
 		}
 	}
 	
-	public void reload() {
-		changed = false;
+	public void reload() {		
 		plugin.reloadConfig();
 		initializeConfig();
+		
+		modCount = 0;
+		onSynchronized();
+	}
+	
+	/**
+	 * Invoked when the configuration has been synchronized with the underlying file system.
+	 */
+	protected void onSynchronized() {
+		// Do nothing
 	}
 	
 	private void initializeConfig() {
@@ -71,7 +82,7 @@ public class ItemRenamerConfiguration {
 	}
 	
 	public void setAutoUpdate(boolean value) {
-		changed = true;
+		modCount++;
 		config.set(AUTO_UPDATE, value);
 	}
 	
@@ -81,7 +92,7 @@ public class ItemRenamerConfiguration {
 	 * @param pack - the pack name.
 	 */
 	public void setWorldPack(String world, String pack) {
-		changed = true;
+		modCount++;
 		config.set(WORLD_PACKS + "." + world, pack);
 	}
 	
@@ -95,15 +106,14 @@ public class ItemRenamerConfiguration {
 	}
 	
 	/**
-	 * Determine if the configuration has changed in any way.
-	 * @return TRUE if it has, FALSE otherwise.
+	 * Retrieve the number of modications to the configuration since last reload.
+	 * @return The number of modifications.
 	 */
-	public boolean hasChanged() {
-		if (changed) {
+	public int getModificationCount() {
+		if (modCount > 0) {
 			System.out.println("[ItemRenamer] Main config has changed");
-			return true;
 		}
-		return renameConfig.hasChanged();
+		return modCount + renameConfig.getModificationCount();
 	}
 	
 	/**

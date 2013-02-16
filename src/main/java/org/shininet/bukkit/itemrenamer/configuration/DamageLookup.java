@@ -73,15 +73,14 @@ public interface DamageLookup {
 	public abstract RenameRule getRule(int damage);
 
 	/**
-	 * Determine if this lookup has changed.
-	 * @return TRUE if it has, FALSE otherwise.
+	 * Determine how many times this damage lookup has been modified.
+	 * @return The number of times each individual field has been changed.
 	 */
-	public abstract boolean hasChanged();
-	
+	public abstract int getModificationCount();
 	
 	/**
-	 * Set whether or not this lookup has changed.
-	 * @param value - TRUE if it has, FALSE otherwise.
+	 * Set how many times this damage lookup has been modified.
+	 * @param value - the new number of times it has changed.
 	 */
-	public abstract void setChanged(boolean value);
+	public abstract void setModificationCount(int value);
 }

@@ -38,7 +38,7 @@ class MemoryDamageLookup implements DamageLookup {
 	private RenameRule other;
 
 	// Whether or not the lookup has changed
-	private boolean changed;
+	private int modCount;
 	
 	/**
 	 * Construct a new memory damage lookup.
@@ -61,7 +61,7 @@ class MemoryDamageLookup implements DamageLookup {
 			RenameRule rule = entry.getValue();
 			setRule(range.lowerEndpoint(), range.upperEndpoint(), rule);
 		}
-		changed = false;
+		modCount = 0;
 	}
 	
 	@Override
@@ -71,7 +71,7 @@ class MemoryDamageLookup implements DamageLookup {
 
 	@Override
 	public void setAllRule(RenameRule rule) {
-		this.changed = true;
+		this.modCount++;
 		this.all = rule;
 	}
 	
@@ -82,7 +82,7 @@ class MemoryDamageLookup implements DamageLookup {
 	
 	@Override
 	public void setOtherRule(RenameRule rule) {
-		this.changed = true;
+		this.modCount++;
 		this.other = rule;
 	}
 
@@ -110,7 +110,7 @@ class MemoryDamageLookup implements DamageLookup {
 		RenameRule defaultRule = ruleTransform.apply(new RenameRule(null, null));
 		
 		// It's been changed
-		changed = true;
+		modCount++;
 		
 		// Set everything to default
 		setRule(minimum, maximum, defaultRule);
@@ -156,7 +156,7 @@ class MemoryDamageLookup implements DamageLookup {
 		if (damage < 0)
 			throw new IllegalArgumentException("Damage cannot be less than zero.");
 		
-		changed = true;
+		modCount++;
 		tree.put(damage, damage, rule);
 	}
 	
@@ -167,21 +167,17 @@ class MemoryDamageLookup implements DamageLookup {
 		if (lowerDamage > upperDamage)
 			throw new IllegalArgumentException("Lower damage must be less than upper damage.");
 		
-		changed = true;
+		modCount++;
 		tree.put(lowerDamage, upperDamage, rule);
 	}
 	
-	/**
-	 * Determine if the current lookup has changed.
-	 * @return TRUE if it has, FALSE otherwise.
-	 */
 	@Override
-	public boolean hasChanged() {
-		return changed;
+	public int getModificationCount() {
+		return modCount;
 	}
 
 	@Override
-	public void setChanged(boolean value) {
-		this.changed = value;
+	public void setModificationCount(int value) {
+		this.modCount = value;
 	}
 }

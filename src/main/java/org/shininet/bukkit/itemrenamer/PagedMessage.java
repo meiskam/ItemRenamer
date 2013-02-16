@@ -6,6 +6,8 @@ import java.util.WeakHashMap;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
+
+import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 
@@ -18,26 +20,29 @@ public class PagedMessage {
 	// Paged message
 	private Map<CommandSender, List<String>> pagedMessage = new WeakHashMap<CommandSender, List<String>>();
 	
-	public void printPage(CommandSender receiver, int pageIndex) {
+	public String getPage(CommandSender receiver, int pageIndex) {
 		List<String> paged = pagedMessage.get(receiver);
 		
 		// Make sure the player has any pages
 		if (paged != null) {
+			List<String> output = Lists.newArrayList();
 			int lastPage = ((paged.size() - 1) / PAGE_LINE_COUNT) + 1;
 			
 			for (int i = PAGE_LINE_COUNT * (pageIndex - 1); i < PAGE_LINE_COUNT * pageIndex; i++) {
 				if (i < paged.size()) {
-					receiver.sendMessage(" " + paged.get(i));
+					output.add(" " + paged.get(i));
 				}
 			}
 			
 			// More data?
 			if (pageIndex < lastPage) {
-				receiver.sendMessage("Send /renamer page " + (pageIndex + 1) + " for the next page.");
+				output.add("Send /renamer page " + (pageIndex + 1) + " for the next page.");
 			}
 			
+			return Joiner.on("\n").join(output);
+			
 		} else {
-			receiver.sendMessage(ChatColor.RED + "No pages found.");
+			return ChatColor.RED + "No pages found.";
 		}
 	}
 	
@@ -45,18 +50,19 @@ public class PagedMessage {
 	 * Send a message by splitting it up into pages.
 	 * @param receiver - the reciever.
 	 * @param message - the message to send.
+	 * @return The preliminary message to send to the player.
 	 */
-	public void sendPaged(CommandSender receiver, String message) {
+	public String createPage(CommandSender receiver, String message) {
 		List<String> messages = Lists.newArrayList(Splitter.on("\n").split(message));
 		
 		if (messages.size() > 0 && messages.size() > PAGE_LINE_COUNT) {
 			// Divide the messages into chuncks
 			pagedMessage.put(receiver, messages);
-			printPage(receiver, 1);
+			return getPage(receiver, 1);
 			
 		} else {
-			// Just send it
-			receiver.sendMessage(message);
+			// Just send it without any fuzz
+			return message;
 		}
 	}
 }

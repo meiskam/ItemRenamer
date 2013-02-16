@@ -152,8 +152,7 @@ public class ItemRenamerCommands implements CommandExecutor {
 					List<Integer> pageNumber = ConfigParsers.getIntegers(args, 1, null);
 					
 					if (pageNumber.size() == 1) {
-						pagedMessage.printPage(sender, pageNumber.get(0));
-						return null; 
+						return pagedMessage.getPage(sender, pageNumber.get(0));
 					} else {
 						throw new CommandErrorException("Must specify a page number.");
 					}
@@ -175,8 +174,7 @@ public class ItemRenamerCommands implements CommandExecutor {
 			serializer.writeLookup(lookup);
 			
 			// Display the lookup as a YAML
-			pagedMessage.sendPaged(sender, yaml.saveToString());
-			return null;
+			return pagedMessage.createPage(sender, yaml.saveToString());
 		}
 		
 		final DamageValues damage = getDamageValues(args);

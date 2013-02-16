@@ -111,7 +111,9 @@ public class DamageSerializer {
 	 * Deserialize the content of the configuration section to the given damage lookup.
 	 * @param destination - the input or destination damage lookup.
 	 */
-	public void readLookup(DamageLookup destination) {		
+	public void readLookup(DamageLookup destination) {
+		int oldModCount = destination.getModificationCount();
+		
 		destination.setAllRule(readRule(DAMAGE_ALL));
 		destination.setOtherRule(readRule(DAMAGE_OTHER));
 		
@@ -122,7 +124,7 @@ public class DamageSerializer {
 				destination.setRule(range.lowerEndpoint(), range.upperEndpoint(), readRule(key));
 			}
 		}
-		destination.setChanged(false);
+		destination.setModificationCount(oldModCount);
 	}
 
 	/**

@@ -36,13 +36,20 @@ public class ItemRenamer extends JavaPlugin {
 	private ItemRenamerPlayerJoin listenerPlayerJoin;
 	private ItemRenamerPacket listenerPacket;
 	private ItemRenamerStackRestrictor stackRestrictor;
+	private RefreshInventoryTask refreshTask;
 	
 	private ProtocolManager protocolManager;
+	private int lastSaveCount;
 	
 	@Override
 	public void onEnable() {
 		logger = getLogger();
-		config = new ItemRenamerConfiguration(this, new File(getDataFolder(), "config.yml").getAbsolutePath());
+		config = new ItemRenamerConfiguration(this, new File(getDataFolder(), "config.yml").getAbsolutePath()) {
+			protected void onSynchronized() {
+				lastSaveCount = getModificationCount();
+				refreshTask.forceRefresh();
+			};
+		};
 		processor = new RenameProcessor(config);
 		
 		startMetrics();
@@ -61,6 +68,10 @@ public class ItemRenamer extends JavaPlugin {
 		
 		commandExecutor = new ItemRenamerCommands(this, config);
 		getCommand("ItemRenamer").setExecutor(commandExecutor);
+		
+		// Tasks
+		refreshTask = new RefreshInventoryTask(getServer().getScheduler(), this, config);
+		refreshTask.start();
 	}
 
 	private void startUpdater() {
@@ -100,12 +111,13 @@ public class ItemRenamer extends JavaPlugin {
 	
 	@Override
 	public void onDisable() {
-		// Save all changes
-		if (config.hasChanged())
+		// Save all changes if anything has changed
+		if (config.getModificationCount() != lastSaveCount)
 			config.save();
 		
 		listenerPacket.unregister(this);
 		listenerPlayerJoin.unregister();
+		refreshTask.stop();
 	}
 
 	public boolean getUpdateReady() {
