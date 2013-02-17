@@ -73,6 +73,29 @@ packs:
         lore:
         - The mighty diamond
         - Look how it shines
+        packs:
+    '276':
+      0-10:
+        lore:
+        - Scratched
+      11-199:
+        lore:
+        - Battleworn
+      200-499:
+        lore:
+        - Bloodied
+      500-1000:
+        lore:
+        - Feared
+      1001-1500:
+        lore:
+        - Lightly Damaged
+      1501-1560:
+        lore:
+        - Damaged
+      1561-1562:
+        lore:
+        - FIX ME
     '290':
       '0':
         name: Wooden Hoe
