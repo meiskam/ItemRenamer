@@ -1,6 +1,6 @@
 package org.shininet.bukkit.itemrenamer.listeners;
 
-import org.bukkit.World;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -29,16 +29,16 @@ public class ItemRenamerStackRestrictor implements Listener {
 			// around.
 			if (cursor.getAmount() == 0 || event.isRightClick()) {
 				return;
-			} else if (!isValid(event.getWhoClicked().getWorld(), current, cursor)) {
+			} else if (!isValid((Player) event.getWhoClicked(), current, cursor)) {
 				// But never increase a stack above their personal limit
 				event.setCancelled(true);
 			}
 		}
 	}
 
-	private boolean isValid(World world, ItemStack current, ItemStack cursor) {
-		ItemStack modCurrent = processor.process(world.getName(), current.clone());
-		ItemStack modCursor = processor.process(world.getName(), cursor.clone());
+	private boolean isValid(Player player, ItemStack current, ItemStack cursor) {
+		ItemStack modCurrent = processor.process(player, current.clone());
+		ItemStack modCursor = processor.process(player, cursor.clone());
 		
 		return !modCurrent.equals(modCursor);
 	}

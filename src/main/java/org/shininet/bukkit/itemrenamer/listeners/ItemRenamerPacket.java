@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import org.shininet.bukkit.itemrenamer.RenameProcessor;
@@ -55,20 +56,20 @@ public class ItemRenamerPacket {
 					return;
 				
 				try {
-					String world = event.getPlayer().getWorld().getName();
+					Player player = event.getPlayer();
 					
 					switch (event.getPacketID()) {
 					case 0x67:
 						StructureModifier<ItemStack> sm = packet.getItemModifier();
 						for (int i = 0; i < sm.size(); i++) {
-							processor.process(world, sm.read(i));
+							processor.process(player, sm.read(i));
 						}
 						break;
 
 					case 0x68:
 						StructureModifier<ItemStack[]> smArray = packet.getItemArrayModifier();
 						for (int i = 0; i < smArray.size(); i++) {
-							processor.process(world, smArray.read(i));
+							processor.process(player, smArray.read(i));
 						}
 						break;
 				
@@ -77,7 +78,7 @@ public class ItemRenamerPacket {
 						if (packet.getStrings().read(0).equals("MC|TrList")) {
 							
 							try {
-								byte[] result = processMerchantList(world, packet.getByteArrays().read(0));
+								byte[] result = processMerchantList(player, packet.getByteArrays().read(0));
 								packet.getIntegers().write(0, result.length);
 								packet.getByteArrays().write(0, result);
 							} catch (IOException e) {
@@ -98,10 +99,8 @@ public class ItemRenamerPacket {
 			@Override
 			public void onPacketSending(PacketEvent event) {
 				if (event.getPacketID() == Packets.Client.SET_CREATIVE_SLOT) {
-					String worldName = event.getPlayer().getWorld().getName();
-					
 					// Process the slot data
-					processor.process(worldName, event.getPacket().getItemModifier().read(0));
+					processor.process(event.getPlayer(), event.getPacket().getItemModifier().read(0));
 				}
 			}
 			
@@ -116,7 +115,7 @@ public class ItemRenamerPacket {
 		});
 	}
 	
-	private byte[] processMerchantList(String world, byte[] data) throws IOException {
+	private byte[] processMerchantList(Player player, byte[] data) throws IOException {
 		ByteArrayInputStream source = new ByteArrayInputStream(data);
 		DataInputStream input = new DataInputStream(source);
 		
@@ -125,9 +124,9 @@ public class ItemRenamerPacket {
 		
 		// Process each and every item stack
 		for (MerchantRecipe recipe : list) {
-			recipe.setItemToBuy(processor.process(world, recipe.getItemToBuy()) );
-			recipe.setSecondItemToBuy(processor.process(world, recipe.getSecondItemToBuy()) );
-			recipe.setItemToSell(processor.process(world, recipe.getItemToSell()) );
+			recipe.setItemToBuy(processor.process(player, recipe.getItemToBuy()) );
+			recipe.setSecondItemToBuy(processor.process(player, recipe.getSecondItemToBuy()) );
+			recipe.setItemToSell(processor.process(player, recipe.getItemToSell()) );
 		}
 		
 		// Write the result back

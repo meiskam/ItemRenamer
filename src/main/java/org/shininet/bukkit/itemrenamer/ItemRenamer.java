@@ -8,7 +8,10 @@ import java.io.File;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import net.milkbowl.vault.chat.Chat;
+
 import org.bukkit.plugin.PluginManager;
+import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.shininet.bukkit.itemrenamer.configuration.ItemRenamerConfiguration;
 import org.shininet.bukkit.itemrenamer.listeners.ItemRenamerPacket;
@@ -40,6 +43,8 @@ public class ItemRenamer extends JavaPlugin {
 	
 	private ProtocolManager protocolManager;
 	private int lastSaveCount;
+
+	private Chat chat;
 	
 	@Override
 	public void onEnable() {
@@ -50,7 +55,11 @@ public class ItemRenamer extends JavaPlugin {
 				refreshTask.forceRefresh();
 			};
 		};
-		processor = new RenameProcessor(config);
+		
+		if (setupChat()) {
+			logger.info("Found Vault!");
+		}
+		processor = new RenameProcessor(config, chat);
 		
 		startMetrics();
 		startUpdater();
@@ -100,6 +109,24 @@ public class ItemRenamer extends JavaPlugin {
 		}
 	}
 
+	/**
+	 * Initialize refernece to Vault.
+	 * @return TRUE if Vault was detected and loaded, FALSE otherwise.
+	 */
+    private boolean setupChat() {
+    	try {
+	        RegisteredServiceProvider<Chat> chatProvider = getServer().getServicesManager().getRegistration(Chat.class);
+	        
+	        if (chatProvider != null) {
+	            chat = chatProvider.getProvider();
+	        }
+	        return (chat != null);
+    	} catch (NoClassDefFoundError e) {
+    		// Nope
+    		return false;
+    	}
+    }
+	
 	// TODO: Determine if this is necessary
 	public void performConversion() {
 		//if ((configFile.contains("pack")) && (!configFile.contains("packs.converted"))) { //conversion ftw

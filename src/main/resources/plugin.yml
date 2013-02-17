@@ -1,16 +1,17 @@
 name: ItemRenamer
 version: 1.6.0-SNAPSHOT
 description: Custom default item names
-author: meiskam
+author: [meiskam, aadnk]
 
 main: org.shininet.bukkit.itemrenamer.ItemRenamer
 database: false
 depend: [ProtocolLib]
+softdepend: [Vault]
 
 commands:
   ItemRenamer:
-    aliases: [renamer]
-    description: general ItemRenamer command
+    aliases: [renamer, rn]
+    description: General ItemRenamer command
 
 permissions:
   itemrenamer.*:

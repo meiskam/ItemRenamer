@@ -2,7 +2,10 @@ package org.shininet.bukkit.itemrenamer;
 
 import java.util.List;
 
+import net.milkbowl.vault.chat.Chat;
+
 import org.bukkit.ChatColor;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.shininet.bukkit.itemrenamer.configuration.DamageLookup;
@@ -18,13 +21,17 @@ public class RenameProcessor {
 
 	private ItemRenamerConfiguration config;
 	
+	// Vault
+	private Chat chat;
+	
 	/**
 	 * A marker telling us that this is ItemStack was renamed by ItemRenamer.
 	 */
 	private final int MARKER = 0xD17065B1;
 	
-	public RenameProcessor(ItemRenamerConfiguration config) {
+	public RenameProcessor(ItemRenamerConfiguration config, Chat chat) {
 		this.config = config;
+		this.chat = chat;
 	}
 
 	private void packName(ItemMeta itemMeta, RenameRule rule) {
@@ -43,14 +50,16 @@ public class RenameProcessor {
 		
 		// Translate color codes as well
 		for (int i = 0; i < output.size(); i++) {
-			output.set(i, ChatColor.translateAlternateColorCodes('&', output.get(i))+ChatColor.RESET);
+			output.set(i, ChatColor.translateAlternateColorCodes('&', output.get(i)) + ChatColor.RESET);
 		}
 		itemMeta.setLore(output);
 	}
 
-	public ItemStack process(String world, ItemStack input) {
-		String pack = config.getWorldPack(world);
-
+	public ItemStack process(Player player, ItemStack input) {
+		return process(getPack(player), input);
+	}
+	
+	private ItemStack process(String pack, ItemStack input) {
 		// The item stack has already been cloned in the packet
 		if (input != null && pack != null) {
 			DamageLookup lookup = config.getRenameConfig().getLookup(pack, input.getTypeId());
@@ -109,13 +118,26 @@ public class RenameProcessor {
 		return false;
 	}
 	
-	public ItemStack[] process(String world, ItemStack[] input) {
+	public ItemStack[] process(Player player, ItemStack[] input) {
+		String pack = getPack(player);
+		
 		if (input != null) {
 			for (int i = 0; i < input.length; i++) {
-				process(world, input[i]);
+				process(pack, input[i]);
 			}
 		}
 		return input;
+	}
+	
+	private String getPack(Player player) {
+		if (chat != null) {
+			String pack = chat.getPlayerInfoString(player, "itempack", null);
+
+			// Use this pack instead
+			if (pack != null)
+				return pack;
+		}
+		return config.getWorldPack(player.getWorld().getName());
 	}
 	
 	private NbtCompound getCompound(ItemStack stack) {
