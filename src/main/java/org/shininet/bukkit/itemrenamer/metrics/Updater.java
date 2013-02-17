@@ -40,7 +40,7 @@ import org.bukkit.plugin.Plugin;
 
 public class Updater 
 {
-    private Plugin plugin;
+	private Plugin plugin;
     private UpdateType type;
     private String versionTitle;
     private String versionLink;
@@ -52,6 +52,7 @@ public class Updater
     private URL url; // Connecting to RSS
     private static final String DBOUrl = "http://dev.bukkit.org/server-mods/"; // Slugs will be appended to this to get to the project's RSS feed
     private String [] noUpdateTag = {"-DEV","-PRE"}; // If the version number contains one of these, don't update.
+    private static final String VERSION_DELIMITER = " ";
     private static final int BYTE_SIZE = 1024; // Used for downloading files
     private String updateFolder = YamlConfiguration.loadConfiguration(new File("bukkit.yml")).getString("settings.update-folder"); // The folder that downloads will be placed in
     private Updater.UpdateResult result = Updater.UpdateResult.SUCCESS; // Used for determining the outcome of the update process
@@ -491,9 +492,9 @@ public class Updater
         if(type != UpdateType.NO_VERSION_CHECK)
         {
             String version = plugin.getDescription().getVersion();
-            if(title.split("v").length == 2)
+            if(title.split(VERSION_DELIMITER).length == 2)
             {
-                String remoteVersion = title.split("v")[1].split(" ")[0]; // Get the newest file's version number
+                String remoteVersion = title.split(VERSION_DELIMITER)[1].split(" ")[0]; // Get the newest file's version number
                 int remVer = -1,curVer=0;
                 try
                 {
