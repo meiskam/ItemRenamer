@@ -1,5 +1,6 @@
 package org.shininet.bukkit.itemrenamer.listeners;
 
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -24,7 +25,7 @@ public class ItemRenamerStackRestrictor implements Listener {
 		// http://forums.bukkit.org/threads/item-stack-size.103488/#post-1359513
 		
 		// We want to prevent the player from INCREASING invalid stacks
-		if (current != null && cursor != null) {
+		if (isEmpty(current) && isEmpty(cursor)) {
 			// They should be able to split "too large" stacks, or move them
 			// around.
 			if (cursor.getAmount() == 0 || event.isRightClick()) {
@@ -35,11 +36,18 @@ public class ItemRenamerStackRestrictor implements Listener {
 			}
 		}
 	}
+	
+	private boolean isEmpty(ItemStack stack) {
+		return stack == null || stack.getType() == Material.AIR;
+	}
 
 	private boolean isValid(Player player, ItemStack current, ItemStack cursor) {
 		ItemStack modCurrent = processor.process(player, current.clone());
 		ItemStack modCursor = processor.process(player, cursor.clone());
 		
-		return !modCurrent.equals(modCursor);
+		// Disregard the count
+		modCurrent.setAmount(1);
+		modCursor.setAmount(1);
+		return modCurrent.equals(modCursor);
 	}
 }
