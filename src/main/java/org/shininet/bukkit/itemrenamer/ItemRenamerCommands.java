@@ -191,7 +191,7 @@ public class ItemRenamerCommands implements CommandExecutor {
 	
 	private String setItemName(Deque<String> args) {
 		// Get all the arguments before we begin
-		final DamageLookup lookup = getLookup(args);
+		final DamageLookup lookup = createLookup(args);
 		final DamageValues damage = getDamageValues(args);
 		final String name = Joiner.on(" ").join(args);
 		
@@ -207,7 +207,7 @@ public class ItemRenamerCommands implements CommandExecutor {
 	
 	private String addLore(Deque<String> args) {
 		// Get all the arguments before we begin
-		final DamageLookup lookup = getLookup(args);
+		final DamageLookup lookup = createLookup(args);
 		final DamageValues damage = getDamageValues(args);
 		final String lore = Joiner.on(" ").join(args);
 		
@@ -227,6 +227,10 @@ public class ItemRenamerCommands implements CommandExecutor {
 		final DamageLookup lookup = getLookup(args);
 		final DamageValues damage = getDamageValues(args);
 		final StringBuilder output = new StringBuilder();
+		
+		if (lookup == null) {
+			throw new IllegalArgumentException("No lore found,");
+		}
 		
 		// Apply the change
 		lookup.setTransform(damage, new Function<RenameRule, RenameRule>() {
@@ -256,6 +260,15 @@ public class ItemRenamerCommands implements CommandExecutor {
 		if (pack == null || pack.length() == 0)
 			throw new IllegalArgumentException("Must specify an item pack.");
 		return config.getRenameConfig().getLookup(pack, itemID);
+	}
+	
+	private DamageLookup createLookup(Deque<String> args) {
+		String pack = args.pollFirst();
+		Integer itemID = getItemID(args);
+		
+		if (pack == null || pack.length() == 0)
+			throw new IllegalArgumentException("Must specify an item pack.");
+		return config.getRenameConfig().createLookup(pack, itemID);
 	}
 	
 	private DamageValues getDamageValues(Deque<String> args) {
