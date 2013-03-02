@@ -134,7 +134,7 @@ public class RenameProcessor {
 			String pack = chat.getPlayerInfoString(player, "itempack", null);
 
 			// Use this pack instead
-			if (pack != null)
+			if (pack != null && pack.length() > 0)
 				return pack;
 		}
 		return config.getWorldPack(player.getWorld().getName());

@@ -1,10 +1,12 @@
 package org.shininet.bukkit.itemrenamer.configuration;
 
+import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import org.bukkit.configuration.ConfigurationSection;
 
+import com.comphenix.protocol.reflect.FieldUtils;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -15,6 +17,9 @@ import com.google.common.collect.Maps;
  */
 public class RenameConfiguration {
 	private ConfigurationSection section;
+	
+	// Group Manager sucks
+	private static Field internalMap;
 	
 	// Store of every loaded lookup
 	private Map<String, Map<Integer, DamageLookup>> memoryLookup = Maps.newHashMap();
@@ -44,6 +49,30 @@ public class RenameConfiguration {
 		}
 	}
 	
+	private ConfigurationSection getSection(ConfigurationSection parent, String key) {
+		ConfigurationSection result = parent.getConfigurationSection(key);
+		
+		// What the hell?
+		if (result == parent) {
+			if (internalMap == null)
+				internalMap = FieldUtils.getField(result.getClass(), "map", true);
+			try {
+				@SuppressWarnings("unchecked")
+				Map<String, Object> map = (Map<String, Object>) internalMap.get(parent);
+				Object raw = map != null ? map.get(key) : null;
+				
+				// Neat
+				if (raw instanceof ConfigurationSection)
+					return (ConfigurationSection) raw;
+			} catch (Exception e) {
+				throw new RuntimeException("GroupMananger hack failed!", e);
+			}
+			// Failure
+			return null;
+		}
+		return result;
+	}
+	
 	/**
 	 * Load a given item name pack from the configuration file.
 	 * @param pack - the pack to load.
@@ -51,17 +80,17 @@ public class RenameConfiguration {
 	 */
 	private Map<Integer, DamageLookup> loadPack(String pack) {
 		Map<Integer, DamageLookup> itemLookup = memoryLookup.get(pack);
-
+		
 		// Initialize item lookup
 		if (itemLookup == null) {
-			ConfigurationSection items = section.getConfigurationSection(pack);
+			ConfigurationSection items = getSection(section, pack);
 			
 			if (items != null) {
 				memoryLookup.put(pack, itemLookup = Maps.newHashMap());
 				
 				for (String key : items.getKeys(false)) {
 					Integer id = Integer.parseInt(key);
-					DamageSerializer serializer = new DamageSerializer(items.getConfigurationSection(key));	
+					DamageSerializer serializer = new DamageSerializer(getSection(items, key));	
 					DamageLookup damage = new MemoryDamageLookup();
 					
 					// Load and save
