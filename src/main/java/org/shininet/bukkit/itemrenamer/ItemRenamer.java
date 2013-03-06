@@ -81,8 +81,23 @@ public class ItemRenamer extends JavaPlugin {
 		// Tasks
 		refreshTask = new RefreshInventoryTask(getServer().getScheduler(), this, config);
 		refreshTask.start();
+		
+		// Warn if a world cannot be found
+		for (String world : config.getWorldKeys()) {
+			if (getServer().getWorld(world) == null) {
+				logger.warning("Unable to find world " + world + ". Config may be invalid.");
+			} else {
+				// Is the pack valid
+				String pack = config.getWorldPack(world);
+				
+				if (config.getRenameConfig().hasPack(pack))
+					logger.info("Item renaming enabled for world " + world);
+				else
+					logger.warning("Cannot find pack " + pack + " for world " + world);
+			}
+		}
 	}
-
+	
 	private void startUpdater() {
 		try {
 			if (config.isAutoUpdate() && !(updateReady)) {

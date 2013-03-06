@@ -1,6 +1,7 @@
 package org.shininet.bukkit.itemrenamer.configuration;
 
 import java.io.File;
+import java.util.Set;
 
 import org.bukkit.configuration.file.FileConfiguration;
 import org.shininet.bukkit.itemrenamer.ItemRenamer;
@@ -107,6 +108,14 @@ public class ItemRenamerConfiguration {
 	 */
 	public String getWorldPack(String world) {
 		return config.getString(WORLD_PACKS + "." + world);
+	}
+	
+	/**
+	 * Retrieve a list of the worlds that have been defined in the configuration section.
+	 * @return List of defined worlds in the config.
+	 */
+	public Set<String> getWorldKeys() {
+		return config.getConfigurationSection(WORLD_PACKS).getKeys(false);
 	}
 	
 	/**
