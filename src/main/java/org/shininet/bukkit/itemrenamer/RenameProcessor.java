@@ -7,6 +7,7 @@ import net.milkbowl.vault.chat.Chat;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.shininet.bukkit.itemrenamer.configuration.DamageLookup;
 import org.shininet.bukkit.itemrenamer.configuration.ItemRenamerConfiguration;
@@ -74,6 +75,15 @@ public class RenameProcessor {
 				// May have been set by a plugin or a player
 				if ((itemMeta.hasDisplayName()) || (itemMeta.hasLore())) 
 					return input;
+				// Fix a client bug
+				if (itemMeta instanceof BookMeta) {
+					BookMeta book = (BookMeta) itemMeta;
+					
+					// Create the pages NBT tag
+					if (book.getPageCount() == 0) {
+						book.setPages("");
+					}
+				}
 				
 				packName(itemMeta, rule);
 				packLore(itemMeta, rule);
