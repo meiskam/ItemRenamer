@@ -60,8 +60,10 @@ public class DamageValues {
 		String clean = arguments.peekFirst().trim();
 		
 		if (clean.equalsIgnoreCase("ALL")) {
+			arguments.pollFirst();
 			return ALL;
 		} else if (clean.equalsIgnoreCase("OTHER")) {
+			arguments.pollFirst();
 			return OTHER;
 		} else {
 			List<Integer> range = ConfigParsers.getIntegers(arguments, 2, Ranges.closed(0, (int) Short.MAX_VALUE));
