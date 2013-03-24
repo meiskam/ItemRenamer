@@ -8,6 +8,8 @@ import java.util.Arrays;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 import javax.annotation.Nullable;
 
@@ -16,6 +18,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.YamlConfiguration;
+
 import org.shininet.bukkit.itemrenamer.configuration.ConfigParsers;
 import org.shininet.bukkit.itemrenamer.configuration.DamageLookup;
 import org.shininet.bukkit.itemrenamer.configuration.DamageSerializer;
@@ -35,6 +38,9 @@ public class ItemRenamerCommands implements CommandExecutor {
 	// The super command
 	private static final Object COMMAND_ITEMRENAMER = "ItemRenamer";
 	
+	// The selected pack for each sender
+	private Map<CommandSender, String> selectedPack = new WeakHashMap<CommandSender, String>();
+	
 	// Recognized sub-commands
 	public enum Commands {
 		GET_AUTO_UPDATE,
@@ -44,6 +50,8 @@ public class ItemRenamerCommands implements CommandExecutor {
 		GET_ITEM,
 		ADD_PACK,
 		DELETE_PACK,
+		SELECT_PACK,
+		SELECT_NONE,
 		SET_NAME, 
 		ADD_LORE, 
 		DELETE_LORE,
@@ -74,6 +82,8 @@ public class ItemRenamerCommands implements CommandExecutor {
 		output.registerCommand(Commands.SET_WORLD_PACK, PERM_SET, "set", "world");
 		output.registerCommand(Commands.ADD_PACK, PERM_SET, "add", "pack");
 		output.registerCommand(Commands.DELETE_PACK, PERM_SET, "delete", "pack");
+		output.registerCommand(Commands.SELECT_PACK, PERM_SET, "select", "pack");
+		output.registerCommand(Commands.SELECT_NONE, PERM_SET, "select", "none");
 		output.registerCommand(Commands.GET_ITEM, PERM_GET, "get", "item");
 		output.registerCommand(Commands.SET_NAME, PERM_SET, "set", "name");
 		output.registerCommand(Commands.ADD_LORE, PERM_SET, "add", "lore");
@@ -135,18 +145,23 @@ public class ItemRenamerCommands implements CommandExecutor {
 					return setWorldPack(args);
 				case ADD_PACK:
 					expectCommandCount(args, 1, "Need a world pack name.");
-					return addWorldPack(args);
+					return addWorldPack(sender, args);
 				case DELETE_PACK:
 					expectCommandCount(args, 1, "Need a world pack name.");
 					return deleteWorldPack(args);
+				case SELECT_PACK:
+					expectCommandCount(args, 1, "Need a world pack name.");
+					return selectWorldPack(sender, args);
+				case SELECT_NONE:
+					return deselectWorldPack(sender);
 				case GET_ITEM:
 					return getItem(sender, args);
 				case SET_NAME:
-					return setItemName(args);
+					return setItemName(sender, args);
 				case ADD_LORE:
-					return addLore(args);
+					return addLore(sender, args);
 				case DELETE_LORE:
-					return clearLore(args);
+					return clearLore(sender, args);
 				case RELOAD:
 					config.reload();
 					return "Reloading configuration.";
@@ -168,10 +183,10 @@ public class ItemRenamerCommands implements CommandExecutor {
 		}
 		throw new CommandErrorException("Unrecognized sub command: " + command);
 	}
-	
+
 	private String getItem(CommandSender sender, Deque<String> args) {
 		// Get all the arguments before we begin
-		final DamageLookup lookup = getLookup(args);
+		final DamageLookup lookup = getLookup(sender, args);
 		
 		if (args.isEmpty()) {
 			YamlConfiguration yaml = new YamlConfiguration();
@@ -194,9 +209,9 @@ public class ItemRenamerCommands implements CommandExecutor {
 			throw new CommandErrorException("Cannot parse damage. Must be a single value, ALL or OTHER.");
 	}
 	
-	private String setItemName(Deque<String> args) {
+	private String setItemName(CommandSender sender, Deque<String> args) {
 		// Get all the arguments before we begin
-		final DamageLookup lookup = createLookup(args);
+		final DamageLookup lookup = createLookup(sender, args);
 		final DamageValues damage = getDamageValues(args);
 		final String name = Joiner.on(" ").join(args);
 		
@@ -210,9 +225,9 @@ public class ItemRenamerCommands implements CommandExecutor {
 		return String.format("Set the name of every item %s.", name);
 	}
 	
-	private String addLore(Deque<String> args) {
+	private String addLore(CommandSender sender, Deque<String> args) {
 		// Get all the arguments before we begin
-		final DamageLookup lookup = createLookup(args);
+		final DamageLookup lookup = createLookup(sender, args);
 		final DamageValues damage = getDamageValues(args);
 		final String lore = Joiner.on(" ").join(args);
 		
@@ -227,9 +242,9 @@ public class ItemRenamerCommands implements CommandExecutor {
 		return String.format("Add the lore '%s' to every item.", lore);
 	}
 	
-	private String clearLore(Deque<String> args) {
+	private String clearLore(CommandSender sender, Deque<String> args) {
 		// Get all the arguments before we begin
-		final DamageLookup lookup = getLookup(args);
+		final DamageLookup lookup = getLookup(sender, args);
 		final DamageValues damage = getDamageValues(args);
 		final StringBuilder output = new StringBuilder();
 		
@@ -255,11 +270,12 @@ public class ItemRenamerCommands implements CommandExecutor {
 
 	/**
 	 * Retrieve the damage lookup based on the item pack and item ID in the parameter stack.
+	 * @param sender - the original command sender.
 	 * @param args - the parameter stack.
 	 * @return The corresponding damage lookup.
 	 */
-	private DamageLookup getLookup(Deque<String> args) {
-		String pack = args.pollFirst();
+	private DamageLookup getLookup(CommandSender sender, Deque<String> args) {
+		String pack = parsePack(sender, args);
 		Integer itemID = getItemID(args);
 		
 		if (pack == null || pack.length() == 0)
@@ -267,8 +283,18 @@ public class ItemRenamerCommands implements CommandExecutor {
 		return config.getRenameConfig().getLookup(pack, itemID);
 	}
 	
-	private DamageLookup createLookup(Deque<String> args) {
-		String pack = args.pollFirst();
+	private String parsePack(CommandSender sender, Deque<String> args) {
+		String selected = selectedPack.get(sender);
+		
+		// Use the selected pack, or parse the input arguments
+		if (selected != null) 
+			return selected;
+		else 
+			return args.pollFirst();
+	}
+	
+	private DamageLookup createLookup(CommandSender sender, Deque<String> args) {
+		String pack = parsePack(sender, args);
 		Integer itemID = getItemID(args);
 		
 		if (pack == null || pack.length() == 0)
@@ -299,7 +325,7 @@ public class ItemRenamerCommands implements CommandExecutor {
 		}
 	}
 
-	private String addWorldPack(Deque<String> args) {
+	private String addWorldPack(CommandSender sender, Deque<String> args) {
 		String pack = args.poll();
 		
 		if (config.getRenameConfig().createPack(pack))
@@ -308,11 +334,37 @@ public class ItemRenamerCommands implements CommandExecutor {
 			return "Pack " + pack + " already exists";
 	}
 	
+	private String selectWorldPack(CommandSender sender, Deque<String> args) {
+		String pack = args.poll();
+		
+		// Either add or remove the selection
+		if (pack == null) {
+			String previous = selectedPack.remove(sender);
+			return previous != null ? "Deselected " + previous : "No pack selected.";
+			
+		} if (config.getRenameConfig().hasPack(pack)) {
+			selectedPack.put(sender, pack);
+			return "Selected pack " + pack;
+			
+		} else {
+			return "Pack " + pack + " doesn't exist.";
+		}
+	}
+	
 	private String deleteWorldPack(Deque<String> args) {
 		String pack = args.poll();
 		
 		config.getRenameConfig().removePack(pack);
 		return "Deleted pack " + pack;
+	}
+
+	private String deselectWorldPack(CommandSender sender) {
+		String removed = selectedPack.remove(sender);
+		
+		if (removed != null)
+			return "Deselected pack " + removed;
+		else
+			return "No pack was selected.";
 	}
 
 	private void expectCommandCount(Deque<String> args, int expected, String error) {
