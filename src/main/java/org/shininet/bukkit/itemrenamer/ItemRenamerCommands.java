@@ -42,6 +42,7 @@ public class ItemRenamerCommands implements CommandExecutor {
 		GET_WORLD_PACK, 
 		SET_WORLD_PACK,
 		GET_ITEM,
+		ADD_PACK,
 		DELETE_PACK,
 		SET_NAME, 
 		ADD_LORE, 
@@ -71,6 +72,7 @@ public class ItemRenamerCommands implements CommandExecutor {
 		output.registerCommand(Commands.SET_AUTO_UPDATE, PERM_SET, "set", "setting", "autoupdate");
 		output.registerCommand(Commands.GET_WORLD_PACK, PERM_GET, "get", "world");
 		output.registerCommand(Commands.SET_WORLD_PACK, PERM_SET, "set", "world");
+		output.registerCommand(Commands.ADD_PACK, PERM_SET, "add", "pack");
 		output.registerCommand(Commands.DELETE_PACK, PERM_SET, "delete", "pack");
 		output.registerCommand(Commands.GET_ITEM, PERM_GET, "get", "item");
 		output.registerCommand(Commands.SET_NAME, PERM_SET, "set", "name");
@@ -131,6 +133,9 @@ public class ItemRenamerCommands implements CommandExecutor {
 				case SET_WORLD_PACK:
 					expectCommandCount(args, 2, "Need a world name and a world pack name.");
 					return setWorldPack(args);
+				case ADD_PACK:
+					expectCommandCount(args, 1, "Need a world pack name.");
+					return addWorldPack(args);
 				case DELETE_PACK:
 					expectCommandCount(args, 1, "Need a world pack name.");
 					return deleteWorldPack(args);
@@ -292,6 +297,15 @@ public class ItemRenamerCommands implements CommandExecutor {
 		} catch (IllegalArgumentException e) {
 			throw new CommandErrorException(e.getMessage(), e);
 		}
+	}
+
+	private String addWorldPack(Deque<String> args) {
+		String pack = args.poll();
+		
+		if (config.getRenameConfig().createPack(pack))
+			return "Created pack " + pack;
+		else
+			return "Pack " + pack + " already exists";
 	}
 	
 	private String deleteWorldPack(Deque<String> args) {

@@ -120,13 +120,7 @@ public class RenameConfiguration {
 	 * @return Existing damage lookup, or a new one if it doesn't exist.
 	 */
 	public DamageLookup createLookup(String pack, int itemID) {
-		Map<Integer, DamageLookup> itemLookup = loadPack(pack);
-				
-		// Create a new if we need to
-		if (itemLookup == null) {
-			modCount++;
-			memoryLookup.put(pack, itemLookup = Maps.newHashMap());
-		}
+		Map<Integer, DamageLookup> itemLookup = loadOrCreatePack(pack);
 		
 		// Same thing for the lookup
 		DamageLookup lookup = itemLookup.get(itemID);
@@ -146,6 +140,35 @@ public class RenameConfiguration {
 	public boolean removePack(String pack) {
 		modCount++;
 		return memoryLookup.remove(pack) != null;
+	}
+	
+	/**
+	 * Construct a new item pack.
+	 * @param pack - name of the pack to construct.
+	 * @return TRUE if this pack was constructed, FALSE if a pack by this name already exists.
+	 */
+	public boolean createPack(String pack) {
+		if (loadPack(pack) == null) {
+			loadOrCreatePack(pack);
+			return true;
+		}
+		return false;
+	}
+	
+	/**
+	 * Load or create a new pack.
+	 * @param pack - name of the pack to create.
+	 * @return The existing pack, or a new one.
+	 */
+	private Map<Integer, DamageLookup> loadOrCreatePack(String pack) {
+		Map<Integer, DamageLookup> itemLookup = loadPack(pack);
+		
+		// Create a new if we need to
+		if (itemLookup == null) {
+			modCount++;
+			memoryLookup.put(pack, itemLookup = Maps.newHashMap());
+		}
+		return itemLookup;
 	}
 	
 	/**
