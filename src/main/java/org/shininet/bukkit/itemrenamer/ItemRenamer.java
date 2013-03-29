@@ -73,8 +73,14 @@ public class ItemRenamer extends JavaPlugin {
 		stackRestrictor = new ItemRenamerStackRestrictor(processor);
 		
 		plugins.registerEvents(listenerPlayerJoin, this);
-		plugins.registerEvents(stackRestrictor, this);
 		
+		if (config.hasStackRestrictor()) {
+			plugins.registerEvents(stackRestrictor, this);
+			logger.info("Starting stack restrictor.");
+		} else {
+			logger.warning("Stack restrictor has been disabled.");
+		}
+				
 		commandExecutor = new ItemRenamerCommands(this, config);
 		getCommand("ItemRenamer").setExecutor(commandExecutor);
 		

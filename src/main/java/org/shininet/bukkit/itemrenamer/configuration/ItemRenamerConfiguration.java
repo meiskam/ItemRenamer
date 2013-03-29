@@ -14,6 +14,7 @@ import org.shininet.bukkit.itemrenamer.ItemRenamer;
 public class ItemRenamerConfiguration {
 	// Locations in the configuration file
 	private static final String AUTO_UPDATE = "autoupdate";
+	private static final String STACK_RESTRICTOR = "stackrestrictor";
 	private static final String WORLD_PACKS = "worlds";
 	
 	private RenameConfiguration renameConfig;
@@ -108,6 +109,14 @@ public class ItemRenamerConfiguration {
 	 */
 	public String getWorldPack(String world) {
 		return config.getString(WORLD_PACKS + "." + world);
+	}
+	
+	public boolean hasStackRestrictor() {
+		return config.getBoolean(STACK_RESTRICTOR, true);
+	}
+	
+	public void setStackRestrictor(boolean value) {
+		config.set(STACK_RESTRICTOR, value);
 	}
 	
 	/**
