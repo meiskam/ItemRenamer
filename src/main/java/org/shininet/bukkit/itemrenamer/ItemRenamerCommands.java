@@ -21,10 +21,11 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 import org.shininet.bukkit.itemrenamer.configuration.ConfigParsers;
 import org.shininet.bukkit.itemrenamer.configuration.DamageLookup;
-import org.shininet.bukkit.itemrenamer.configuration.DamageSerializer;
 import org.shininet.bukkit.itemrenamer.configuration.DamageValues;
 import org.shininet.bukkit.itemrenamer.configuration.ItemRenamerConfiguration;
 import org.shininet.bukkit.itemrenamer.configuration.RenameRule;
+import org.shininet.bukkit.itemrenamer.serialization.DamageSerializer;
+
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;

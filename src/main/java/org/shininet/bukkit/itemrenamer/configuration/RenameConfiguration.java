@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.bukkit.configuration.ConfigurationSection;
+import org.shininet.bukkit.itemrenamer.serialization.DamageSerializer;
 
 import com.comphenix.protocol.reflect.FieldUtils;
 import com.google.common.collect.Lists;
