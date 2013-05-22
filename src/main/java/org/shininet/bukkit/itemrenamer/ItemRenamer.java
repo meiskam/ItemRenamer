@@ -24,7 +24,7 @@ import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
 
 public class ItemRenamer extends JavaPlugin {
-	public Logger logger;
+	private Logger logger;
 
 	private static boolean updateReady = false;
 	private static String updateName = "";
@@ -32,17 +32,13 @@ public class ItemRenamer extends JavaPlugin {
 
 	public static final String updateSlug = "itemrenamer";
 
-	private ItemRenamerCommands commandExecutor;
-	private ItemRenamerConfiguration config;
-	private RenameProcessor processor;
-	
-	private ItemRenamerPlayerJoin listenerPlayerJoin;
+    private ItemRenamerConfiguration config;
+
+    private ItemRenamerPlayerJoin listenerPlayerJoin;
 	private ItemRenamerPacket listenerPacket;
-	private ItemRenamerStackRestrictor stackRestrictor;
-	private RefreshInventoryTask refreshTask;
-	
-	private ProtocolManager protocolManager;
-	private int lastSaveCount;
+    private RefreshInventoryTask refreshTask;
+
+    private int lastSaveCount;
 
 	private Chat chat;
 	
@@ -53,24 +49,24 @@ public class ItemRenamer extends JavaPlugin {
 			protected void onSynchronized() {
 				lastSaveCount = getModificationCount();
 				refreshTask.forceRefresh();
-			};
+			}
 		};
 		
 		if (setupChat()) {
 			logger.info("Found Vault!");
 		}
-		processor = new RenameProcessor(config, chat);
+        RenameProcessor processor = new RenameProcessor(config, chat);
 		
 		startMetrics();
 		startUpdater();
 		
 		// Managers
 		PluginManager plugins = getServer().getPluginManager();
-		protocolManager = ProtocolLibrary.getProtocolManager();
+        ProtocolManager protocolManager = ProtocolLibrary.getProtocolManager();
 		
 		listenerPacket = new ItemRenamerPacket(this, processor, protocolManager, logger);
 		listenerPlayerJoin = new ItemRenamerPlayerJoin(this);
-		stackRestrictor = new ItemRenamerStackRestrictor(processor);
+        ItemRenamerStackRestrictor stackRestrictor = new ItemRenamerStackRestrictor(processor);
 		
 		plugins.registerEvents(listenerPlayerJoin, this);
 		
@@ -80,8 +76,8 @@ public class ItemRenamer extends JavaPlugin {
 		} else {
 			logger.warning("Stack restrictor has been disabled.");
 		}
-				
-		commandExecutor = new ItemRenamerCommands(this, config);
+
+        ItemRenamerCommands commandExecutor = new ItemRenamerCommands(this, config);
 		getCommand("ItemRenamer").setExecutor(commandExecutor);
 		
 		// Tasks
@@ -131,7 +127,7 @@ public class ItemRenamer extends JavaPlugin {
 	}
 
 	/**
-	 * Initialize refernece to Vault.
+	 * Initialize reference to Vault.
 	 * @return TRUE if Vault was detected and loaded, FALSE otherwise.
 	 */
     private boolean setupChat() {

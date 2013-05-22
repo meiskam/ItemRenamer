@@ -50,7 +50,7 @@ public interface DamageLookup {
 	 * @param higherDamage - the maximum damage (inclusive).
 	 * @param rule - the rule to set.
 	 */
-	public abstract void setRule(int lowerDamage, int upperDamage, RenameRule rule);
+	public abstract void setRule(int lowerDamage, int higherDamage, RenameRule rule);
 
 	/**
 	 * Retrieve every defined range in the lookup tree.

@@ -7,12 +7,11 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Range;
 
 public class ConfigParsers {
-
 	/**
 	 * Retrieve as many integers as possible from a given list.
 	 * @param args - list of candidate integers.
 	 * @param count - maximum number of values to consume.
-	 * @param range 
+	 * @param range - range of permitted integers.
 	 * @return The list we're looking for.
 	 */
 	public static List<Integer> getIntegers(Deque<String> args, int count, Range<Integer> range) {

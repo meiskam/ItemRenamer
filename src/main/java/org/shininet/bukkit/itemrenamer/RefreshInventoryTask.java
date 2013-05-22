@@ -12,9 +12,9 @@ public class RefreshInventoryTask implements Runnable {
 	private int lastModCount;
 	private int taskID;
 	
-	private ItemRenamerConfiguration config;
-	private BukkitScheduler scheduler;
-	private Plugin plugin;
+	private final ItemRenamerConfiguration config;
+	private final BukkitScheduler scheduler;
+	private final Plugin plugin;
 	
 	/**
 	 * Construct a new refresh inventory task.

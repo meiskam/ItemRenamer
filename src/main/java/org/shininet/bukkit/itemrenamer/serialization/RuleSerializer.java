@@ -80,7 +80,7 @@ public class RuleSerializer {
 	 * Read a configuration section at a given location.
 	 * @param key - the key of this section.
 	 * @return The configuration section.
-	 * @IllegalArgumentException If a value at this section is not a configuration section.
+	 * @throws IllegalArgumentException If a value at this section is not a configuration section.
 	 */
 	private ConfigurationSection getSection(String key) {
 		Object ruleSection = section.get(key.toLowerCase());

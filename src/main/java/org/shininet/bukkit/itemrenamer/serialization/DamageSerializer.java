@@ -56,7 +56,7 @@ public class DamageSerializer {
 		destination.setOtherRule(ruleSerializer.readRule(DAMAGE_OTHER));
 		
 		for (String key : section.getKeys(false)) {
-			if (!isSpecialKey(key)) {
+			if (isNotSpecialKey(key)) {
 				// Parse and save
 				Range<Integer> range = parseRange(key);
 				destination.setRule(range.lowerEndpoint(), range.upperEndpoint(), ruleSerializer.readRule(key));
@@ -106,8 +106,8 @@ public class DamageSerializer {
 		}
 	}
 
-	private boolean isSpecialKey(String key) {
-		return DAMAGE_ALL.equalsIgnoreCase(key) || DAMAGE_OTHER.equalsIgnoreCase(key);
+	private boolean isNotSpecialKey(String key) {
+		return !DAMAGE_ALL.equalsIgnoreCase(key) && !DAMAGE_OTHER.equalsIgnoreCase(key);
  	}
 	
 	/**

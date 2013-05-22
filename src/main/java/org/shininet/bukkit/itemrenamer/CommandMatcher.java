@@ -14,13 +14,13 @@ class CommandMatcher<TType extends Enum<TType>> {
 	 */
 	public class CommandNode {
 		// NULL for no command
-		private TType command;
-		private String permission;
+		private final TType command;
+		private final String permission;
 		
-		private String name;
+		private final String name;
 		private String path = "";
 		
-		private Map<String, CommandNode> children = Maps.newHashMap();
+		private final Map<String, CommandNode> children = Maps.newHashMap();
 		
 		private CommandNode(String permission, String name, TType command) {
 			this.name = name;
@@ -75,7 +75,7 @@ class CommandMatcher<TType extends Enum<TType>> {
 	/**
 	 * Represents anything.
 	 */
-	private CommandNode root = new CommandNode("", "", null);
+	private final CommandNode root = new CommandNode("", "", null);
 	
 	public CommandNode matchClosest(Deque<String> arguments) {
 		CommandNode current = root;

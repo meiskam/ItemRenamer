@@ -12,7 +12,7 @@ public class MerchantRecipe {
     private ItemStack itemToSell;
 
     // Whether or not this recipe can be used
-    private boolean canUse;
+    private final boolean canUse;
     
 	public MerchantRecipe(ItemStack itemToBuy, ItemStack secondItemToBuy, ItemStack itemToSell, boolean canUse) {
 		this.itemToBuy = itemToBuy;

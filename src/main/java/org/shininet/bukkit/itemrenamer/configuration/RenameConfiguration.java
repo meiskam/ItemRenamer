@@ -17,13 +17,13 @@ import com.google.common.collect.Maps;
  * @author Kristian
  */
 public class RenameConfiguration {
-	private ConfigurationSection section;
+	private final ConfigurationSection section;
 	
 	// Group Manager sucks
 	private static Field internalMap;
 	
 	// Store of every loaded lookup
-	private Map<String, Map<Integer, DamageLookup>> memoryLookup = Maps.newHashMap();
+	private final Map<String, Map<Integer, DamageLookup>> memoryLookup = Maps.newHashMap();
 	
 	// How many times this configuration has changed
 	private int modCount;

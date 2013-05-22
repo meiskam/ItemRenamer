@@ -10,7 +10,7 @@ import org.bukkit.inventory.ItemStack;
 import org.shininet.bukkit.itemrenamer.RenameProcessor;
 
 public class ItemRenamerStackRestrictor implements Listener {
-	private RenameProcessor processor;
+	private final RenameProcessor processor;
 	
 	public ItemRenamerStackRestrictor(RenameProcessor processor) {
 		this.processor = processor;
@@ -30,7 +30,7 @@ public class ItemRenamerStackRestrictor implements Listener {
 			// around.
 			if (cursor.getAmount() == 0 || event.isRightClick()) {
 				return;
-			} else if (!isValid((Player) event.getWhoClicked(), current, cursor)) {
+			} else if (isNotValid((Player) event.getWhoClicked(), current, cursor)) {
 				// But never increase a stack above their personal limit
 				event.setCancelled(true);
 			}
@@ -41,13 +41,13 @@ public class ItemRenamerStackRestrictor implements Listener {
 		return stack == null || stack.getType() == Material.AIR;
 	}
 
-	private boolean isValid(Player player, ItemStack current, ItemStack cursor) {
+	private boolean isNotValid(Player player, ItemStack current, ItemStack cursor) {
 		ItemStack modCurrent = processor.process(player, current.clone());
 		ItemStack modCursor = processor.process(player, cursor.clone());
 		
 		// Disregard the count
 		modCurrent.setAmount(1);
 		modCursor.setAmount(1);
-		return modCurrent.equals(modCursor);
+		return !modCurrent.equals(modCursor);
 	}
 }

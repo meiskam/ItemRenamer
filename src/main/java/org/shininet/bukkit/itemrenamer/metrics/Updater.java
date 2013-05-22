@@ -40,21 +40,21 @@ import org.bukkit.plugin.Plugin;
 
 public class Updater 
 {
-	private Plugin plugin;
-    private UpdateType type;
+	private final Plugin plugin;
+    private final UpdateType type;
     private String versionTitle;
     private String versionLink;
     private long totalSize; // Holds the total size of the file
     //private double downloadedSize; TODO: Holds the number of bytes downloaded
     private int sizeLine; // Used for detecting file size
     private int multiplier; // Used for determining when to broadcast download updates
-    private boolean announce; // Whether to announce file downloads
+    private final boolean announce; // Whether to announce file downloads
     private URL url; // Connecting to RSS
     private static final String DBOUrl = "http://dev.bukkit.org/server-mods/"; // Slugs will be appended to this to get to the project's RSS feed
-    private String [] noUpdateTag = {"-DEV","-PRE"}; // If the version number contains one of these, don't update.
+    private final String [] noUpdateTag = {"-DEV","-PRE"}; // If the version number contains one of these, don't update.
     private static final String VERSION_DELIMITER = " ";
     private static final int BYTE_SIZE = 1024; // Used for downloading files
-    private String updateFolder = YamlConfiguration.loadConfiguration(new File("bukkit.yml")).getString("settings.update-folder"); // The folder that downloads will be placed in
+    private final String updateFolder = YamlConfiguration.loadConfiguration(new File("bukkit.yml")).getString("settings.update-folder"); // The folder that downloads will be placed in
     private Updater.UpdateResult result = Updater.UpdateResult.SUCCESS; // Used for determining the outcome of the update process
     
     // Strings for reading RSS

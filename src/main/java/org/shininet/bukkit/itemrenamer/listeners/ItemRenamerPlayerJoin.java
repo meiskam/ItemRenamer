@@ -12,7 +12,7 @@ import org.shininet.bukkit.itemrenamer.ItemRenamer;
 
 public class ItemRenamerPlayerJoin implements Listener {
 	
-	private ItemRenamer plugin;
+	private final ItemRenamer plugin;
 	
 	public ItemRenamerPlayerJoin(ItemRenamer plugin) {
 		this.plugin = plugin;

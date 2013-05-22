@@ -31,8 +31,8 @@ import com.comphenix.protocol.reflect.FieldAccessException;
 import com.comphenix.protocol.reflect.StructureModifier;
 
 public class ItemRenamerPacket {
-	private RenameProcessor processor;
-	private ProtocolManager protocolManager;
+	private final RenameProcessor processor;
+	private final ProtocolManager protocolManager;
 
 	private final Logger logger;
 

@@ -40,7 +40,7 @@ public class ItemRenamerCommands implements CommandExecutor {
 	private static final Object COMMAND_ITEMRENAMER = "ItemRenamer";
 	
 	// The selected pack for each sender
-	private Map<CommandSender, String> selectedPack = new WeakHashMap<CommandSender, String>();
+	private final Map<CommandSender, String> selectedPack = new WeakHashMap<CommandSender, String>();
 	
 	// Recognized sub-commands
 	public enum Commands {
@@ -61,13 +61,13 @@ public class ItemRenamerCommands implements CommandExecutor {
 		PAGE,
 	}
 	
-	private ItemRenamer plugin;
-	private ItemRenamerConfiguration config;
+	private final ItemRenamer plugin;
+	private final ItemRenamerConfiguration config;
 	
-	private CommandMatcher<Commands> matcher;
+	private final CommandMatcher<Commands> matcher;
 	
 	// Paged output
-	private PagedMessage pagedMessage = new PagedMessage();
+	private final PagedMessage pagedMessage = new PagedMessage();
 	
 	public ItemRenamerCommands(ItemRenamer plugin, ItemRenamerConfiguration config) {
 		this.plugin = plugin;
@@ -257,7 +257,7 @@ public class ItemRenamerCommands implements CommandExecutor {
 		lookup.setTransform(damage, new Function<RenameRule, RenameRule>() {
 			@Override
 			public RenameRule apply(@Nullable RenameRule input) {
-				output.append("Resetting lore for " + input);
+				output.append("Resetting lore for ").append(input);
 				return new RenameRule(input.getName(), null);
 			}
 		});

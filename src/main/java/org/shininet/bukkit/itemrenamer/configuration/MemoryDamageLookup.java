@@ -32,7 +32,7 @@ class MemoryDamageLookup implements DamageLookup {
 	}
 	
 	// Used to store our data
-	private AbstractIntervalTree<Integer, RenameRule> tree = new IntegerInterval();
+	private final AbstractIntervalTree<Integer, RenameRule> tree = new IntegerInterval();
 	
 	private RenameRule all;
 	private RenameRule other;
@@ -49,7 +49,7 @@ class MemoryDamageLookup implements DamageLookup {
 	
 	/**
 	 * Clone a memory damage lookup from a given lookup.
-	 * @param lookup - the other lookup.
+	 * @param other - the other lookup.
 	 */
 	public MemoryDamageLookup(DamageLookup other) {
 		setAllRule(other.getAllRule());

@@ -20,10 +20,10 @@ import com.google.common.collect.Lists;
 public class RenameProcessor {
 	private static final String MARKER_KEY = "com.comphenix.marker";
 
-	private ItemRenamerConfiguration config;
+	private final ItemRenamerConfiguration config;
 	
 	// Vault
-	private Chat chat;
+	private final Chat chat;
 	
 	/**
 	 * A marker telling us that this is ItemStack was renamed by ItemRenamer.
@@ -101,7 +101,7 @@ public class RenameProcessor {
 	
 	/**
 	 * Undo a item rename, or leave as is.
-	 * @param stack - the stack to undo.
+	 * @param input - the stack to undo.
 	 * @return TRUE if we removed the rename and lore, FALSE otherwise.
 	 */
 	public boolean unprocess(ItemStack input) {
@@ -132,9 +132,9 @@ public class RenameProcessor {
 		String pack = getPack(player);
 		
 		if (input != null) {
-			for (int i = 0; i < input.length; i++) {
-				process(pack, input[i]);
-			}
+            for (ItemStack anInput : input) {
+                process(pack, anInput);
+            }
 		}
 		return input;
 	}

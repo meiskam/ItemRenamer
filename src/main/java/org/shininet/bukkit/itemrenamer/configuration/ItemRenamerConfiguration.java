@@ -19,10 +19,10 @@ public class ItemRenamerConfiguration {
 	
 	private RenameConfiguration renameConfig;
 	private FileConfiguration config;
-	private ItemRenamer plugin;
+	private final ItemRenamer plugin;
 	
 	// Path to the configuration file
-	private String path;
+	private final String path;
 	
 	// Number of times it has changed
 	private int modCount;

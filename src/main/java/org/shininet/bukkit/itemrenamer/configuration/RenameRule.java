@@ -37,7 +37,7 @@ public class RenameRule {
 			this.loreSections = ImmutableList.copyOf(loreSections);
 		else
 			// Lore sections should never be NULL
-			this.loreSections = ImmutableList.<String>of();
+			this.loreSections = ImmutableList.of();
 	}
 
 	/**
@@ -147,7 +147,7 @@ public class RenameRule {
 	/**
 	 * Modify the given rename rule by setting a new name.
 	 * @param original - the original rename rule.
-	 * @param newName - the new name.
+	 * @param newLore - the new lore.
 	 * @return The modified rename rule.
 	 */
 	public static RenameRule withAdditionalLore(RenameRule original, String newLore) {

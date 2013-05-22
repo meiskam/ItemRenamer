@@ -18,7 +18,7 @@ public class PagedMessage {
 	public static final int PAGE_LINE_COUNT = 9;
 	
 	// Paged message
-	private Map<CommandSender, List<String>> pagedMessage = new WeakHashMap<CommandSender, List<String>>();
+	private final Map<CommandSender, List<String>> pagedMessage = new WeakHashMap<CommandSender, List<String>>();
 	
 	public String getPage(CommandSender receiver, int pageIndex) {
 		List<String> paged = pagedMessage.get(receiver);
