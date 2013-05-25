@@ -2,4 +2,5 @@
 *.jar
 *.iml
 bin/*
-/target
+target/*
+.idea/*
