@@ -4,6 +4,7 @@
 
 package org.shininet.bukkit.itemrenamer;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.LinkedList;
@@ -18,6 +19,8 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
 import org.shininet.bukkit.itemrenamer.configuration.ConfigParsers;
 import org.shininet.bukkit.itemrenamer.configuration.DamageLookup;
@@ -39,8 +42,11 @@ public class ItemRenamerCommands implements CommandExecutor {
 	// The super command
 	private static final Object COMMAND_ITEMRENAMER = "ItemRenamer";
 	
-	// The selected pack for each sender
+	// The selected pack and item for each sender
 	private final Map<CommandSender, String> selectedPack = new WeakHashMap<CommandSender, String>();
+	
+	// Selected items
+	private SelectedItemTracker selectedTracker;
 	
 	// Recognized sub-commands
 	public enum Commands {
@@ -49,9 +55,11 @@ public class ItemRenamerCommands implements CommandExecutor {
 		GET_WORLD_PACK, 
 		SET_WORLD_PACK,
 		GET_ITEM,
+		GET_SELECTED,
 		ADD_PACK,
 		DELETE_PACK,
 		SELECT_PACK,
+		SELECT_ITEM,
 		SELECT_NONE,
 		SET_NAME, 
 		ADD_LORE, 
@@ -69,10 +77,11 @@ public class ItemRenamerCommands implements CommandExecutor {
 	// Paged output
 	private final PagedMessage pagedMessage = new PagedMessage();
 	
-	public ItemRenamerCommands(ItemRenamer plugin, ItemRenamerConfiguration config) {
+	public ItemRenamerCommands(ItemRenamer plugin, ItemRenamerConfiguration config, SelectedItemTracker selectedTracker) {
 		this.plugin = plugin;
 		this.matcher = registerCommands();
 		this.config = config;
+		this.selectedTracker = selectedTracker;
 	}
 	
 	private CommandMatcher<Commands> registerCommands() {
@@ -82,8 +91,10 @@ public class ItemRenamerCommands implements CommandExecutor {
 		output.registerCommand(Commands.GET_WORLD_PACK, PERM_GET, "get", "world");
 		output.registerCommand(Commands.SET_WORLD_PACK, PERM_SET, "set", "world");
 		output.registerCommand(Commands.ADD_PACK, PERM_SET, "add", "pack");
+		output.registerCommand(Commands.GET_SELECTED, PERM_GET, "get", "selected");
 		output.registerCommand(Commands.DELETE_PACK, PERM_SET, "delete", "pack");
 		output.registerCommand(Commands.SELECT_PACK, PERM_SET, "select", "pack");
+		output.registerCommand(Commands.SELECT_ITEM, PERM_SET, "select", "item");
 		output.registerCommand(Commands.SELECT_NONE, PERM_SET, "select", "none");
 		output.registerCommand(Commands.GET_ITEM, PERM_GET, "get", "item");
 		output.registerCommand(Commands.SET_NAME, PERM_SET, "set", "name");
@@ -150,11 +161,17 @@ public class ItemRenamerCommands implements CommandExecutor {
 				case DELETE_PACK:
 					expectCommandCount(args, 1, "Need a world pack name.");
 					return deleteWorldPack(args);
+				case SELECT_ITEM:
+					expectCommandCount(args, 0, "No arguments needed.");
+					return selectCurrent(sender);
 				case SELECT_PACK:
 					expectCommandCount(args, 1, "Need a world pack name.");
 					return selectWorldPack(sender, args);
 				case SELECT_NONE:
-					return deselectWorldPack(sender);
+					String deselectedItem = deselectItemStack(sender);
+					return deselectWorldPack(sender) + (deselectedItem != null ? ". " + deselectedItem : "");
+				case GET_SELECTED:
+					return printSelected(sender);
 				case GET_ITEM:
 					return getItem(sender, args);
 				case SET_NAME:
@@ -185,6 +202,48 @@ public class ItemRenamerCommands implements CommandExecutor {
 		throw new CommandErrorException("Unrecognized sub command: " + command);
 	}
 
+	private String selectCurrent(CommandSender sender) {
+		// This will fail if the command sender is not a player
+		ItemStack previous = selectedTracker.selectCurrent(sender);
+		ItemStack current = selectedTracker.getItemToSelect(sender);
+		Player player = (Player) sender;
+		
+		String worldName = player.getWorld().getName();
+		String worldPack = config.getWorldPack(worldName);
+		
+		// Select the current world too
+		if (selectedPack.get(sender) == null && worldPack != null) {
+			selectedPack.put(sender, worldPack);
+		}
+		
+		// And we're done
+		if (previous != null) {
+			return "Selected " + current + " from " + previous;
+		} else {
+			return "Selected " + current;
+		}
+	}
+
+	/**
+	 * Print the currently selected item and pack.
+	 * @param sender - the command sender.
+	 * @return The lines to print.
+	 */
+	private String printSelected(CommandSender sender) {
+		List<String> lines = new ArrayList<String>();
+
+		if (selectedPack.get(sender) != null)
+			lines.add("Selected pack " + selectedPack.get(sender));
+		if (selectedTracker.getSelected(sender) != null)
+			lines.add("Selected item " + selectedTracker.getSelected(sender));
+		
+		if (lines.size() > 0) {
+			return Joiner.on("\n").join(lines);
+		} else {
+			return "Nothing selected.";
+		}
+	}
+
 	private String getItem(CommandSender sender, Deque<String> args) {
 		// Get all the arguments before we begin
 		final DamageLookup lookup = getLookup(sender, args);
@@ -198,7 +257,7 @@ public class ItemRenamerCommands implements CommandExecutor {
 			return pagedMessage.createPage(sender, yaml.saveToString());
 		}
 		
-		final DamageValues damage = getDamageValues(args);
+		final DamageValues damage = getDamageValues(sender, args);
 		
 		if (damage == DamageValues.ALL)
 			return "Rename: " + lookup.getAllRule();
@@ -213,7 +272,7 @@ public class ItemRenamerCommands implements CommandExecutor {
 	private String setItemName(CommandSender sender, Deque<String> args) {
 		// Get all the arguments before we begin
 		final DamageLookup lookup = createLookup(sender, args);
-		final DamageValues damage = getDamageValues(args);
+		final DamageValues damage = getDamageValues(sender, args);
 		final String name = Joiner.on(" ").join(args);
 		
 		lookup.setTransform(damage, new Function<RenameRule, RenameRule>() {
@@ -229,7 +288,7 @@ public class ItemRenamerCommands implements CommandExecutor {
 	private String addLore(CommandSender sender, Deque<String> args) {
 		// Get all the arguments before we begin
 		final DamageLookup lookup = createLookup(sender, args);
-		final DamageValues damage = getDamageValues(args);
+		final DamageValues damage = getDamageValues(sender, args);
 		final String lore = Joiner.on(" ").join(args);
 		
 		// Apply the change
@@ -246,7 +305,7 @@ public class ItemRenamerCommands implements CommandExecutor {
 	private String clearLore(CommandSender sender, Deque<String> args) {
 		// Get all the arguments before we begin
 		final DamageLookup lookup = getLookup(sender, args);
-		final DamageValues damage = getDamageValues(args);
+		final DamageValues damage = getDamageValues(sender, args);
 		final StringBuilder output = new StringBuilder();
 		
 		if (lookup == null) {
@@ -294,18 +353,28 @@ public class ItemRenamerCommands implements CommandExecutor {
 			return args.pollFirst();
 	}
 	
+	private Integer getSelectedItemID(CommandSender sender, Deque<String> alternative) {
+		ItemStack stack = selectedTracker.getSelected(sender);
+		
+		// Either use the selected stack, or look it up using the passed parameters
+		return stack != null ? stack.getTypeId() : getItemID(alternative);
+	}
+	
 	private DamageLookup createLookup(CommandSender sender, Deque<String> args) {
 		String pack = parsePack(sender, args);
-		Integer itemID = getItemID(args);
+		Integer itemID = getSelectedItemID(sender, args);
 		
 		if (pack == null || pack.length() == 0)
 			throw new IllegalArgumentException("Must specify an item pack.");
 		return config.getRenameConfig().createLookup(pack, itemID);
 	}
 	
-	private DamageValues getDamageValues(Deque<String> args) {
+	private DamageValues getDamageValues(CommandSender sender, Deque<String> args) {
 		try {
-			return DamageValues.parse(args);
+			if (selectedTracker.getSelected(sender) != null)
+				return new DamageValues(selectedTracker.getSelected(sender).getDurability());
+			else
+				return DamageValues.parse(args);
 		} catch (IllegalArgumentException e) {
 			// Wrap it in a more specific exception
 			throw new CommandErrorException(e.getMessage(), e);
@@ -366,6 +435,15 @@ public class ItemRenamerCommands implements CommandExecutor {
 			return "Deselected pack " + removed;
 		else
 			return "No pack was selected.";
+	}
+	
+	private String deselectItemStack(CommandSender sender) {
+		ItemStack removed = selectedTracker.deselectCurrent(sender);
+		
+		if (removed != null)
+			return "Deselected item " + removed;
+		else
+			return null;
 	}
 
 	private void expectCommandCount(Deque<String> args, int expected, String error) {

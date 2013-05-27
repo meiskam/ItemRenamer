@@ -38,8 +38,10 @@ public class ItemRenamer extends JavaPlugin {
 	private ItemRenamerPacket listenerPacket;
     private RefreshInventoryTask refreshTask;
 
+    // For tracking the currently selected item
+    private SelectedItemTracker selectedTracker;
+    
     private int lastSaveCount;
-
 	private Chat chat;
 	
 	@Override
@@ -66,9 +68,11 @@ public class ItemRenamer extends JavaPlugin {
 		
 		listenerPacket = new ItemRenamerPacket(this, processor, protocolManager, logger);
 		listenerPlayerJoin = new ItemRenamerPlayerJoin(this);
+		selectedTracker = new SelectedItemTracker();
         ItemRenamerStackRestrictor stackRestrictor = new ItemRenamerStackRestrictor(processor);
 		
 		plugins.registerEvents(listenerPlayerJoin, this);
+		plugins.registerEvents(selectedTracker, this);
 		
 		if (config.hasStackRestrictor()) {
 			plugins.registerEvents(stackRestrictor, this);
@@ -77,7 +81,7 @@ public class ItemRenamer extends JavaPlugin {
 			logger.warning("Stack restrictor has been disabled.");
 		}
 
-        ItemRenamerCommands commandExecutor = new ItemRenamerCommands(this, config);
+        ItemRenamerCommands commandExecutor = new ItemRenamerCommands(this, config, selectedTracker);
 		getCommand("ItemRenamer").setExecutor(commandExecutor);
 		
 		// Tasks

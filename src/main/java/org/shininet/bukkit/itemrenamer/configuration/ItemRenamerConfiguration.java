@@ -105,7 +105,7 @@ public class ItemRenamerConfiguration {
 	/**
 	 * Retrieve the default item name pack for a given world.
 	 * @param world - the name of the world.
-	 * @return The default item name pack.
+	 * @return The default item name pack, or NULL if not found.
 	 */
 	public String getWorldPack(String world) {
 		return config.getString(WORLD_PACKS + "." + world);
