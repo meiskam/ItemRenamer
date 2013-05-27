@@ -59,7 +59,7 @@ public class ItemRenamerCommands implements CommandExecutor {
 		ADD_PACK,
 		DELETE_PACK,
 		SELECT_PACK,
-		SELECT_ITEM,
+		SELECT_HAND,
 		SELECT_NONE,
 		SET_NAME, 
 		ADD_LORE, 
@@ -94,7 +94,7 @@ public class ItemRenamerCommands implements CommandExecutor {
 		output.registerCommand(Commands.GET_SELECTED, PERM_GET, "get", "selected");
 		output.registerCommand(Commands.DELETE_PACK, PERM_SET, "delete", "pack");
 		output.registerCommand(Commands.SELECT_PACK, PERM_SET, "select", "pack");
-		output.registerCommand(Commands.SELECT_ITEM, PERM_SET, "select", "item");
+		output.registerCommand(Commands.SELECT_HAND, PERM_SET, "select", "hand");
 		output.registerCommand(Commands.SELECT_NONE, PERM_SET, "select", "none");
 		output.registerCommand(Commands.GET_ITEM, PERM_GET, "get", "item");
 		output.registerCommand(Commands.SET_NAME, PERM_SET, "set", "name");
@@ -161,7 +161,7 @@ public class ItemRenamerCommands implements CommandExecutor {
 				case DELETE_PACK:
 					expectCommandCount(args, 1, "Need a world pack name.");
 					return deleteWorldPack(args);
-				case SELECT_ITEM:
+				case SELECT_HAND:
 					expectCommandCount(args, 0, "No arguments needed.");
 					return selectCurrent(sender);
 				case SELECT_PACK:
