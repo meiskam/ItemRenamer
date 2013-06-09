@@ -11,6 +11,7 @@ import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.shininet.bukkit.itemrenamer.configuration.DamageLookup;
 import org.shininet.bukkit.itemrenamer.configuration.ItemRenamerConfiguration;
+import org.shininet.bukkit.itemrenamer.configuration.RenameConfiguration;
 import org.shininet.bukkit.itemrenamer.configuration.RenameRule;
 
 import com.comphenix.protocol.wrappers.nbt.NbtCompound;
@@ -61,9 +62,11 @@ public class RenameProcessor {
 	}
 	
 	private ItemStack process(String pack, ItemStack input) {
+		RenameConfiguration renameConfig = config.getRenameConfig();
+		
 		// The item stack has already been cloned in the packet
-		if (input != null && pack != null) {
-			DamageLookup lookup = config.getRenameConfig().getLookup(pack, input.getTypeId());
+		if (input != null && pack != null && renameConfig.hasPack(pack)) {
+			DamageLookup lookup = renameConfig.getLookup(pack, input.getTypeId());
 		
 			if (lookup != null) {
 				RenameRule rule = lookup.getRule(input.getDurability());
