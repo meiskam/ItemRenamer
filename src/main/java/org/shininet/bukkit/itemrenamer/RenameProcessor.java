@@ -66,39 +66,59 @@ public class RenameProcessor {
 		
 		// The item stack has already been cloned in the packet
 		if (input != null && pack != null && renameConfig.hasPack(pack)) {
+			RenameRule exactRule = renameConfig.getExact(pack).getRule(input);
+			
+			// Exact item stacks has priority
+			if (exactRule != null) {
+				return processRule(input, exactRule);
+			}
+			
+			// Next look at ranged rename rules
 			DamageLookup lookup = renameConfig.getLookup(pack, input.getTypeId());
-		
+
 			if (lookup != null) {
 				RenameRule rule = lookup.getRule(input.getDurability());
 				
-				if (rule == null)
-					return input;
-				ItemMeta itemMeta = input.getItemMeta();
-				
-				// May have been set by a plugin or a player
-				if ((itemMeta.hasDisplayName()) || (itemMeta.hasLore())) 
-					return input;
-				// Fix a client bug
-				if (itemMeta instanceof BookMeta) {
-					BookMeta book = (BookMeta) itemMeta;
-					
-					// Create the pages NBT tag
-					if (book.getPageCount() == 0) {
-						book.setPages("");
-					}
+				if (rule != null) {
+					return processRule(input, rule);
 				}
-				
-				packName(itemMeta, rule);
-				packLore(itemMeta, rule);
-				input.setItemMeta(itemMeta);
-				
-				// Add a simple marker allowing us to detect renamed items
-				// Note that this MUST be exected after ItemMeta
-				getCompound(input).put(MARKER_KEY, MARKER);
 			}
 		}
 		
 		// Just return it - for chaining
+		return input;
+	}
+
+	/**
+	 * Rename or append lore to the given item stack.
+	 * @param input - the item stack.
+	 * @param rule - the rename rule to apply.
+	 * @return The renamed item stack.
+	 */
+	private ItemStack processRule(ItemStack input, RenameRule rule) {
+		ItemMeta itemMeta = input.getItemMeta();
+		
+		// May have been set by a plugin or a player
+		if ((itemMeta.hasDisplayName()) || (itemMeta.hasLore())) 
+			return input;
+		
+		// Fix a client bug
+		if (itemMeta instanceof BookMeta) {
+			BookMeta book = (BookMeta) itemMeta;
+			
+			// Create the pages NBT tag
+			if (book.getPageCount() == 0) {
+				book.setPages("");
+			}
+		}
+		
+		packName(itemMeta, rule);
+		packLore(itemMeta, rule);
+		input.setItemMeta(itemMeta);
+		
+		// Add a simple marker allowing us to detect renamed items
+		// Note that this MUST be exected after ItemMeta
+		getCompound(input).put(MARKER_KEY, MARKER);
 		return input;
 	}
 	

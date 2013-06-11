@@ -1,13 +1,9 @@
 package org.shininet.bukkit.itemrenamer.configuration;
 
-import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import org.bukkit.configuration.ConfigurationSection;
-import org.shininet.bukkit.itemrenamer.serialization.DamageSerializer;
-
-import com.comphenix.protocol.reflect.FieldUtils;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -19,11 +15,8 @@ import com.google.common.collect.Maps;
 public class RenameConfiguration {
 	private final ConfigurationSection section;
 	
-	// Group Manager sucks
-	private static Field internalMap;
-	
 	// Store of every loaded lookup
-	private final Map<String, Map<Integer, DamageLookup>> memoryLookup = Maps.newHashMap();
+	private final Map<String, RulePack> memoryLookup = Maps.newHashMap();
 	
 	// How many times this configuration has changed
 	private int modCount;
@@ -41,37 +34,28 @@ public class RenameConfiguration {
 	 * @return The damage lookup, or NULL if the item ID has not been registered.
 	 */
 	public DamageLookup getLookup(String pack, int itemID) {
-		Map<Integer, DamageLookup> itemLookup = loadPack(pack);
+		RulePack itemLookup = loadPack(pack);
 
 		if (itemLookup != null) {
-			return itemLookup.get(itemID);
+			return itemLookup.getRangeLookup().get(itemID);
 		} else {
 			throw new IllegalArgumentException("Pack " + pack + " doesn't exist.");
 		}
 	}
 	
-	private ConfigurationSection getSection(ConfigurationSection parent, String key) {
-		ConfigurationSection result = parent.getConfigurationSection(key);
+	/**
+	 * Retrieve the exact lookup for a given pack.
+	 * @param pack - the pack name.
+	 * @return The exact lookup.
+	 */
+	public ExactLookup getExact(String pack) {
+		RulePack itemLookup = loadPack(pack);
 		
-		// What the hell?
-		if (result == parent) {
-			if (internalMap == null)
-				internalMap = FieldUtils.getField(result.getClass(), "map", true);
-			try {
-				@SuppressWarnings("unchecked")
-				Map<String, Object> map = (Map<String, Object>) internalMap.get(parent);
-				Object raw = map != null ? map.get(key) : null;
-				
-				// Neat
-				if (raw instanceof ConfigurationSection)
-					return (ConfigurationSection) raw;
-			} catch (Exception e) {
-				throw new RuntimeException("GroupMananger hack failed!", e);
-			}
-			// Failure
-			return null;
+		if (itemLookup != null) {
+			return itemLookup.getExactLookup();
+		} else {
+			throw new IllegalArgumentException("Pack " + pack + " doesn't exist.");	
 		}
-		return result;
 	}
 	
 	/**
@@ -79,28 +63,13 @@ public class RenameConfiguration {
 	 * @param pack - the pack to load.
 	 * @return A map representation of this pack.
 	 */
-	private Map<Integer, DamageLookup> loadPack(String pack) {
-		Map<Integer, DamageLookup> itemLookup = memoryLookup.get(pack);
+	private RulePack loadPack(String pack) {
+		RulePack itemLookup = memoryLookup.get(pack);
 		
 		// Initialize item lookup
 		if (itemLookup == null) {
-			ConfigurationSection items = getSection(section, pack);
-			
-			if (items != null) {
-				memoryLookup.put(pack, itemLookup = Maps.newHashMap());
-				
-				for (String key : items.getKeys(false)) {
-					Integer id = Integer.parseInt(key);
-					DamageSerializer serializer = new DamageSerializer(getSection(items, key));	
-					DamageLookup damage = new MemoryDamageLookup();
-					
-					// Load and save
-					serializer.readLookup(damage);
-					itemLookup.put(id, damage);
-				}
-			} else {
-				return null;
-			}
+			itemLookup = new RulePack(pack);
+			itemLookup.load(section);
 		}
 		return itemLookup;
 	}
@@ -121,16 +90,7 @@ public class RenameConfiguration {
 	 * @return Existing damage lookup, or a new one if it doesn't exist.
 	 */
 	public DamageLookup createLookup(String pack, int itemID) {
-		Map<Integer, DamageLookup> itemLookup = loadOrCreatePack(pack);
-		
-		// Same thing for the lookup
-		DamageLookup lookup = itemLookup.get(itemID);
-		
-		if (lookup == null) {
-			modCount++;
-			itemLookup.put(itemID, lookup = new MemoryDamageLookup());
-		}
-		return lookup;
+		return loadOrCreatePack(pack).getOrCreateLookup(itemID);
 	}
 	
 	/**
@@ -161,13 +121,13 @@ public class RenameConfiguration {
 	 * @param pack - name of the pack to create.
 	 * @return The existing pack, or a new one.
 	 */
-	private Map<Integer, DamageLookup> loadOrCreatePack(String pack) {
-		Map<Integer, DamageLookup> itemLookup = loadPack(pack);
+	private RulePack loadOrCreatePack(String pack) {
+		RulePack itemLookup = loadPack(pack);
 		
 		// Create a new if we need to
 		if (itemLookup == null) {
 			modCount++;
-			memoryLookup.put(pack, itemLookup = Maps.newHashMap());
+			memoryLookup.put(pack, itemLookup);
 		}
 		return itemLookup;
 	}
@@ -177,15 +137,10 @@ public class RenameConfiguration {
 	 * @param pack - name pack.
 	 */
 	public void saveLookup(String pack) {
-		Map<Integer, DamageLookup> itemLookup = memoryLookup.get(pack);
+		RulePack itemLookup = memoryLookup.get(pack);
 		
 		if (itemLookup != null) {
-			// Write all the stored damage lookups
-			for (Entry<Integer, DamageLookup> entry : itemLookup.entrySet()) {
-				DamageSerializer serializer = new DamageSerializer(section.createSection(pack + "." + entry.getKey()));
-				serializer.writeLookup(entry.getValue());
-			}
-			
+			itemLookup.save(section);
 		} else {
 			throw new IllegalArgumentException("Cannot save " + pack + ": It doesn't exist.");
 		}
@@ -198,12 +153,8 @@ public class RenameConfiguration {
 	public int getModificationCount() {
 		int totalCount = modCount;
 		
-		for (Entry<String, Map<Integer, DamageLookup>> packEntry : memoryLookup.entrySet()) {
-			for (DamageLookup lookup : packEntry.getValue().values()) {
-				if (lookup.getModificationCount() > 0) {
-					totalCount += lookup.getModificationCount();
-				}
-			}
+		for (Entry<String, RulePack> packEntry : memoryLookup.entrySet()) {
+			totalCount += packEntry.getValue().getModificationCount();
 		}
 		return totalCount;
 	}

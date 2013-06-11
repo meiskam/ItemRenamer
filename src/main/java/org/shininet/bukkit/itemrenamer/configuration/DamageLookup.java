@@ -5,7 +5,7 @@ import java.util.Map;
 import com.google.common.base.Function;
 import com.google.common.collect.Range;
 
-public interface DamageLookup {
+public interface DamageLookup extends Modifiable {
 	/**
 	 * Retrieve the rule that is applied to every damage value, even those that have been set.
 	 * @return The all rule.
@@ -71,16 +71,4 @@ public interface DamageLookup {
 	 * @return The correct rename rule.
 	 */
 	public abstract RenameRule getRule(int damage);
-
-	/**
-	 * Determine how many times this damage lookup has been modified.
-	 * @return The number of times each individual field has been changed.
-	 */
-	public abstract int getModificationCount();
-	
-	/**
-	 * Set how many times this damage lookup has been modified.
-	 * @param value - the new number of times it has changed.
-	 */
-	public abstract void setModificationCount(int value);
 }
