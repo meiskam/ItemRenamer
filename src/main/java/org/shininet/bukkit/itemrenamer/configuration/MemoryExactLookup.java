@@ -6,6 +6,7 @@ import java.util.Map.Entry;
 import org.bukkit.inventory.ItemStack;
 import org.shininet.bukkit.wrappers.SpecificItemStack;
 
+import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
 
@@ -20,14 +21,22 @@ public class MemoryExactLookup implements ExactLookup {
 	public RenameRule getRule(ItemStack stack) {
 		return lookup.get(new SpecificItemStack(stack));
 	}
-
+	
+	@Override
+	public void setTransform(ItemStack stack, Function<RenameRule, RenameRule> function) {
+		RenameRule rule = getRule(stack);
+		
+		// Process and apply the rule
+		setRule(stack, function.apply(rule != null ? rule : RenameRule.IDENTITY));
+	}
+	
 	@Override
 	public void setRule(ItemStack stack, RenameRule rule) {
-		SpecificItemStack key = new SpecificItemStack(stack.clone());
+		SpecificItemStack key = new SpecificItemStack(stack);
 		RenameRule old = null;
 
 		// Associate or remove
-		if (rule != null)
+		if (!RenameRule.isIdentity(rule))
 			old = lookup.put(key, rule);
 		else
 			old = lookup.remove(key);

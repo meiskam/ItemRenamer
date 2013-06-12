@@ -26,10 +26,10 @@ import org.shininet.bukkit.itemrenamer.configuration.ConfigParsers;
 import org.shininet.bukkit.itemrenamer.configuration.DamageLookup;
 import org.shininet.bukkit.itemrenamer.configuration.DamageValues;
 import org.shininet.bukkit.itemrenamer.configuration.ItemRenamerConfiguration;
+import org.shininet.bukkit.itemrenamer.configuration.RenameProcessorFactory;
 import org.shininet.bukkit.itemrenamer.configuration.RenameRule;
 import org.shininet.bukkit.itemrenamer.serialization.DamageSerializer;
 
-import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ranges;
@@ -245,6 +245,14 @@ public class ItemRenamerCommands implements CommandExecutor {
 	}
 
 	private String getItem(CommandSender sender, Deque<String> args) {
+		String pack = selectedPack.get(sender);
+		
+		// Check for special selection
+		if (selectedTracker.hasExactSelector(sender) && pack != null) {
+			return "Rename: " + config.getRenameConfig().getExact(pack).
+								getRule(selectedTracker.getSelected(sender));
+		}
+
 		// Get all the arguments before we begin
 		final DamageLookup lookup = getLookup(sender, args);
 		
@@ -269,58 +277,90 @@ public class ItemRenamerCommands implements CommandExecutor {
 			throw new CommandErrorException("Cannot parse damage. Must be a single value, ALL or OTHER.");
 	}
 	
-	private String setItemName(CommandSender sender, Deque<String> args) {
-		// Get all the arguments before we begin
-		final DamageLookup lookup = createLookup(sender, args);
-		final DamageValues damage = getDamageValues(sender, args);
-		final String name = Joiner.on(" ").join(args);
+	private void modifyCurrent(CommandSender sender, Deque<String> args, boolean createNew, RenameProcessorFactory factory) {
+		String pack = selectedPack.get(sender);
 		
-		lookup.setTransform(damage, new Function<RenameRule, RenameRule>() {
-			@Override
-			public RenameRule apply(@Nullable RenameRule input) {
-				return input.withName(name);
-			}
-		});
-		
-		return String.format("Set the name of every item %s.", name);
+		// Exact matches
+		if (selectedTracker.hasExactSelector(sender) && pack != null) {
+			ItemStack stack = selectedTracker.getSelected(sender);
+
+			// Apply this to a new exact lookup
+			config.getRenameConfig().createExact(pack).
+				setTransform(stack, factory.create());
+		} else {
+			// Get all the arguments before we begin
+			DamageLookup lookup = createNew ? createLookup(sender, args) : getLookup(sender, args);
+			DamageValues damage = getDamageValues(sender, args);
+			
+			if (lookup != null)
+				lookup.setTransform(damage, factory.create());
+			else
+				throw new IllegalArgumentException("No rename rule found.");
+		}
 	}
 	
-	private String addLore(CommandSender sender, Deque<String> args) {
-		// Get all the arguments before we begin
-		final DamageLookup lookup = createLookup(sender, args);
-		final DamageValues damage = getDamageValues(sender, args);
-		final String lore = Joiner.on(" ").join(args);
-		
-		// Apply the change
-		lookup.setTransform(damage, new Function<RenameRule, RenameRule>() {
+	/**
+	 * Retrieve the remaining arguments as a string.
+	 * @param args - the arguments.
+	 * @return The remaining arguments.
+	 */
+	private String getRemainder(Deque<String> args) {
+		return Joiner.on(" ").join(args);
+	}
+	
+	private String setItemName(CommandSender sender, final Deque<String> args) {
+		modifyCurrent(sender, args, true, new RenameProcessorFactory() {
 			@Override
-			public RenameRule apply(@Nullable RenameRule input) {
-				return input.withAdditionalLore(Arrays.asList(lore));
+			public RenameFunction create() {
+				final String name = getRemainder(args);
+				// This is Java alright ...
+				return new RenameFunction() {
+					@Override
+					public RenameRule apply(@Nullable RenameRule input) {
+						return input.withName(name);
+					}
+				};
 			}
 		});
-		
-		return String.format("Add the lore '%s' to every item.", lore);
+		return String.format("Set the name of every item %s.", getRemainder(args));
+	}
+	
+	private String addLore(CommandSender sender, final Deque<String> args) {
+		// Apply the change
+		modifyCurrent(sender, args, true, new RenameProcessorFactory() {
+			@Override
+			public RenameFunction create() {
+				final String lore = getRemainder(args);
+				
+				return new RenameFunction() {
+					@Override
+					public RenameRule apply(@Nullable RenameRule input) {
+						return input.withAdditionalLore(Arrays.asList(lore));
+					}
+				};
+			}
+		});
+		return String.format("Add the lore '%s' to every item.", getRemainder(args));
 	}
 	
 	private String clearLore(CommandSender sender, Deque<String> args) {
-		// Get all the arguments before we begin
-		final DamageLookup lookup = getLookup(sender, args);
-		final DamageValues damage = getDamageValues(sender, args);
+		// Output message
 		final StringBuilder output = new StringBuilder();
-		
-		if (lookup == null) {
-			throw new IllegalArgumentException("No lore found,");
-		}
-		
+
 		// Apply the change
-		lookup.setTransform(damage, new Function<RenameRule, RenameRule>() {
+		modifyCurrent(sender, args, true, new RenameProcessorFactory() {
 			@Override
-			public RenameRule apply(@Nullable RenameRule input) {
-				output.append("Resetting lore for ").append(input);
-				return new RenameRule(input.getName(), null);
+			public RenameFunction create() {
+				return new RenameFunction() {
+					@Override
+					public RenameRule apply(@Nullable RenameRule input) {
+						output.append("Resetting lore for ").append(input);
+						return new RenameRule(input.getName(), null);
+					}
+				};
 			}
 		});
-		
+
 		// Inform the user
 		if (output.length() == 0)
 			return "No items found.";

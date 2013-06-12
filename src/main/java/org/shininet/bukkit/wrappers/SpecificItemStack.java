@@ -5,6 +5,8 @@ import java.util.Set;
 
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.Repairable;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.Sets;
@@ -17,8 +19,8 @@ public class SpecificItemStack {
 	private final ItemStack stack;
 	
 	// Don't use EnumSet - may not work that well with MCPC+
-	private static Set<Material> armor = Sets.newHashSet();
-	private static Set<Material> tool = Sets.newHashSet();
+	private static Set<Material> ARMOR = Sets.newHashSet();
+	private static Set<Material> TOOL = Sets.newHashSet();
 	
 	// Invoked to initialize the armor and weapon lookups
 	static {
@@ -26,9 +28,9 @@ public class SpecificItemStack {
 			String name = material.name();
 			
 			if (name.contains("HELMET") || name.contains("CHESTPLATE") || name.contains("LEGGING") || name.contains("BOOTS")) {
-				armor.add(material);
+				ARMOR.add(material);
 			} else if (name.contains("AXE") || name.contains("HOE") || name.contains("PICKAXE") || name.contains("SPADE") || name.contains("SWORD")) {
-				tool.add(material);
+				TOOL.add(material);
 			}
 		}
 	}
@@ -40,13 +42,24 @@ public class SpecificItemStack {
 	public SpecificItemStack(ItemStack stack) {
 		if (stack == null)
 			throw new IllegalArgumentException("Cannot wrap a NULL stack.");
-		this.stack = stack;
+		// Ensure that we are using a copy
+		stack = stack.clone();
 		
 		// Ignore durability for armor
-		if (isArmorTool()) {
-			stack = stack.clone();
+		if (isArmorTool(stack)) {
 			stack.setDurability((short) 0);
 		}
+		
+		// Also remove repair cost
+		if (stack.hasItemMeta() && stack.getItemMeta() instanceof Repairable) {
+			Repairable repairable = (Repairable) stack.getItemMeta();
+
+			repairable.setRepairCost(0);
+			stack.setItemMeta((ItemMeta) repairable);
+		}
+		
+		// Save the resulting stack
+		this.stack = stack;
 	}
 
 	/**
@@ -103,8 +116,8 @@ public class SpecificItemStack {
 	 * Determine if the current item stack is an armor or a tool
 	 * @return TRUE it if is either, FALSE otherwise.
 	 */
-	private boolean isArmorTool() {
-		return armor.contains(stack.getType()) || tool.contains(stack.getType());
+	private boolean isArmorTool(ItemStack stack) {
+		return ARMOR.contains(stack.getType()) || TOOL.contains(stack.getType());
 	}
 	
 	@Override

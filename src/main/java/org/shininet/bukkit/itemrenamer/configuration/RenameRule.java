@@ -6,6 +6,8 @@ import java.util.List;
 
 import javax.annotation.Nonnull;
 
+import org.shininet.bukkit.utils.CollectionsUtil;
+
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
@@ -17,6 +19,11 @@ import com.google.common.collect.Lists;
  * @author Kristian
  */
 public class RenameRule {
+	/**
+	 * Represents a rename rule that makes no modifications to a given item stack (identity rule).
+	 */
+	public static final RenameRule IDENTITY = new RenameRule();
+	
 	private final String name;
 	private final ImmutableList<String> loreSections;
 	
@@ -71,8 +78,13 @@ public class RenameRule {
 		if (obj instanceof RenameRule) {
 			RenameRule other = (RenameRule) obj;
 			
-			return Objects.equal(name, other.getName()) &&
-				   Objects.equal(getLoreSections(), other.getLoreSections());
+			if (!Objects.equal(name, other.getName()))
+				return false;
+			if (CollectionsUtil.isEmpty(loreSections) ^ CollectionsUtil.isEmpty(other.getLoreSections()))
+				return false;
+			if (!loreSections.containsAll(other.getLoreSections()))
+				return false;
+			return true;
 		}
 		return false;
 	}
@@ -104,6 +116,14 @@ public class RenameRule {
 	 */
 	public RenameRule withName(String newName) {
 		return new RenameRule(newName, loreSections);
+	}
+	
+	/**
+	 * Determine if this is an identity rule.
+	 * @return TRUE if it is, FALSE otherwise.
+	 */
+	public boolean isIdentity() {
+		return name == null && CollectionsUtil.isEmpty(loreSections);
 	}
 	
 	/**
@@ -155,5 +175,16 @@ public class RenameRule {
 			return new RenameRule("", Arrays.asList(newLore));
 		else
 			return original.withAdditionalLore(Arrays.asList(newLore));
+	}
+	
+	/**
+	 * Determine if a given rename rule is the identity rule. 
+	 * <p>
+	 * That is, it preserves both the name and lore section of any item stack given to it.
+	 * @param rule - the rule to check.
+	 * @return TRUE if it is, FALSE otherwise.
+	 */
+	public static boolean isIdentity(RenameRule rule) {
+		return rule == null || rule == IDENTITY || rule.isIdentity();
 	}
 }

@@ -12,6 +12,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.inventory.ItemStack;
+import org.shininet.bukkit.utils.CollectionsUtil;
 
 public class SelectedItemTracker implements Listener {
 	private final Map<CommandSender, ItemStack> selectedItem = new WeakHashMap<CommandSender, ItemStack>();
@@ -69,6 +70,20 @@ public class SelectedItemTracker implements Listener {
 		} else {
 			throw new CommandErrorException("Must hold an item to select.");
 		}
+	}
+	
+	/**
+	 * Determine if the current item can only be matched by an exact lookup.
+	 * @return TRUE if it does, FALSE otherwise.
+	 */
+	public boolean hasExactSelector(CommandSender sender) {
+		ItemStack stack = getSelected(sender);
+		
+		// This is the case if the item has any additional data (NBT) or enchantments
+		if (isValid(stack)) {
+			return !CollectionsUtil.isEmpty(stack.getEnchantments()) || stack.hasItemMeta();
+		}
+		return false;
 	}
 	
 	/**

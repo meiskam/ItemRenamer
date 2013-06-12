@@ -2,7 +2,8 @@ package org.shininet.bukkit.itemrenamer.configuration;
 
 import java.util.Map;
 
-import com.google.common.base.Function;
+import org.shininet.bukkit.itemrenamer.configuration.RenameProcessorFactory.RenameFunction;
+
 import com.google.common.collect.Range;
 
 public interface DamageLookup extends Modifiable {
@@ -35,7 +36,7 @@ public interface DamageLookup extends Modifiable {
 	 * @param value - the range of damage values to modify.
 	 * @param function - the method to apply to every defined and undefined value in this range.
 	 */
-	public abstract void setTransform(DamageValues value, Function<RenameRule, RenameRule> function);
+	public abstract void setTransform(DamageValues value, RenameFunction function);
 	
 	/**
 	 * Associate a given damage value with a certain rename rule

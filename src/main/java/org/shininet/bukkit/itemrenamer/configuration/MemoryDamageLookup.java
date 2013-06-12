@@ -4,6 +4,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.shininet.bukkit.itemrenamer.configuration.RenameProcessorFactory.RenameFunction;
+
 import com.comphenix.protocol.concurrency.AbstractIntervalTree;
 import com.google.common.base.Function;
 import com.google.common.collect.Maps;
@@ -87,7 +89,7 @@ class MemoryDamageLookup implements DamageLookup {
 	}
 
 	@Override
-	public void setTransform(DamageValues value, Function<RenameRule, RenameRule> function) {
+	public void setTransform(DamageValues value, RenameFunction function) {
 		if (value == DamageValues.ALL) {
 			setAllRule(function.apply(getAllRule() != null ? getAllRule() : new RenameRule()));	
 		} else if (value == DamageValues.OTHER) {

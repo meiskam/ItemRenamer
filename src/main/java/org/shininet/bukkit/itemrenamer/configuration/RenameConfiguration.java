@@ -23,6 +23,11 @@ public class RenameConfiguration {
 	
 	public RenameConfiguration(ConfigurationSection section) {
 		this.section = section;
+		
+		// Load all packs
+		for (String pack : section.getKeys(false)) {
+			loadPack(pack);
+		}
 	}
 
 	/**
@@ -70,6 +75,7 @@ public class RenameConfiguration {
 		if (itemLookup == null) {
 			itemLookup = new RulePack(pack);
 			itemLookup.load(section);
+			memoryLookup.put(pack, itemLookup);
 		}
 		return itemLookup;
 	}
@@ -91,6 +97,15 @@ public class RenameConfiguration {
 	 */
 	public DamageLookup createLookup(String pack, int itemID) {
 		return loadOrCreatePack(pack).getOrCreateLookup(itemID);
+	}
+	
+	/**
+	 * Create a new exact lookup, or load the existing lookup if it exist.
+	 * @param pack - package it belongs to.
+	 * @return Existing exact lookup, or a new one if it doesn't exist.
+	 */
+	public ExactLookup createExact(String pack) {
+		return loadOrCreatePack(pack).getExactLookup();
 	}
 	
 	/**

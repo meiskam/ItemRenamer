@@ -90,7 +90,7 @@ public class RulePack {
 		
 		// Save the exact item stacks
 		ExactSerializer serializer = new ExactSerializer(
-				ConfigurationUtils.getSection(section, EXACT));
+				section.createSection(name + "." + EXACT));
 		serializer.writeLookup(exactLookup);
 	}
 	
@@ -146,6 +146,6 @@ public class RulePack {
 				totalCount += lookup.getModificationCount();
 			}
 		}
-		return totalCount;
+		return exactLookup.getModificationCount() + totalCount;
 	}
 }
