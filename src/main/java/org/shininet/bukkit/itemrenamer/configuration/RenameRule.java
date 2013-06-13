@@ -6,7 +6,7 @@ import java.util.List;
 
 import javax.annotation.Nonnull;
 
-import org.shininet.bukkit.utils.CollectionsUtil;
+import org.shininet.bukkit.itemrenamer.utils.CollectionsUtil;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;

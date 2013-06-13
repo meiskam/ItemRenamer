@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.bukkit.inventory.ItemStack;
-import org.shininet.bukkit.wrappers.SpecificItemStack;
+import org.shininet.bukkit.itemrenamer.wrappers.SpecificItemStack;
 
 import com.google.common.base.Function;
 import com.google.common.base.Objects;

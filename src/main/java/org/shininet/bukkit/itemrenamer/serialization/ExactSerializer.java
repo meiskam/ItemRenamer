@@ -8,7 +8,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.inventory.ItemStack;
 import org.shininet.bukkit.itemrenamer.configuration.ExactLookup;
 import org.shininet.bukkit.itemrenamer.configuration.RenameRule;
-import org.shininet.bukkit.utils.ConfigurationUtils;
+import org.shininet.bukkit.itemrenamer.utils.ConfigurationUtils;
 
 import com.google.common.collect.Sets;
 

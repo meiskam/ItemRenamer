@@ -1,4 +1,4 @@
-package org.shininet.bukkit.wrappers;
+package org.shininet.bukkit.itemrenamer.wrappers;
 
 import java.util.Map;
 import java.util.Set;

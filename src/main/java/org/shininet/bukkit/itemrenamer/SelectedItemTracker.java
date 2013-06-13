@@ -12,7 +12,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.inventory.ItemStack;
-import org.shininet.bukkit.utils.CollectionsUtil;
+import org.shininet.bukkit.itemrenamer.utils.CollectionsUtil;
 
 public class SelectedItemTracker implements Listener {
 	private final Map<CommandSender, ItemStack> selectedItem = new WeakHashMap<CommandSender, ItemStack>();

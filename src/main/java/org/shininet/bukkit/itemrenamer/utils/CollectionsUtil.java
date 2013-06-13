@@ -1,4 +1,4 @@
-package org.shininet.bukkit.utils;
+package org.shininet.bukkit.itemrenamer.utils;
 
 import java.util.Collection;
 import java.util.Map;

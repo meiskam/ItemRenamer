@@ -6,7 +6,7 @@ import java.util.Map.Entry;
 import org.bukkit.configuration.ConfigurationSection;
 import org.shininet.bukkit.itemrenamer.serialization.DamageSerializer;
 import org.shininet.bukkit.itemrenamer.serialization.ExactSerializer;
-import org.shininet.bukkit.utils.ConfigurationUtils;
+import org.shininet.bukkit.itemrenamer.utils.ConfigurationUtils;
 
 import com.google.common.collect.Maps;
 
