@@ -80,7 +80,7 @@ public class ExactSerializer {
 		}
 		
 		// This is probably wrong
-		for (String missing : Sets.union(keys.getKeys(false), values.getKeys(false))) {
+		for (String missing : Sets.symmetricDifference(keys.getKeys(false), values.getKeys(false))) {
 			Bukkit.getLogger().warning("[ItemRenamer] [" + currentPath + "] Missing key or value: " + missing);
 		}
 		destination.setModificationCount(oldModCount);
