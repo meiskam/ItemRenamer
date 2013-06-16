@@ -40,4 +40,18 @@ public class ConfigurationUtils {
 		}
 		return result;
 	}
+	
+	/**
+	 * Reset the content of a given section.
+	 * @param section - the section to reset.
+	 * @return A new section with the same path.
+	 */
+	public static ConfigurationSection resetSection(ConfigurationSection section) {
+		ConfigurationSection parent = section.getParent();
+		
+		if (parent != null) {
+			section = parent.createSection(section.getName());
+		}
+		return section;
+	}
 }

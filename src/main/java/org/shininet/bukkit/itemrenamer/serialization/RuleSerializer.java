@@ -1,7 +1,12 @@
 package org.shininet.bukkit.itemrenamer.serialization;
 
+import java.util.Set;
+
 import org.bukkit.configuration.ConfigurationSection;
 import org.shininet.bukkit.itemrenamer.configuration.RenameRule;
+import org.shininet.bukkit.itemrenamer.wrappers.LeveledEnchantment;
+
+import com.google.common.collect.Sets;
 
 /**
  * A serializer and deserializer for RenameRule.
@@ -11,9 +16,14 @@ import org.shininet.bukkit.itemrenamer.configuration.RenameRule;
 public class RuleSerializer {
 	private static final String RULE_NAME = "name";
 	private static final String RULE_LORE = "lore";
+	private static final String RULE_ENCHANTMENTS = "enchantments";
+	private static final String RULE_DECHANTMENTS = "dechantments";
 	
 	private final ConfigurationSection section;
-
+	
+	// Serializing enchantment
+	private final EnchantmentSerializer enchantSerializer = new EnchantmentSerializer();
+	
 	/**
 	 * Construct a rule serializer with the given parent section.
 	 * @param section - the parent section.
@@ -52,8 +62,28 @@ public class RuleSerializer {
 			return null;
 		
 		// Any of these may fail too
-		return new RenameRule(ruleSection.getString(RULE_NAME), 
-							  ruleSection.getStringList(RULE_LORE));
+		return new RenameRule(
+				ruleSection.getString(RULE_NAME), 
+				ruleSection.getStringList(RULE_LORE),
+				getEnchantmentSection(ruleSection, RULE_ENCHANTMENTS),
+				getEnchantmentSection(ruleSection, RULE_DECHANTMENTS));
+	}
+	
+	/**
+	 * Retrieve every leveled enchantments from a given sub-section.
+	 * @param section - the current section.
+	 * @param name - the sub section name.
+	 * @return Every leveled enchantment.
+	 */
+	private Set<LeveledEnchantment> getEnchantmentSection(ConfigurationSection section, String name) {
+		ConfigurationSection subsection = section.getConfigurationSection(name);
+		// No need to read it 
+		if (subsection == null)
+			return null;
+		
+		Set<LeveledEnchantment> destination = Sets.newHashSet();
+		enchantSerializer.readEnchantments(subsection, destination);
+		return destination;
 	}
 	
 	/**
@@ -70,6 +100,12 @@ public class RuleSerializer {
 				ruleSection.set(RULE_NAME, rule.getName());
 			if (rule.getLoreSections().size() > 0)
 				ruleSection.set(RULE_LORE, rule.getLoreSections());
+			if (rule.getAddedEnchantments().size() > 0)
+				enchantSerializer.writeEnchantments(
+						ruleSection.createSection(RULE_ENCHANTMENTS), rule.getAddedEnchantments());
+			if (rule.getRemovedEnchantments().size() > 0)
+				enchantSerializer.writeEnchantments(
+						ruleSection.createSection(RULE_DECHANTMENTS), rule.getRemovedEnchantments());
 		} else {
 			// Delete it
 			section.set(key, null);

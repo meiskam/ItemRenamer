@@ -92,9 +92,7 @@ public class ExactSerializer {
 	 */
 	public void writeLookup(ExactLookup source) {
 		// Reset section
-		ConfigurationSection parent = section.getParent();
-		if (parent != null)
-			setSection(parent.createSection(section.getName()));
+		section = ConfigurationUtils.resetSection(section);
 		
 		ConfigurationSection keys = section.createSection(KEYS);
 		ConfigurationSection values = section.createSection(VALUES);

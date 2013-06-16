@@ -8,6 +8,7 @@ import java.util.Map.Entry;
 import org.bukkit.configuration.ConfigurationSection;
 import org.shininet.bukkit.itemrenamer.configuration.DamageLookup;
 import org.shininet.bukkit.itemrenamer.configuration.RenameRule;
+import org.shininet.bukkit.itemrenamer.utils.ConfigurationUtils;
 
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Lists;
@@ -70,10 +71,7 @@ public class DamageSerializer {
 	 * @param source - the damage lookup to write.
 	 */
 	public void writeLookup(DamageLookup source) {
-		// Reset section
-		ConfigurationSection parent = section.getParent();
-		if (parent != null)
-			setSection(parent.createSection(section.getName()));
+		setSection(ConfigurationUtils.resetSection(section));
 		
 		ruleSerializer.writeRule(DAMAGE_ALL, source.getAllRule());
 		ruleSerializer.writeRule(DAMAGE_OTHER, source.getOtherRule());

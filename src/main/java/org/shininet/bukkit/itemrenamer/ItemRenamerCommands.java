@@ -30,6 +30,7 @@ import org.shininet.bukkit.itemrenamer.configuration.RenameProcessorFactory;
 import org.shininet.bukkit.itemrenamer.configuration.RenameRule;
 import org.shininet.bukkit.itemrenamer.serialization.DamageSerializer;
 import org.shininet.bukkit.itemrenamer.utils.MaterialUtils;
+import org.shininet.bukkit.itemrenamer.wrappers.LeveledEnchantment;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
@@ -65,6 +66,10 @@ public class ItemRenamerCommands implements CommandExecutor {
 		SET_NAME, 
 		ADD_LORE, 
 		DELETE_LORE,
+		ADD_ENCHANTMENT, 
+		ADD_DECHANTMENT, 
+		DELETE_ENCHANTMENTS,
+		DELETE_DECHANTMENTS,
 		RELOAD,
 		SAVE,
 		PAGE,
@@ -101,6 +106,10 @@ public class ItemRenamerCommands implements CommandExecutor {
 		output.registerCommand(Commands.SET_NAME, PERM_SET, "set", "name");
 		output.registerCommand(Commands.ADD_LORE, PERM_SET, "add", "lore");
 		output.registerCommand(Commands.DELETE_LORE, PERM_SET, "delete", "lore");
+		output.registerCommand(Commands.ADD_ENCHANTMENT, PERM_SET, "add", "enchantment");
+		output.registerCommand(Commands.ADD_DECHANTMENT, PERM_SET, "add", "dechantment");
+		output.registerCommand(Commands.DELETE_ENCHANTMENTS, PERM_SET, "delete", "enchantments");
+		output.registerCommand(Commands.DELETE_DECHANTMENTS, PERM_SET, "delete", "dechantments");
 		output.registerCommand(Commands.RELOAD, PERM_SET, "reload");
 		output.registerCommand(Commands.SAVE, PERM_SET, "save");
 		output.registerCommand(Commands.PAGE, null, "page");
@@ -181,6 +190,14 @@ public class ItemRenamerCommands implements CommandExecutor {
 					return addLore(sender, args);
 				case DELETE_LORE:
 					return clearLore(sender, args);
+				case ADD_ENCHANTMENT:
+					return addEnchantment(sender, args);
+				case ADD_DECHANTMENT:
+					return addDechantment(sender, args);
+				case DELETE_ENCHANTMENTS:
+					return clearEnchantments(sender, args);
+				case DELETE_DECHANTMENTS:
+					return clearDechantment(sender, args);
 				case RELOAD:
 					config.reload();
 					return "Reloading configuration.";
@@ -203,6 +220,12 @@ public class ItemRenamerCommands implements CommandExecutor {
 		throw new CommandErrorException("Unrecognized sub command: " + command);
 	}
 
+	/**
+	 * Perform the "select hand" command. This will use the current items ID and durability,
+	 * or the item itself.
+	 * @param sender - the command sender.
+	 * @return Result string.
+	 */
 	private String selectCurrent(CommandSender sender) {
 		// This will fail if the command sender is not a player
 		ItemStack previous = selectedTracker.selectCurrent(sender);
@@ -213,10 +236,11 @@ public class ItemRenamerCommands implements CommandExecutor {
 		String worldPack = config.getWorldPack(worldName);
 		
 		// Select the current world too
-		if (selectedPack.get(sender) == null && worldPack != null) {
-			selectedPack.put(sender, worldPack);
-		} else {
-			return "Please set the world pack first.";
+		if (selectedPack.get(sender) == null) {
+			if (worldPack != null)
+				selectedPack.put(sender, worldPack);
+			else
+				return "Please set the world pack first.";
 		}
 		
 		// And we're done
@@ -347,30 +371,118 @@ public class ItemRenamerCommands implements CommandExecutor {
 	}
 	
 	private String clearLore(CommandSender sender, Deque<String> args) {
-		// Output message
-		final StringBuilder output = new StringBuilder();
-
-		// Apply the change
-		modifyCurrent(sender, args, true, new RenameProcessorFactory() {
+		// Use the clear attribute utility class
+		return clearAttribute(sender, args, new RenameOutputFactory() {
 			@Override
 			public RenameFunction create() {
 				return new RenameFunction() {
 					@Override
 					public RenameRule apply(@Nullable RenameRule input) {
 						output.append("Resetting lore for ").append(input);
-						return new RenameRule(input.getName(), null);
+						return new RenameRule(input.getName(), null, 
+								input.getAddedEnchantments(), input.getRemovedEnchantments());
 					}
 				};
 			}
 		});
+	}
+	
+	// The powerful programming technique of COPY PASTE
+	// I'm sorry.
+	private String clearEnchantments(CommandSender sender, Deque<String> args) {
+		return clearAttribute(sender, args, new RenameOutputFactory() {
+			@Override
+			public RenameFunction create() {
+				return new RenameFunction() {
+					@Override
+					public RenameRule apply(@Nullable RenameRule input) {
+						output.append("Resetting enchantments for ").append(input);
+						return new RenameRule(input.getName(), input.getLoreSections(), 
+								null, input.getRemovedEnchantments());
+					}
+				};
+			}
+		});
+	}
+	
+	private String clearDechantment(CommandSender sender, Deque<String> args) {
+		return clearAttribute(sender, args, new RenameOutputFactory() {
+			@Override
+			public RenameFunction create() {
+				return new RenameFunction() {
+					@Override
+					public RenameRule apply(@Nullable RenameRule input) {
+						output.append("Resetting dechantments for ").append(input);
+						return new RenameRule(input.getName(), input.getLoreSections(), 
+								input.getAddedEnchantments(), null);
+					}
+				};
+			}
+		});
+	}
+	
+	/**
+	 * Modify the current item with the given output factory.
+	 * @param sender - the command sender.
+	 * @param args - the arguments.
+	 * @param factory - the custom output factory.
+	 * @return The result string, supplied by the output factory.
+	 */
+	private String clearAttribute(CommandSender sender, Deque<String> args, RenameOutputFactory factory) {
+		// Apply the change
+		modifyCurrent(sender, args, true, factory);
 
 		// Inform the user
-		if (output.length() == 0)
+		if (factory.getOutput().length() == 0)
 			return "No items found.";
 		else
-			return output.toString();
+			return factory.getOutput();
 	}
-
+	
+	private String addEnchantment(CommandSender sender, final Deque<String> args) {
+		// Apply the change
+		modifyCurrent(sender, args, true, new RenameProcessorFactory() {
+			@Override
+			public RenameFunction create() {
+				final LeveledEnchantment enchantment = LeveledEnchantment.parse(args);
+				
+				// Damn it
+				if (enchantment == null)
+					throw new IllegalArgumentException("Must specify an enchantment and level.");
+				
+				return new RenameFunction() {
+					@Override
+					public RenameRule apply(@Nullable RenameRule input) {
+						return input.withAddedEnchantment(Arrays.asList(enchantment));
+					}
+				};
+			}
+		});
+		return String.format("Added the enchantment '%s' to every item.", LeveledEnchantment.parse(args));
+	}
+	
+	private String addDechantment(CommandSender sender, final Deque<String> args) {
+		// Apply the change
+		modifyCurrent(sender, args, true, new RenameProcessorFactory() {
+			@Override
+			public RenameFunction create() {
+				final LeveledEnchantment enchantment = LeveledEnchantment.parse(args);
+				
+				// Damn it
+				if (enchantment == null)
+					throw new IllegalArgumentException("Must specify an enchantment and level.");
+				
+				return new RenameFunction() {
+					@Override
+					public RenameRule apply(@Nullable RenameRule input) {
+						return input.withRemovedEnchantment(Arrays.asList(enchantment));
+					}
+				};
+			}
+		});
+		return String.format("Dechanted '%s' for every item.", LeveledEnchantment.parse(args));
+	}
+	
 	/**
 	 * Retrieve the damage lookup based on the item pack and item ID in the parameter stack.
 	 * @param sender - the original command sender.
@@ -544,6 +656,22 @@ public class ItemRenamerCommands implements CommandExecutor {
 			return false;
 		} else {
 			throw new CommandErrorException("Cannot parse " + value + " as a boolean (yes/no)");
+		}
+	}
+	
+	/**
+	 * Represents a output factory that has a string output,
+	 * @author Kristian
+	 */
+	private abstract static class RenameOutputFactory extends RenameProcessorFactory {
+		protected StringBuilder output = new StringBuilder();
+		
+		/**
+		 * Retrieve the final output.
+		 * @return The final output.
+		 */
+		public String getOutput() {
+			return output.toString();
 		}
 	}
 }

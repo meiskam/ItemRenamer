@@ -109,7 +109,7 @@ class MemoryDamageLookup implements DamageLookup {
 	 */
 	public void setTransformed(int minimum, int maximum, Function<RenameRule, RenameRule> ruleTransform) {
 		Set<IntegerInterval.Entry> removed = tree.remove(minimum, maximum, true);
-		RenameRule defaultRule = ruleTransform.apply(new RenameRule(null, null));
+		RenameRule defaultRule = ruleTransform.apply(RenameRule.IDENTITY);
 		
 		// It's been changed
 		modCount++;

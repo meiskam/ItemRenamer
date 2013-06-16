@@ -3,14 +3,17 @@ package org.shininet.bukkit.itemrenamer.configuration;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import javax.annotation.Nonnull;
 
 import org.shininet.bukkit.itemrenamer.utils.CollectionsUtil;
+import org.shininet.bukkit.itemrenamer.wrappers.LeveledEnchantment;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 
 /**
@@ -27,24 +30,51 @@ public class RenameRule {
 	private final String name;
 	private final ImmutableList<String> loreSections;
 	
+	// Enchantments to add or remove
+	private final ImmutableSet<LeveledEnchantment> addedEnchantments;
+	private final ImmutableSet<LeveledEnchantment> removedEnchantments;
+	
 	public RenameRule() {
-		this(null, null);
+		this(null, null, null, null);
 	}
 	
 	/**
 	 * Construct a new immutable item rename rule.
 	 * @param name - the new name.
 	 * @param loreSections - list of lore sections.
+	 * @param added - set of enchantments to add.
+	 * @param removoed - set of enchantments to remove.
 	 */
-	public RenameRule(String name, List<String> loreSections) {
+	public RenameRule(String name, List<String> loreSections, 
+					  Set<LeveledEnchantment> added, Set<LeveledEnchantment> removed) {
 		this.name = name;
-
-		if (loreSections != null)
-			// If it's already an immutable list, no copy will be made
-			this.loreSections = ImmutableList.copyOf(loreSections);
+		this.loreSections = safeList(loreSections);
+		this.addedEnchantments = safeSet(added);
+		this.removedEnchantments = safeSet(removed);
+	}
+	
+	/**
+	 * Construct an immutable copy of a given list.
+	 * @param list - the list to copy.
+	 * @return The copied immutable list.
+	 */
+	private <T> ImmutableList<T> safeList(List<T> list) {
+		if (list != null)
+			return ImmutableList.copyOf(list);
 		else
-			// Lore sections should never be NULL
-			this.loreSections = ImmutableList.of();
+			return ImmutableList.of();
+	}
+	
+	/**
+	 * Construct an immutable copy of a given set.
+	 * @param list - the set to copy.
+	 * @return The copied immutable set.
+	 */
+	private <T> ImmutableSet<T> safeSet(Set<T> set) {
+		if (set != null)
+			return ImmutableSet.copyOf(set);
+		else
+			return ImmutableSet.of();
 	}
 
 	/**
@@ -64,6 +94,23 @@ public class RenameRule {
 		return loreSections;
 	}
 	
+	/**
+	 * Retrieve a list of every enchantment that will be added to the item stack.
+	 * @return Every enchantment to be added.
+	 */
+	@Nonnull
+	public ImmutableSet<LeveledEnchantment> getAddedEnchantments() {
+		return addedEnchantments;
+	}
+	
+	/**
+	 * Retrieve a list of every enchantment (or dechantment) that will be removed from the item stack.
+	 * @return Every enchantment to be removed.
+	 */
+	public ImmutableSet<LeveledEnchantment> getRemovedEnchantments() {
+		return removedEnchantments;
+	}
+	
 	@Override
 	public int hashCode() {
 		return Objects.hashCode(name, loreSections);
@@ -80,11 +127,9 @@ public class RenameRule {
 			
 			if (!Objects.equal(name, other.getName()))
 				return false;
-			if (CollectionsUtil.isEmpty(loreSections) ^ CollectionsUtil.isEmpty(other.getLoreSections()))
-				return false;
-			if (!loreSections.containsAll(other.getLoreSections()))
-				return false;
-			return true;
+			return CollectionsUtil.equalsMany(loreSections, other.getLoreSections()) &&
+				   CollectionsUtil.equalsMany(addedEnchantments, other.getAddedEnchantments()) &&
+				   CollectionsUtil.equalsMany(removedEnchantments, other.getRemovedEnchantments());
 		}
 		return false;
 	}
@@ -106,7 +151,7 @@ public class RenameRule {
 		List<String> newLore = Lists.newArrayList(loreSections);
 		newLore.addAll(lore);
 		
-		return new RenameRule(name, newLore);
+		return new RenameRule(name, newLore, addedEnchantments, removedEnchantments);
 	}
 	
 	/**
@@ -115,7 +160,33 @@ public class RenameRule {
 	 * @return New item rename rule.
 	 */
 	public RenameRule withName(String newName) {
-		return new RenameRule(newName, loreSections);
+		return new RenameRule(newName, loreSections, addedEnchantments, removedEnchantments);
+	}
+	
+	/**
+	 * Construct a new rename rule with an additional added enchantment.
+	 * @param enchantments - new enchantments to add.
+	 * @return The updated rename rule.
+	 */
+	public RenameRule withAddedEnchantment(Collection<LeveledEnchantment> enchantments) {
+		Set<LeveledEnchantment> copy = ImmutableSet.<LeveledEnchantment>builder().
+				addAll(addedEnchantments).
+				addAll(enchantments).
+				build();
+		return new RenameRule(name, loreSections, copy, removedEnchantments);
+	}
+	
+	/**
+	 * Construct a new rename rule with a removed enchantment.
+	 * @param enchantments - new enchantments to remove.
+	 * @return The updated rename rule.
+	 */
+	public RenameRule withRemovedEnchantment(Collection<LeveledEnchantment> enchantments) {
+		Set<LeveledEnchantment> copy = ImmutableSet.<LeveledEnchantment>builder().
+				addAll(removedEnchantments).
+				addAll(enchantments).
+				build();
+		return new RenameRule(name, loreSections, addedEnchantments, copy);
 	}
 	
 	/**
@@ -123,7 +194,10 @@ public class RenameRule {
 	 * @return TRUE if it is, FALSE otherwise.
 	 */
 	public boolean isIdentity() {
-		return name == null && CollectionsUtil.isEmpty(loreSections);
+		return name == null && 
+				CollectionsUtil.isEmpty(loreSections) &&
+				CollectionsUtil.isEmpty(addedEnchantments) &&
+				CollectionsUtil.isEmpty(removedEnchantments);
 	}
 	
 	/**
@@ -141,7 +215,10 @@ public class RenameRule {
 			return priority != null ? priority : fallback;
 		} else {
 			// Priority takes, well, priority
-			RenameRule rule = fallback.withAdditionalLore(priority.getLoreSections());
+			RenameRule rule = fallback.
+					withAdditionalLore(priority.getLoreSections()).
+					withAddedEnchantment(priority.getAddedEnchantments()).
+					withRemovedEnchantment(priority.getRemovedEnchantments());
 			
 			// Don't merge nulls
 			if (priority.getName() != null) {
@@ -159,7 +236,7 @@ public class RenameRule {
 	 */
 	public static RenameRule withName(RenameRule original, String newName) {
 		if (original == null)
-			return new RenameRule(newName, null);
+			return new RenameRule(newName, null, null, null);
 		else
 			return original.withName(newName);
 	}
@@ -172,7 +249,7 @@ public class RenameRule {
 	 */
 	public static RenameRule withAdditionalLore(RenameRule original, String newLore) {
 		if (original == null)
-			return new RenameRule("", Arrays.asList(newLore));
+			return new RenameRule("", Arrays.asList(newLore), null, null);
 		else
 			return original.withAdditionalLore(Arrays.asList(newLore));
 	}

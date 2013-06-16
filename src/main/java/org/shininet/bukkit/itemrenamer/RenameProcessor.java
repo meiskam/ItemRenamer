@@ -13,6 +13,7 @@ import org.shininet.bukkit.itemrenamer.configuration.DamageLookup;
 import org.shininet.bukkit.itemrenamer.configuration.ItemRenamerConfiguration;
 import org.shininet.bukkit.itemrenamer.configuration.RenameConfiguration;
 import org.shininet.bukkit.itemrenamer.configuration.RenameRule;
+import org.shininet.bukkit.itemrenamer.wrappers.LeveledEnchantment;
 
 import com.comphenix.protocol.wrappers.nbt.NbtCompound;
 import com.comphenix.protocol.wrappers.nbt.NbtFactory;
@@ -115,6 +116,14 @@ public class RenameProcessor {
 		packName(itemMeta, rule);
 		packLore(itemMeta, rule);
 		input.setItemMeta(itemMeta);
+		
+		// Remove or add enchantments
+		for (LeveledEnchantment removed : rule.getRemovedEnchantments()) {
+			input.removeEnchantment(removed.getEnchantment());
+		}
+		for (LeveledEnchantment added : rule.getAddedEnchantments()) {
+			input.addUnsafeEnchantment(added.getEnchantment(), added.getLevel());
+		}
 		
 		// Add a simple marker allowing us to detect renamed items
 		// Note that this MUST be exected after ItemMeta
