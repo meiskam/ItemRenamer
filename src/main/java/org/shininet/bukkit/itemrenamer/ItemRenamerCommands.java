@@ -29,6 +29,7 @@ import org.shininet.bukkit.itemrenamer.configuration.ItemRenamerConfiguration;
 import org.shininet.bukkit.itemrenamer.configuration.RenameProcessorFactory;
 import org.shininet.bukkit.itemrenamer.configuration.RenameRule;
 import org.shininet.bukkit.itemrenamer.serialization.DamageSerializer;
+import org.shininet.bukkit.itemrenamer.utils.MaterialUtils;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
@@ -214,6 +215,8 @@ public class ItemRenamerCommands implements CommandExecutor {
 		// Select the current world too
 		if (selectedPack.get(sender) == null && worldPack != null) {
 			selectedPack.put(sender, worldPack);
+		} else {
+			return "Please set the world pack first.";
 		}
 		
 		// And we're done
@@ -411,10 +414,16 @@ public class ItemRenamerCommands implements CommandExecutor {
 	
 	private DamageValues getDamageValues(CommandSender sender, Deque<String> args) {
 		try {
-			if (selectedTracker.getSelected(sender) != null)
-				return new DamageValues(selectedTracker.getSelected(sender).getDurability());
-			else
+			ItemStack item = selectedTracker.getSelected(sender);
+			
+			if (item != null) {
+				if (MaterialUtils.isArmorTool(item.getType()))
+					return DamageValues.OTHER;
+				else
+					return new DamageValues(item.getDurability());
+			} else {
 				return DamageValues.parse(args);
+			}
 		} catch (IllegalArgumentException e) {
 			// Wrap it in a more specific exception
 			throw new CommandErrorException(e.getMessage(), e);

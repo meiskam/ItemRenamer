@@ -1,15 +1,12 @@
 package org.shininet.bukkit.itemrenamer.wrappers;
 
 import java.util.Map;
-import java.util.Set;
-
-import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.Repairable;
+import org.shininet.bukkit.itemrenamer.utils.MaterialUtils;
 
 import com.google.common.base.Objects;
-import com.google.common.collect.Sets;
 
 /**
  * Represents an item stack that takes enchantment into account when doing comparisions.
@@ -17,23 +14,6 @@ import com.google.common.collect.Sets;
  */
 public class SpecificItemStack {
 	private final ItemStack stack;
-	
-	// Don't use EnumSet - may not work that well with MCPC+
-	private static Set<Material> ARMOR = Sets.newHashSet();
-	private static Set<Material> TOOL = Sets.newHashSet();
-	
-	// Invoked to initialize the armor and weapon lookups
-	static {
-		for (Material material : Material.values()) {
-			String name = material.name();
-			
-			if (name.contains("HELMET") || name.contains("CHESTPLATE") || name.contains("LEGGING") || name.contains("BOOTS")) {
-				ARMOR.add(material);
-			} else if (name.contains("AXE") || name.contains("HOE") || name.contains("PICKAXE") || name.contains("SPADE") || name.contains("SWORD")) {
-				TOOL.add(material);
-			}
-		}
-	}
 	
 	/**
 	 * Construct a new specific item stack wrapper.
@@ -46,7 +26,7 @@ public class SpecificItemStack {
 		stack = stack.clone();
 		
 		// Ignore durability for armor
-		if (isArmorTool(stack)) {
+		if (MaterialUtils.isArmorTool(stack.getType())) {
 			stack.setDurability((short) 0);
 		}
 		
@@ -110,14 +90,6 @@ public class SpecificItemStack {
 		if (stack == null)
 			return 0;
 		return Objects.hashCode(stack.hashCode(), stack.getEnchantments().hashCode());
-	}
-	
-	/**
-	 * Determine if the current item stack is an armor or a tool
-	 * @return TRUE it if is either, FALSE otherwise.
-	 */
-	private boolean isArmorTool(ItemStack stack) {
-		return ARMOR.contains(stack.getType()) || TOOL.contains(stack.getType());
 	}
 	
 	@Override
