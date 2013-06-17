@@ -39,6 +39,15 @@ public class EnchantmentSerializer {
 	}
 	
 	/**
+	 * Read the content of the given packaged byte array and store it in the given collection.
+	 * @param packaged
+	 * @param destination
+	 */
+	public void readEnchantments(byte[] packaged, Collection<LeveledEnchantment> destination) {
+		
+	}
+	
+	/**
 	 * Write all the enchantments in the given source to the configuration section.
 	 * @param section - the section to write to.
 	 * @param source - source of enchantments to write.

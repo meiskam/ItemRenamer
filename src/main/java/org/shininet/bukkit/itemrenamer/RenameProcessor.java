@@ -15,22 +15,26 @@ import org.shininet.bukkit.itemrenamer.configuration.RenameConfiguration;
 import org.shininet.bukkit.itemrenamer.configuration.RenameRule;
 import org.shininet.bukkit.itemrenamer.wrappers.LeveledEnchantment;
 
+import com.comphenix.protocol.reflect.StructureModifier;
+import com.comphenix.protocol.utility.MinecraftReflection;
+import com.comphenix.protocol.wrappers.BukkitConverters;
+import com.comphenix.protocol.wrappers.nbt.NbtBase;
 import com.comphenix.protocol.wrappers.nbt.NbtCompound;
 import com.comphenix.protocol.wrappers.nbt.NbtFactory;
 import com.google.common.collect.Lists;
 
 public class RenameProcessor {
-	private static final String MARKER_KEY = "com.comphenix.marker";
-
+	/**
+	 * Storage of the original ItemMeta.
+	 */
+	private static final String KEY_ORIGINAL = "com.comphenix.original";
 	private final ItemRenamerConfiguration config;
+	
+	// This should really have been in ProtocolLib
+	private static StructureModifier<Object> itemStackModifier;
 	
 	// Vault
 	private final Chat chat;
-	
-	/**
-	 * A marker telling us that this is ItemStack was renamed by ItemRenamer.
-	 */
-	private final int MARKER = 0xD17065B1;
 	
 	public RenameProcessor(ItemRenamerConfiguration config, Chat chat) {
 		this.config = config;
@@ -102,6 +106,7 @@ public class RenameProcessor {
 		// May have been set by a plugin or a player
 		if ((itemMeta.hasDisplayName()) || (itemMeta.hasLore())) 
 			return input;
+		NbtCompound original = getCompound(input);
 		
 		// Fix a client bug
 		if (itemMeta instanceof BookMeta) {
@@ -125,9 +130,8 @@ public class RenameProcessor {
 			input.addUnsafeEnchantment(added.getEnchantment(), added.getLevel());
 		}
 		
-		// Add a simple marker allowing us to detect renamed items
-		// Note that this MUST be exected after ItemMeta
-		getCompound(input).put(MARKER_KEY, MARKER);
+		// Add a simple marker allowing us to restore the ItemMeta
+		getCompound(input).put(KEY_ORIGINAL, original);
 		return input;
 	}
 	
@@ -138,28 +142,43 @@ public class RenameProcessor {
 	 */
 	public boolean unprocess(ItemStack input) {
 		if (input != null) {
-			ItemMeta meta = input.getItemMeta();
-			
-			// It has not been touched by anyone
-			if (!meta.hasDisplayName() && !meta.hasLore())
-				return false;
+			// This will only be invoked for creative players
 			NbtCompound data = getCompound(input);
 			
 			// Check for our marker
-			if (data.containsKey(MARKER_KEY) && data.getInteger(MARKER_KEY) == MARKER) {
-				// Not necessary today, but we will not assume it is in the future
-				data.getValue().remove(MARKER_KEY);
-				
-				// Remove name and lore modifications
-				meta.setDisplayName(null);
-				meta.setLore(null);
-				input.setItemMeta(meta); 
+			if (data.containsKey(KEY_ORIGINAL)) {
+				saveNbt(input, data.getCompound(KEY_ORIGINAL));
 				return true;
 			}
 		}
 		return false;
 	}
 	
+	/**
+	 * Save the given compound as TAG in the item stack,
+	 * @param stack - the source item stack.
+	 * @param compound - the compound to save.
+	 */
+	private void saveNbt(ItemStack stack, NbtCompound compound) {
+		Object nmsStack = MinecraftReflection.getMinecraftItemStack(stack);
+		
+		// Reuse reflection machinery
+		if (itemStackModifier == null) {
+			itemStackModifier = new StructureModifier<Object>(nmsStack.getClass(), Object.class, false);
+		}
+		StructureModifier<NbtBase<?>> modifier = itemStackModifier.
+				withTarget(nmsStack).
+				withType(MinecraftReflection.getNBTBaseClass(), 
+						 BukkitConverters.getNbtConverter());
+		modifier.write(0, compound);
+	}
+	
+	/**
+	 * Apply rename rules to an array of item stacks.
+	 * @param player - the recieving player.
+	 * @param input - the item stack to process.
+	 * @return The processed item stacks.
+	 */
 	public ItemStack[] process(Player player, ItemStack[] input) {
 		String pack = getPack(player);
 		
@@ -171,6 +190,13 @@ public class RenameProcessor {
 		return input;
 	}
 	
+	/**
+	 * Retrieve the associated rename pack for a given player.
+	 * <p>
+	 * This may depend on the current world the player is located in.
+	 * @param player - the player to look up.
+	 * @return The name of the rename pack.
+	 */
 	private String getPack(Player player) {
 		if (chat != null) {
 			String pack = chat.getPlayerInfoString(player, "itempack", null);
