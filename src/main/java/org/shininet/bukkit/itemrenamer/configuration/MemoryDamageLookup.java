@@ -91,9 +91,9 @@ class MemoryDamageLookup implements DamageLookup {
 	@Override
 	public void setTransform(DamageValues value, RenameFunction function) {
 		if (value == DamageValues.ALL) {
-			setAllRule(function.apply(getAllRule() != null ? getAllRule() : new RenameRule()));	
+			setAllRule(function.apply(getAllRule() != null ? getAllRule() : RenameRule.IDENTITY));	
 		} else if (value == DamageValues.OTHER) {
-			setOtherRule(function.apply(getOtherRule() != null ? getOtherRule() : new RenameRule()));	
+			setOtherRule(function.apply(getOtherRule() != null ? getOtherRule() : RenameRule.IDENTITY));	
 		} else {
 			setTransformed(value.getRange().lowerEndpoint(), value.getRange().upperEndpoint(), function);
 		}

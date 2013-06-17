@@ -118,10 +118,10 @@ public class RenameProcessor {
 		input.setItemMeta(itemMeta);
 		
 		// Remove or add enchantments
-		for (LeveledEnchantment removed : rule.getRemovedEnchantments()) {
+		for (LeveledEnchantment removed : rule.getDechantments()) {
 			input.removeEnchantment(removed.getEnchantment());
 		}
-		for (LeveledEnchantment added : rule.getAddedEnchantments()) {
+		for (LeveledEnchantment added : rule.getEnchantments()) {
 			input.addUnsafeEnchantment(added.getEnchantment(), added.getLevel());
 		}
 		

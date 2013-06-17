@@ -62,11 +62,12 @@ public class RuleSerializer {
 			return null;
 		
 		// Any of these may fail too
-		return new RenameRule(
-				ruleSection.getString(RULE_NAME), 
-				ruleSection.getStringList(RULE_LORE),
-				getEnchantmentSection(ruleSection, RULE_ENCHANTMENTS),
-				getEnchantmentSection(ruleSection, RULE_DECHANTMENTS));
+		return RenameRule.newBuilder().
+				name(ruleSection.getString(RULE_NAME)). 
+				loreSections(ruleSection.getStringList(RULE_LORE)).
+				enchantments(getEnchantmentSection(ruleSection, RULE_ENCHANTMENTS)).
+				dechantments(getEnchantmentSection(ruleSection, RULE_DECHANTMENTS)).
+				build();
 	}
 	
 	/**
@@ -100,12 +101,12 @@ public class RuleSerializer {
 				ruleSection.set(RULE_NAME, rule.getName());
 			if (rule.getLoreSections().size() > 0)
 				ruleSection.set(RULE_LORE, rule.getLoreSections());
-			if (rule.getAddedEnchantments().size() > 0)
+			if (rule.getEnchantments().size() > 0)
 				enchantSerializer.writeEnchantments(
-						ruleSection.createSection(RULE_ENCHANTMENTS), rule.getAddedEnchantments());
-			if (rule.getRemovedEnchantments().size() > 0)
+						ruleSection.createSection(RULE_ENCHANTMENTS), rule.getEnchantments());
+			if (rule.getDechantments().size() > 0)
 				enchantSerializer.writeEnchantments(
-						ruleSection.createSection(RULE_DECHANTMENTS), rule.getRemovedEnchantments());
+						ruleSection.createSection(RULE_DECHANTMENTS), rule.getDechantments());
 		} else {
 			// Delete it
 			section.set(key, null);

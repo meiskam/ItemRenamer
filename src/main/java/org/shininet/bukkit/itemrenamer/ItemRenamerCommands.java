@@ -344,7 +344,7 @@ public class ItemRenamerCommands implements CommandExecutor {
 				return new RenameFunction() {
 					@Override
 					public RenameRule apply(@Nullable RenameRule input) {
-						return input.withName(name);
+						return RenameRule.newBuilder(input).name(name).build();
 					}
 				};
 			}
@@ -362,7 +362,7 @@ public class ItemRenamerCommands implements CommandExecutor {
 				return new RenameFunction() {
 					@Override
 					public RenameRule apply(@Nullable RenameRule input) {
-						return input.withAdditionalLore(Arrays.asList(lore));
+						return RenameRule.newBuilder(input).mergeLoreSections(Arrays.asList(lore)).build();
 					}
 				};
 			}
@@ -379,8 +379,7 @@ public class ItemRenamerCommands implements CommandExecutor {
 					@Override
 					public RenameRule apply(@Nullable RenameRule input) {
 						output.append("Resetting lore for ").append(input);
-						return new RenameRule(input.getName(), null, 
-								input.getAddedEnchantments(), input.getRemovedEnchantments());
+						return RenameRule.newBuilder(input).loreSections(null).build();
 					}
 				};
 			}
@@ -397,8 +396,7 @@ public class ItemRenamerCommands implements CommandExecutor {
 					@Override
 					public RenameRule apply(@Nullable RenameRule input) {
 						output.append("Resetting enchantments for ").append(input);
-						return new RenameRule(input.getName(), input.getLoreSections(), 
-								null, input.getRemovedEnchantments());
+						return RenameRule.newBuilder(input).enchantments(null).build();
 					}
 				};
 			}
@@ -413,8 +411,7 @@ public class ItemRenamerCommands implements CommandExecutor {
 					@Override
 					public RenameRule apply(@Nullable RenameRule input) {
 						output.append("Resetting dechantments for ").append(input);
-						return new RenameRule(input.getName(), input.getLoreSections(), 
-								input.getAddedEnchantments(), null);
+						return RenameRule.newBuilder(input).dechantments(null).build();
 					}
 				};
 			}
@@ -453,7 +450,7 @@ public class ItemRenamerCommands implements CommandExecutor {
 				return new RenameFunction() {
 					@Override
 					public RenameRule apply(@Nullable RenameRule input) {
-						return input.withAddedEnchantment(Arrays.asList(enchantment));
+						return RenameRule.newBuilder(input).mergeEnchantments(Arrays.asList(enchantment)).build();
 					}
 				};
 			}
@@ -475,7 +472,11 @@ public class ItemRenamerCommands implements CommandExecutor {
 				return new RenameFunction() {
 					@Override
 					public RenameRule apply(@Nullable RenameRule input) {
-						return input.withRemovedEnchantment(Arrays.asList(enchantment));
+						RenameRule result = RenameRule.newBuilder(input).mergeDechantments(Arrays.asList(enchantment)).build();
+						
+						System.out.println("From: " + input);
+						System.out.println("To: " + result);
+						return result;
 					}
 				};
 			}
