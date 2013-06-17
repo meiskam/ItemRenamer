@@ -472,11 +472,7 @@ public class ItemRenamerCommands implements CommandExecutor {
 				return new RenameFunction() {
 					@Override
 					public RenameRule apply(@Nullable RenameRule input) {
-						RenameRule result = RenameRule.newBuilder(input).mergeDechantments(Arrays.asList(enchantment)).build();
-						
-						System.out.println("From: " + input);
-						System.out.println("To: " + result);
-						return result;
+						return RenameRule.newBuilder(input).mergeDechantments(Arrays.asList(enchantment)).build();
 					}
 				};
 			}

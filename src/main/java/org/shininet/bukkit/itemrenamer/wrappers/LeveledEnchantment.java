@@ -7,6 +7,7 @@ import org.bukkit.enchantments.Enchantment;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
+import com.google.common.base.Objects;
 
 public class LeveledEnchantment {
 	private final Enchantment enchantment;
@@ -72,6 +73,23 @@ public class LeveledEnchantment {
 		return level;
 	}
 	
+	@Override
+	public int hashCode(){
+		return Objects.hashCode(enchantment, level);
+	}
+	
+	@Override
+	public boolean equals(Object object){
+		if (object == this)
+			return true;
+		if (object instanceof LeveledEnchantment) {
+			LeveledEnchantment that = (LeveledEnchantment) object;
+			return this.enchantment == that.enchantment &&
+				   this.level == that.level;
+		}
+		return false;
+	}
+
 	@Override
 	public String toString() {
 		return enchantment + " " + level;
