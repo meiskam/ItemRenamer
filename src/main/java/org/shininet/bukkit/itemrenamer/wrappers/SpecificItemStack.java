@@ -25,6 +25,9 @@ public class SpecificItemStack {
 		// Ensure that we are using a copy
 		stack = stack.clone();
 		
+		// Ignore count
+		stack.setAmount(1);
+		
 		// Ignore durability for armor
 		if (MaterialUtils.isArmorTool(stack.getType())) {
 			stack.setDurability((short) 0);
