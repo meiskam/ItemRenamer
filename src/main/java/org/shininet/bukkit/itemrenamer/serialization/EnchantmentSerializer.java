@@ -8,6 +8,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.enchantments.Enchantment;
 import org.shininet.bukkit.itemrenamer.utils.ConfigurationUtils;
 import org.shininet.bukkit.itemrenamer.wrappers.LeveledEnchantment;
+import org.shininet.bukkit.itemrenamer.wrappers.LeveledEnchantment.CustomEnchantment;
 
 /**
  * Serialize and deserialize a collection of enchantments.
@@ -23,28 +24,22 @@ public class EnchantmentSerializer {
 	public void readEnchantments(ConfigurationSection section, Collection<LeveledEnchantment> destination) {
 		for (Entry<String, Object> entry : section.getValues(false).entrySet()) {
 			Enchantment enchantment = Enchantment.getByName(entry.getKey());
-		
-			if (entry.getValue() instanceof Number && enchantment != null) {
-				Number number = (Number) entry.getValue();
-				LeveledEnchantment output = new LeveledEnchantment(enchantment, number.intValue());
+			CustomEnchantment custom = CustomEnchantment.parse(entry.getKey());
+			
+			if (entry.getValue() instanceof Number && (enchantment != null || custom != null)) {
+				Number number = (Number) entry.getValue();;
 				
 				// Store the parsed enchantment
-				destination.add(output);
+				if (enchantment != null)
+					destination.add(new LeveledEnchantment(enchantment, number.intValue()));
+				else
+					destination.add(new LeveledEnchantment(custom, number.intValue()));		
 			} else {
 				// Try to be a bit informative
 				Bukkit.getLogger().warning("[ItemRenamer] [" + section.getCurrentPath() + "] Invalid value " + 
 						entry.getValue() + " for key " + enchantment);
 			}
 		}
-	}
-	
-	/**
-	 * Read the content of the given packaged byte array and store it in the given collection.
-	 * @param packaged
-	 * @param destination
-	 */
-	public void readEnchantments(byte[] packaged, Collection<LeveledEnchantment> destination) {
-		
 	}
 	
 	/**
@@ -57,7 +52,10 @@ public class EnchantmentSerializer {
 		
 		// Write all the enchantments
 		for (LeveledEnchantment leveled : source) {
-			section.set(leveled.getEnchantment().getName(), leveled.getLevel());
+			if (leveled.hasCustomEnchantment())
+				section.set(leveled.getCustom().name(), leveled.getLevel());
+			else
+				section.set(leveled.getEnchantment().getName(), leveled.getLevel());
 		}
 	}
 }

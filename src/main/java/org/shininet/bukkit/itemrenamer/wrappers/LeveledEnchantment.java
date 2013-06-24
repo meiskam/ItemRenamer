@@ -4,14 +4,46 @@ import java.util.Deque;
 import java.util.Map;
 
 import org.bukkit.enchantments.Enchantment;
+import org.shininet.bukkit.itemrenamer.enchants.VanillaEnchanter;
+import org.shininet.bukkit.itemrenamer.enchants.GlowEnchanter;
+import org.shininet.bukkit.itemrenamer.enchants.Enchanter;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
 import com.google.common.base.Objects;
 
 public class LeveledEnchantment {
+	public enum CustomEnchantment {
+		/**
+		 * No custom enchantment. 
+		 */
+		VANILLA,
+		
+		/**
+		 * Represents an enchantment that preserves the enchantment glow, but does not show up client side.
+		 */
+		GLOW;
+		
+		/**
+		 * Retrieve the parsed custom enchantment, or NULL if not found.
+		 * @param name - the value to parse.
+		 * @return The parsed custom enchantment.
+		 */
+		public static CustomEnchantment parse(String name) {
+			try {
+				return CustomEnchantment.valueOf(name);
+			} catch (IllegalArgumentException e) {
+				return null;
+			}
+		}
+	}
+	
+	private final CustomEnchantment custom;
 	private final Enchantment enchantment;
 	private final int level;
+	
+	// The current enchanter
+	private transient Enchanter enchanter;
 	
 	private static Map<String, Enchantment> byName = Maps.newHashMap();
 	
@@ -53,18 +85,63 @@ public class LeveledEnchantment {
 	public LeveledEnchantment(Enchantment enchantment, int level) {
 		if (enchantment == null)
 			throw new IllegalArgumentException("enchantment cannot be NULL.");
+		
+		this.custom = CustomEnchantment.VANILLA;
 		this.enchantment = enchantment;
 		this.level = level;
 	}
 
 	/**
+	 * Represents a custom enchantment with a associated level.
+	 * @param custom - the custom enchantment.
+	 * @param level - the associated level.
+	 */
+	public LeveledEnchantment(CustomEnchantment custom, int level) {
+		if (custom == null)
+			throw new IllegalArgumentException("custom cannot be NULL.");
+		if (custom == CustomEnchantment.VANILLA)
+			throw new IllegalArgumentException("custom cannot be VANILLA.");
+		
+		this.custom = custom;
+		this.enchantment = null;
+		this.level = level;
+	}
+	
+	/**
 	 * Retrieve the associated enchantment.
+	 * <p>
+	 * May be NULL if this leveled enchantment represents a custom enchantment.
 	 * @return The associated enchantment.
 	 */
 	public Enchantment getEnchantment() {
 		return enchantment;
 	}
 
+	/**
+	 * Retrieve the custom enchantment, or {@link CustomEnchantment#VANILLA} if the LeveledEnchantment
+	 * represents a vanilla enchantment.
+	 * @return The custom enchantment.
+	 */
+	public CustomEnchantment getCustom() {
+		return custom;
+	}
+	
+	/**
+	 * Retrieve an enchanter that applies the current enchantment to items.
+	 * @return An enchanter.
+	 */
+	public Enchanter getEnchanter() {
+		if (enchanter == null) {
+			if (custom == CustomEnchantment.VANILLA)
+				enchanter = new VanillaEnchanter(enchantment, level);
+			else if (custom == CustomEnchantment.GLOW)
+				enchanter = new GlowEnchanter();
+			else
+				throw new IllegalStateException("Invalid custom enchantment: " + custom);
+		}
+		return enchanter;
+	}
+	
 	/**
 	 * Retrieve the level of the enchantment.
 	 * @return The level of the enchantment.
@@ -73,9 +150,17 @@ public class LeveledEnchantment {
 		return level;
 	}
 	
+	/**
+	 * Determine if this leveled enchantment represents a custom type.
+	 * @return TRUE if it does, FALSE otherwise.
+	 */
+	public boolean hasCustomEnchantment() {
+		return custom != null && custom != CustomEnchantment.VANILLA;
+	}
+	
 	@Override
 	public int hashCode(){
-		return Objects.hashCode(enchantment, level);
+		return Objects.hashCode(custom, enchantment, level);
 	}
 	
 	@Override
@@ -84,7 +169,8 @@ public class LeveledEnchantment {
 			return true;
 		if (object instanceof LeveledEnchantment) {
 			LeveledEnchantment that = (LeveledEnchantment) object;
-			return this.enchantment == that.enchantment &&
+			return this.custom == that.custom &&
+				   this.enchantment == that.enchantment &&
 				   this.level == that.level;
 		}
 		return false;
@@ -92,7 +178,10 @@ public class LeveledEnchantment {
 
 	@Override
 	public String toString() {
-		return enchantment + " " + level;
+		if (custom == CustomEnchantment.VANILLA)
+			return enchantment + " " + level;
+		else
+			return custom + " " + level;
 	}
 	
 	/**
@@ -102,15 +191,22 @@ public class LeveledEnchantment {
 	 */
 	public static LeveledEnchantment parse(Deque<String> args) {
 		StringBuilder search = new StringBuilder();
+		String candidate = "";
+		CustomEnchantment parsedCustom = null;
 		
 		// Take elements until we are done
 		while (args.peek() != null) {
 			if (search.length() > 0)
 				search.append("_");
 			search.append(args.poll().toUpperCase());
+			candidate = search.toString();
+			
+			parsedCustom = CustomEnchantment.parse(candidate);
 			
 			// And we're done
-			if (byName.containsKey(search.toString())) {
+			if (parsedCustom != null)
+				break;
+			if (byName.containsKey(candidate)) {
 				break;
 			}
 		}
@@ -119,7 +215,11 @@ public class LeveledEnchantment {
 		try {
 			int level = Integer.parseInt(Joiner.on(" ").join(args).trim());
 			
-			return new LeveledEnchantment(byName.get(search.toString()), level);
+			if (parsedCustom != null)
+				return new LeveledEnchantment(parsedCustom, level);
+			else
+				return new LeveledEnchantment(byName.get(candidate), level);
+			
 		} catch (NumberFormatException e) {
 			// Either not a valid level, or not specified
 			return null;

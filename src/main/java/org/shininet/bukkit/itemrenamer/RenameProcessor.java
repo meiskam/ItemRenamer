@@ -124,10 +124,10 @@ public class RenameProcessor {
 		
 		// Remove or add enchantments
 		for (LeveledEnchantment removed : rule.getDechantments()) {
-			input.removeEnchantment(removed.getEnchantment());
+			input = removed.getEnchanter().disenchant(input);
 		}
 		for (LeveledEnchantment added : rule.getEnchantments()) {
-			input.addUnsafeEnchantment(added.getEnchantment(), added.getLevel());
+			input = added.getEnchanter().enchant(input);
 		}
 		
 		// Add a simple marker allowing us to restore the ItemMeta
@@ -183,8 +183,8 @@ public class RenameProcessor {
 		String pack = getPack(player);
 		
 		if (input != null) {
-            for (ItemStack anInput : input) {
-                process(pack, anInput);
+            for (int i = 0; i < input.length; i++) {
+            	input[i] = process(pack, input[i]);
             }
 		}
 		return input;
