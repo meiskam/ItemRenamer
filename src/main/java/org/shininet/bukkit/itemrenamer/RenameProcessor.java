@@ -75,7 +75,7 @@ public class RenameProcessor {
 			
 			// Exact item stacks has priority
 			if (exactRule != null) {
-				return processRule(input, exactRule);
+				return processRule(input, exactRule, false);
 			}
 			
 			// Next look at ranged rename rules
@@ -85,7 +85,7 @@ public class RenameProcessor {
 				RenameRule rule = lookup.getRule(input.getDurability());
 				
 				if (rule != null) {
-					return processRule(input, rule);
+					return processRule(input, rule, true);
 				}
 			}
 		}
@@ -98,13 +98,14 @@ public class RenameProcessor {
 	 * Rename or append lore to the given item stack.
 	 * @param input - the item stack.
 	 * @param rule - the rename rule to apply.
+	 * @param ignoreRenamed - whether or not to ignore renamed items.
 	 * @return The renamed item stack.
 	 */
-	private ItemStack processRule(ItemStack input, RenameRule rule) {
+	private ItemStack processRule(ItemStack input, RenameRule rule, boolean ignoreRenamed) {
 		ItemMeta itemMeta = input.getItemMeta();
 		
 		// May have been set by a plugin or a player
-		if ((itemMeta.hasDisplayName()) || (itemMeta.hasLore())) 
+		if (ignoreRenamed && (itemMeta.hasDisplayName()) || (itemMeta.hasLore())) 
 			return input;
 		NbtCompound original = getCompound(input);
 		
