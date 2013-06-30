@@ -10,7 +10,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
 
-public class MemoryExactLookup implements ExactLookup {
+class MemoryExactLookup implements ExactLookup {
 	// No need to account for concurrency - only the main thread (ought) to both read and write to this map
 	private Map<SpecificItemStack, RenameRule> lookup = Maps.newHashMap();
 	

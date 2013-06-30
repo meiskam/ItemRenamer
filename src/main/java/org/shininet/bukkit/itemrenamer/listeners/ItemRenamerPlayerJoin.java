@@ -8,13 +8,13 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.shininet.bukkit.itemrenamer.ItemRenamer;
+import org.shininet.bukkit.itemrenamer.ItemRenamerPlugin;
 
 public class ItemRenamerPlayerJoin implements Listener {
 	
-	private final ItemRenamer plugin;
+	private final ItemRenamerPlugin plugin;
 	
-	public ItemRenamerPlayerJoin(ItemRenamer plugin) {
+	public ItemRenamerPlayerJoin(ItemRenamerPlugin plugin) {
 		this.plugin = plugin;
 	}
 	
@@ -25,7 +25,7 @@ public class ItemRenamerPlayerJoin implements Listener {
 		if(player.hasPermission("itemrenamer.update") && plugin.getUpdateReady())
 		{
 			player.sendMessage("[ItemRenamer] An update is available: " + plugin.getUpdateName() + "(" + plugin.getUpdateSize() + " bytes)");
-			player.sendMessage("[ItemRenamer] http://curse.com/server-mods/minecraft/" + ItemRenamer.updateSlug);
+			player.sendMessage("[ItemRenamer] http://curse.com/server-mods/minecraft/" + ItemRenamerPlugin.updateSlug);
 		}
 	}
 	

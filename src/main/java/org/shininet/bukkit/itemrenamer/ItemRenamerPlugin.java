@@ -23,7 +23,7 @@ import org.shininet.bukkit.itemrenamer.metrics.Updater;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
 
-public class ItemRenamer extends JavaPlugin {
+public class ItemRenamerPlugin extends JavaPlugin {
 	private Logger logger;
 
 	private static boolean updateReady = false;

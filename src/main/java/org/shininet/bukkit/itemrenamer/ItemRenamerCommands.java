@@ -70,7 +70,7 @@ class ItemRenamerCommands implements CommandExecutor {
 		PAGE,
 	}
 	
-	private final ItemRenamer plugin;
+	private final ItemRenamerPlugin plugin;
 	private final ItemRenamerConfiguration config;
 	
 	private final CommandMatcher<Commands> matcher;
@@ -78,7 +78,7 @@ class ItemRenamerCommands implements CommandExecutor {
 	// Paged output
 	private final PagedMessage pagedMessage = new PagedMessage();
 	
-	public ItemRenamerCommands(ItemRenamer plugin, ItemRenamerConfiguration config, SelectedItemTracker selectedTracker) {
+	public ItemRenamerCommands(ItemRenamerPlugin plugin, ItemRenamerConfiguration config, SelectedItemTracker selectedTracker) {
 		this.plugin = plugin;
 		this.matcher = registerCommands();
 		this.config = config;

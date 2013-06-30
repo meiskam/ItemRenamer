@@ -4,7 +4,7 @@ import java.io.File;
 import java.util.Set;
 
 import org.bukkit.configuration.file.FileConfiguration;
-import org.shininet.bukkit.itemrenamer.ItemRenamer;
+import org.shininet.bukkit.itemrenamer.ItemRenamerPlugin;
 
 /**
  * Represents a item renamer configuration file.
@@ -19,7 +19,7 @@ public class ItemRenamerConfiguration {
 	
 	private RenameConfiguration renameConfig;
 	private FileConfiguration config;
-	private final ItemRenamer plugin;
+	private final ItemRenamerPlugin plugin;
 	
 	// Path to the configuration file
 	private final String path;
@@ -27,7 +27,7 @@ public class ItemRenamerConfiguration {
 	// Number of times it has changed
 	private int modCount;
 	
-	public ItemRenamerConfiguration(ItemRenamer plugin, String path) {
+	public ItemRenamerConfiguration(ItemRenamerPlugin plugin, String path) {
 		this.plugin = plugin;
 		this.path = path;
 		
