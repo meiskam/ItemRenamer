@@ -1,6 +1,7 @@
 package org.shininet.bukkit.itemrenamer;
 
 import java.util.List;
+
 import java.util.Map;
 import java.util.WeakHashMap;
 
@@ -11,6 +12,10 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 
+/**
+ * A utility class for paging messages.
+ * @author Kristian
+ */
 public class PagedMessage {
 	/**
 	 * Number of lines per page.

@@ -72,7 +72,7 @@ public class ItemRenamer extends JavaPlugin {
         ItemRenamerStackRestrictor stackRestrictor = new ItemRenamerStackRestrictor(processor);
 		
 		plugins.registerEvents(listenerPlayerJoin, this);
-		plugins.registerEvents(selectedTracker, this);
+		plugins.registerEvents(selectedTracker.getBukkitListener(), this);
 		
 		if (config.hasStackRestrictor()) {
 			plugins.registerEvents(stackRestrictor, this);

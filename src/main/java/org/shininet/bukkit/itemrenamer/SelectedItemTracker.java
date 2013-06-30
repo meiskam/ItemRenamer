@@ -14,23 +14,43 @@ import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.inventory.ItemStack;
 import org.shininet.bukkit.itemrenamer.utils.CollectionsUtil;
 
-public class SelectedItemTracker implements Listener {
+public class SelectedItemTracker {
+	// The selected pack and item for each sender
 	private final Map<CommandSender, ItemStack> selectedItem = new WeakHashMap<CommandSender, ItemStack>();
 	
-	@EventHandler
-	public void onPlayerInventory(InventoryClickEvent e) {
-		if (e.getWhoClicked() instanceof Player) {
-			Player clicker = (Player) e.getWhoClicked();
-			onNewSelected(clicker, clicker.getItemInHand());
+	// The Bukkit listener
+	private Listener bukkitListener;
+	
+	/**
+	 * Retrieve the listener that is registered to interface with the Bukkit event systen.
+	 * @return The Bukkit event listener.
+ 	 */
+	public Listener getBukkitListener() {
+		if (bukkitListener == null) {
+			bukkitListener = new Listener() {
+				@EventHandler
+				public void onPlayerInventory(InventoryClickEvent e) {
+					if (e.getWhoClicked() instanceof Player) {
+						Player clicker = (Player) e.getWhoClicked();
+						onNewSelected(clicker, clicker.getItemInHand());
+					}
+				}
+				
+				@EventHandler
+				public void onPlayerItemHeldEvent(PlayerItemHeldEvent e) {
+					Player player = e.getPlayer();
+					onNewSelected(player, e.getPlayer().getInventory().getItem(e.getNewSlot()));
+				}
+			};
 		}
+		return bukkitListener;
 	}
 	
-	@EventHandler
-	public void onPlayerItemHeldEvent(PlayerItemHeldEvent e) {
-		Player player = e.getPlayer();
-		onNewSelected(player, e.getPlayer().getInventory().getItem(e.getNewSlot()));
-	}
-	
+	/**
+	 * Invoked when a player changes the selected item.
+	 * @param clicker - the player.
+	 * @param changed - the new selected item, or NULL if we deselected.
+	 */
 	private void onNewSelected(Player clicker, ItemStack changed) {
 		ItemStack selected = getSelected(clicker);
 		
@@ -107,10 +127,19 @@ public class SelectedItemTracker implements Listener {
 		return selectedItem.remove(sender);
 	}
 	
+	/**
+	 * Determine if a given item stack is non-null and not AIR.
+	 * @param stack - the stack to test.
+	 * @return TRUE if the stack is non-null and non-air, FALSE otherwise.
+	 */
 	private boolean isValid(ItemStack stack) {
 		return stack != null && !Material.AIR.equals(stack.getType());
 	}
 	
+	/**
+	 * Throw an exception if the given command sender is not a player.
+	 * @param sender - the sender to test.
+	 */
 	private void validateSender(CommandSender sender) {
 		if (!(sender instanceof Player)) 
 			throw new CommandErrorException("Select item can only be called by players.");

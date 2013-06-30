@@ -5,7 +5,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitScheduler;
 import org.shininet.bukkit.itemrenamer.configuration.ItemRenamerConfiguration;
 
-public class RefreshInventoryTask implements Runnable {
+class RefreshInventoryTask implements Runnable {
 	private static final int TICKS_PER_SECOND = 20;
 	private static final int DELAY = TICKS_PER_SECOND * 2;	
 	

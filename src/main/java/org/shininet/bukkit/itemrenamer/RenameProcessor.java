@@ -36,11 +36,23 @@ public class RenameProcessor {
 	// Vault
 	private final Chat chat;
 	
-	public RenameProcessor(ItemRenamerConfiguration config, Chat chat) {
+	/**
+	 * Construct a new rename processor.
+	 * <p>
+	 * The Vault chat layer is used to retrieve per-player configuration.
+	 * @param config - the current configuration.
+	 * @param chat - the current Vault chat abstraction layer.
+	 */
+	RenameProcessor(ItemRenamerConfiguration config, Chat chat) {
 		this.config = config;
 		this.chat = chat;
 	}
 
+	/**
+	 * Process the name on the given item meta.
+	 * @param itemMeta - the item meta.
+	 * @param rule - the name rule to apply.
+	 */
 	private void packName(ItemMeta itemMeta, RenameRule rule) {
 		if (rule.getName() != null) {
 			itemMeta.setDisplayName(ChatColor.RESET + 
@@ -48,6 +60,11 @@ public class RenameProcessor {
 		}
 	}
 	
+	/**
+	 * Process lore on the given item meta.
+	 * @param itemMeta - the item meta.
+	 * @param rule - the lore rule to apply.
+	 */
 	private void packLore(ItemMeta itemMeta, RenameRule rule) {
 		// Don't process empty rules
 		if (rule.getLoreSections().size() == 0)
@@ -62,10 +79,24 @@ public class RenameProcessor {
 		itemMeta.setLore(output);
 	}
 
+	/**
+	 * Apply a player's associated rename rules to a given stack.
+	 * <p>
+	 * The rename rules are referenced by the world the player is in or by the player itself.
+	 * @param player - the player.
+	 * @param input - the item to rename.
+	 * @return The processed item stack.
+	 */
 	public ItemStack process(Player player, ItemStack input) {
 		return process(getPack(player), input);
 	}
 	
+	/**
+	 * Apply rename rules to a given item stack.
+	 * @param pack - the current rename package.
+	 * @param input - the item to process.
+	 * @return The processed item.
+	 */
 	private ItemStack process(String pack, ItemStack input) {
 		RenameConfiguration renameConfig = config.getRenameConfig();
 		

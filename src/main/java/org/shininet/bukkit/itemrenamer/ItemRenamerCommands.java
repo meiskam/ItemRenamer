@@ -9,9 +9,6 @@ import java.util.Arrays;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.WeakHashMap;
-
 import javax.annotation.Nullable;
 
 import org.bukkit.ChatColor;
@@ -36,19 +33,17 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ranges;
 
-public class ItemRenamerCommands implements CommandExecutor {
+class ItemRenamerCommands implements CommandExecutor {
 	// Different permissions
 	private static final String PERM_GET = "itemrenamer.config.get";
 	private static final String PERM_SET= "itemrenamer.config.set";
 	
 	// The super command
 	private static final Object COMMAND_ITEMRENAMER = "ItemRenamer";
-	
-	// The selected pack and item for each sender
-	private final Map<CommandSender, String> selectedPack = new WeakHashMap<CommandSender, String>();
-	
+		
 	// Selected items
 	private SelectedItemTracker selectedTracker;
+	private SelectedPackTracker selectedPacks;
 	
 	// Recognized sub-commands
 	public enum Commands {
@@ -88,6 +83,23 @@ public class ItemRenamerCommands implements CommandExecutor {
 		this.matcher = registerCommands();
 		this.config = config;
 		this.selectedTracker = selectedTracker;
+		this.selectedPacks = new SelectedPackTracker();
+	}
+	
+	/**
+	 * Retrieve the tracker for selected packs.
+	 * @return Tracker for selected packs.
+	 */
+	public SelectedPackTracker getSelectedPacks() {
+		return selectedPacks;
+	}
+	
+	/**
+	 * Retrieve the tracker for selected items.
+	 * @return Tracker for selected items.
+	 */
+	public SelectedItemTracker getSelectedTracker() {
+		return selectedTracker;
 	}
 	
 	private CommandMatcher<Commands> registerCommands() {
@@ -236,9 +248,9 @@ public class ItemRenamerCommands implements CommandExecutor {
 		String worldPack = config.getWorldPack(worldName);
 		
 		// Select the current world too
-		if (selectedPack.get(sender) == null) {
+		if (selectedPacks.hasSelected(sender)) {
 			if (worldPack != null)
-				selectedPack.put(sender, worldPack);
+				selectedPacks.selectPack(sender, worldPack);
 			else
 				return "Please set the world pack first.";
 		}
@@ -259,8 +271,8 @@ public class ItemRenamerCommands implements CommandExecutor {
 	private String printSelected(CommandSender sender) {
 		List<String> lines = new ArrayList<String>();
 
-		if (selectedPack.get(sender) != null)
-			lines.add("Selected pack " + selectedPack.get(sender));
+		if (selectedPacks.hasSelected(sender))
+			lines.add("Selected pack " + selectedPacks.getSelected(sender));
 		if (selectedTracker.getSelected(sender) != null)
 			lines.add("Selected item " + selectedTracker.getSelected(sender));
 		
@@ -272,7 +284,7 @@ public class ItemRenamerCommands implements CommandExecutor {
 	}
 
 	private String getItem(CommandSender sender, Deque<String> args) {
-		String pack = selectedPack.get(sender);
+		String pack = selectedPacks.getSelected(sender);
 		
 		// Check for special selection
 		if (selectedTracker.hasExactSelector(sender) && pack != null) {
@@ -305,7 +317,7 @@ public class ItemRenamerCommands implements CommandExecutor {
 	}
 	
 	private void modifyCurrent(CommandSender sender, Deque<String> args, boolean createNew, RenameProcessorFactory factory) {
-		String pack = selectedPack.get(sender);
+		String pack = selectedPacks.getSelected(sender);
 		
 		// Exact matches
 		if (selectedTracker.hasExactSelector(sender) && pack != null) {
@@ -496,7 +508,7 @@ public class ItemRenamerCommands implements CommandExecutor {
 	}
 	
 	private String parsePack(CommandSender sender, Deque<String> args) {
-		String selected = selectedPack.get(sender);
+		String selected = selectedPacks.getSelected(sender);
 		
 		// Use the selected pack, or parse the input arguments
 		if (selected != null) 
@@ -567,11 +579,11 @@ public class ItemRenamerCommands implements CommandExecutor {
 		
 		// Either add or remove the selection
 		if (pack == null) {
-			String previous = selectedPack.remove(sender);
+			String previous = selectedPacks.deselectPack(sender);
 			return previous != null ? "Deselected " + previous : "No pack selected.";
 			
 		} if (config.getRenameConfig().hasPack(pack)) {
-			selectedPack.put(sender, pack);
+			selectedPacks.selectPack(sender, pack);
 			return "Selected pack " + pack;
 			
 		} else {
@@ -587,7 +599,7 @@ public class ItemRenamerCommands implements CommandExecutor {
 	}
 
 	private String deselectWorldPack(CommandSender sender) {
-		String removed = selectedPack.remove(sender);
+		String removed = selectedPacks.deselectPack(sender);
 		
 		if (removed != null)
 			return "Deselected pack " + removed;
