@@ -27,6 +27,11 @@ public class ItemRenamerConfiguration {
 	// Number of times it has changed
 	private int modCount;
 	
+	/**
+	 * Construct a new renamer configuration.
+	 * @param plugin - the renamer plugin.
+	 * @param path - the path.
+	 */
 	public ItemRenamerConfiguration(ItemRenamerPlugin plugin, String path) {
 		this.plugin = plugin;
 		this.path = path;
@@ -39,10 +44,17 @@ public class ItemRenamerConfiguration {
 		initializeConfig();
 	}
 	
+	/**
+	 * Retrieve the underlying file.
+	 * @return The underlying file.
+	 */
 	private File getFile() {
 		return new File(path);
 	}
 	
+	/**
+	 * Save the current configuration to disk.
+	 */
 	public void save() {
 		// Backup the current configuration
 		File currentFile = new File(path);
@@ -63,6 +75,9 @@ public class ItemRenamerConfiguration {
 		}
 	}
 	
+	/**
+	 * Reload the configuration from disk.
+	 */
 	public void reload() {		
 		plugin.reloadConfig();
 		initializeConfig();
@@ -83,10 +98,18 @@ public class ItemRenamerConfiguration {
 		renameConfig = new RenameConfiguration(config.getConfigurationSection("packs"));
 	}
 	
+	/**
+	 * Determine if automatic updates are enabled.
+	 * @return TRUE if they are, FALSE otherwise.
+	 */
 	public boolean isAutoUpdate() {
 		return config.getBoolean(AUTO_UPDATE);
 	}
 	
+	/**
+	 * Set whether or not the plugin will automatically check for updates.
+	 * @param value - TRUE if it should, FALSE otherwise.
+	 */
 	public void setAutoUpdate(boolean value) {
 		modCount++;
 		config.set(AUTO_UPDATE, value);
@@ -111,12 +134,21 @@ public class ItemRenamerConfiguration {
 		return config.getString(WORLD_PACKS + "." + world);
 	}
 	
+	/**
+	 * Determine if the stack restrictor is enabled.
+	 * @return - the stack restrictor.
+	 */
 	public boolean hasStackRestrictor() {
 		return config.getBoolean(STACK_RESTRICTOR, true);
 	}
 	
+	/**
+	 * Set whether or not the stack restrictor is enabled.
+	 * @param value - the stack restrictor.
+	 */
 	public void setStackRestrictor(boolean value) {
 		config.set(STACK_RESTRICTOR, value);
+		plugin.refreshStackRestrictor();
 	}
 	
 	/**

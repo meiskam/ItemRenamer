@@ -15,7 +15,7 @@ import com.google.common.collect.Maps;
  * 
  * @author Kristian
  */
-public class RulePack {
+class RulePack {
 	public static final String EXACT = "exact";
 	
 	private final String name;
@@ -67,6 +67,11 @@ public class RulePack {
 		}
 	}
 
+	/**
+	 * Parse the given item section.
+	 * @param items - the item section.
+	 * @param key - the item ID.
+	 */
 	private void parseRange(ConfigurationSection items, String key) {
 		Integer id = Integer.parseInt(key);
 		DamageSerializer serializer = new DamageSerializer(ConfigurationUtils.getSection(items, key));

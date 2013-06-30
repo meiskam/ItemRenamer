@@ -32,6 +32,11 @@ class MemoryExactLookup implements ExactLookup {
 	
 	@Override
 	public void setRule(ItemStack stack, RenameRule rule) {
+		if (stack == null)
+			throw new IllegalArgumentException("stack cannot be NULL.");
+		if (!RenameRule.isIdentity(rule))
+			rule = rule.withSkipRule(false);
+		
 		SpecificItemStack key = new SpecificItemStack(stack);
 		RenameRule old = null;
 

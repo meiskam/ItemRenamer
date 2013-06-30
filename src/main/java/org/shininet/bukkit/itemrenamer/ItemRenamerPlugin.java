@@ -10,6 +10,7 @@ import java.util.logging.Logger;
 
 import net.milkbowl.vault.chat.Chat;
 
+import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -24,14 +25,16 @@ import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
 
 public class ItemRenamerPlugin extends JavaPlugin {
-	private Logger logger;
-
 	private static boolean updateReady = false;
 	private static String updateName = "";
 	private static long updateSize = 0;
 
 	public static final String updateSlug = "itemrenamer";
-
+	
+	// The current API
+	private static ItemRenamerAPI renamerAPI;
+	
+	private Logger logger;
     private ItemRenamerConfiguration config;
 
     private ItemRenamerPlayerJoin listenerPlayerJoin;
@@ -41,8 +44,20 @@ public class ItemRenamerPlugin extends JavaPlugin {
     // For tracking the currently selected item
     private SelectedItemTracker selectedTracker;
     
+    // For restricting the current stack
+    private ItemRenamerStackRestrictor stackRestrictor;
+    private RenameProcessor processor;
+    
     private int lastSaveCount;
 	private Chat chat;
+	
+	/**
+	 * Retrieve the renamer API.
+	 * @return The renamer API.
+	 */
+	public static ItemRenamerAPI getRenamerAPI() {
+		return renamerAPI;
+	}
 	
 	@Override
 	public void onEnable() {
@@ -57,7 +72,7 @@ public class ItemRenamerPlugin extends JavaPlugin {
 		if (setupChat()) {
 			logger.info("Found Vault!");
 		}
-        RenameProcessor processor = new RenameProcessor(config, chat);
+        processor = new RenameProcessor(config, chat);
 		
 		startMetrics();
 		startUpdater();
@@ -69,24 +84,27 @@ public class ItemRenamerPlugin extends JavaPlugin {
 		listenerPacket = new ItemRenamerPacket(this, processor, protocolManager, logger);
 		listenerPlayerJoin = new ItemRenamerPlayerJoin(this);
 		selectedTracker = new SelectedItemTracker();
-        ItemRenamerStackRestrictor stackRestrictor = new ItemRenamerStackRestrictor(processor);
 		
 		plugins.registerEvents(listenerPlayerJoin, this);
 		plugins.registerEvents(selectedTracker.getBukkitListener(), this);
 		
+		// Update stack restrictor
 		if (config.hasStackRestrictor()) {
-			plugins.registerEvents(stackRestrictor, this);
 			logger.info("Starting stack restrictor.");
 		} else {
 			logger.warning("Stack restrictor has been disabled.");
 		}
-
+		refreshStackRestrictor();			
+			
         ItemRenamerCommands commandExecutor = new ItemRenamerCommands(this, config, selectedTracker);
 		getCommand("ItemRenamer").setExecutor(commandExecutor);
 		
 		// Tasks
 		refreshTask = new RefreshInventoryTask(getServer().getScheduler(), this, config);
 		refreshTask.start();
+		
+		// Initialize the API
+		renamerAPI = new ItemRenamerAPI(config, processor);
 		
 		// Warn if a world cannot be found
 		for (String world : config.getWorldKeys()) {
@@ -100,6 +118,23 @@ public class ItemRenamerPlugin extends JavaPlugin {
 					logger.info("Item renaming enabled for world " + world);
 				else
 					logger.warning("Cannot find pack " + pack + " for world " + world);
+			}
+		}
+	}
+	
+	/**
+	 * Ensure that the stack restrictor is registered or not.
+	 */
+	public void refreshStackRestrictor() {
+		if (config.hasStackRestrictor()) {
+			if (stackRestrictor == null && processor != null) {
+				stackRestrictor = new ItemRenamerStackRestrictor(processor);
+				getServer().getPluginManager().registerEvents(stackRestrictor, this);
+			}
+		} else {
+			if (stackRestrictor != null) {
+				HandlerList.unregisterAll(stackRestrictor);
+				stackRestrictor = null;
 			}
 		}
 	}
@@ -147,16 +182,7 @@ public class ItemRenamerPlugin extends JavaPlugin {
     		return false;
     	}
     }
-	
-	// TODO: Determine if this is necessary
-	public void performConversion() {
-		//if ((configFile.contains("pack")) && (!configFile.contains("packs.converted"))) { //conversion ftw
-		//	configFile.set("packs.converted", configFile.getConfigurationSection("pack"));
-		//	configFile.set("pack", null);
-		//	saveConfig();
-		//}
-	}
-	
+
 	@Override
 	public void onDisable() {
 		// Save all changes if anything has changed
@@ -168,6 +194,9 @@ public class ItemRenamerPlugin extends JavaPlugin {
 		listenerPacket.unregister(this);
 		listenerPlayerJoin.unregister();
 		refreshTask.stop();
+		
+		// Clear API
+		renamerAPI = null;
 	}
 
 	public boolean getUpdateReady() {

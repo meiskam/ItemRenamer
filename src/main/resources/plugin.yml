@@ -3,7 +3,7 @@ version: 1.7.2-SNAPSHOT
 description: Custom default item names
 author: [meiskam, aadnk]
 
-main: org.shininet.bukkit.itemrenamer.ItemRenamer
+main: org.shininet.bukkit.itemrenamer.ItemRenamerPlugin
 database: false
 depend: [ProtocolLib]
 softdepend: [Vault]

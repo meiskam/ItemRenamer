@@ -97,46 +97,61 @@ public class RenameProcessor {
 	 * @param input - the item to process.
 	 * @return The processed item.
 	 */
-	private ItemStack process(String pack, ItemStack input) {
-		RenameConfiguration renameConfig = config.getRenameConfig();
+	public ItemStack process(String pack, ItemStack input) {
+		RenameRule rule = getRule(pack, input);
 		
 		// The item stack has already been cloned in the packet
-		if (input != null && pack != null && renameConfig.hasPack(pack)) {
+		if (!RenameRule.isIdentity(rule)) {
+			return processRule(input, rule);
+		}
+		// Just return it - for chaining
+		return input;
+	}
+	
+	/**
+	 * Retrieve the associated rule for the given pack and item stack.
+	 * <p>
+	 * This will first look for exact rules, then damage lookup rules.
+	 * @param pack - the rename pack.
+	 * @param input - the item stack.
+	 * @return The associated rule, or NULL if not found.
+	 */
+	public RenameRule getRule(String pack, ItemStack input) {
+		// They have no rule
+		if (pack == null || input == null)
+			return null;
+		RenameConfiguration renameConfig = config.getRenameConfig();
+		
+		// Make sure there is an associated pack
+		if (renameConfig.hasPack(pack)) {
 			RenameRule exactRule = renameConfig.getExact(pack).getRule(input);
 			
 			// Exact item stacks has priority
 			if (exactRule != null) {
-				return processRule(input, exactRule, false);
+				return exactRule;
 			}
 			
 			// Next look at ranged rename rules
 			DamageLookup lookup = renameConfig.getLookup(pack, input.getTypeId());
 
 			if (lookup != null) {
-				RenameRule rule = lookup.getRule(input.getDurability());
-				
-				if (rule != null) {
-					return processRule(input, rule, true);
-				}
+				return lookup.getRule(input.getDurability());
 			}
 		}
-		
-		// Just return it - for chaining
-		return input;
+		return null;
 	}
 
 	/**
 	 * Rename or append lore to the given item stack.
 	 * @param input - the item stack.
 	 * @param rule - the rename rule to apply.
-	 * @param ignoreRenamed - whether or not to ignore renamed items.
 	 * @return The renamed item stack.
 	 */
-	private ItemStack processRule(ItemStack input, RenameRule rule, boolean ignoreRenamed) {
+	public ItemStack processRule(ItemStack input, RenameRule rule) {
 		ItemMeta itemMeta = input.getItemMeta();
 		
 		// May have been set by a plugin or a player
-		if (ignoreRenamed && (itemMeta.hasDisplayName()) || (itemMeta.hasLore())) 
+		if (rule.isSkippingCustomNamed() && (itemMeta.hasDisplayName()) || (itemMeta.hasLore())) 
 			return input;
 		NbtCompound original = getCompound(input);
 		
@@ -229,7 +244,7 @@ public class RenameProcessor {
 	 * @param player - the player to look up.
 	 * @return The name of the rename pack.
 	 */
-	private String getPack(Player player) {
+	public String getPack(Player player) {
 		if (chat != null) {
 			String pack = chat.getPlayerInfoString(player, "itempack", null);
 
@@ -240,6 +255,11 @@ public class RenameProcessor {
 		return config.getWorldPack(player.getWorld().getName());
 	}
 	
+	/**
+	 * Retrieve the NbtCompound that stores additional data in an ItemStack.
+	 * @param stack - the item stack.
+	 * @return The additional NbtCompound.
+	 */
 	private NbtCompound getCompound(ItemStack stack) {
 		// It should have been a compound in the API ...
 		return NbtFactory.asCompound(NbtFactory.fromItemTag(stack));

@@ -2,8 +2,11 @@ package org.shininet.bukkit.itemrenamer.configuration;
 
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.bukkit.configuration.ConfigurationSection;
+
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -21,6 +24,10 @@ public class RenameConfiguration {
 	// How many times this configuration has changed
 	private int modCount;
 	
+	/**
+	 * Construct a new rename configuration from a given section.
+	 * @param section - the underlying configuration section.
+	 */
 	public RenameConfiguration(ConfigurationSection section) {
 		this.section = section;
 		
@@ -61,6 +68,14 @@ public class RenameConfiguration {
 		} else {
 			throw new IllegalArgumentException("Pack " + pack + " doesn't exist.");	
 		}
+	}
+	
+	/**
+	 * Retrieve an immutable view of the name of every registered pack.
+	 * @return Name of every registered pack.
+	 */
+	public Set<String> getPacks() {
+		return ImmutableSet.copyOf(memoryLookup.keySet());
 	}
 	
 	/**

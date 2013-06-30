@@ -27,6 +27,7 @@ public class RenameRule {
 	public static final RenameRule IDENTITY = new RenameRule();
 
 	private final String name;
+	private final boolean skipCustomNamed;
 	private final ImmutableList<String> loreSections;
 
 	// Enchantments to add or remove
@@ -46,6 +47,7 @@ public class RenameRule {
 	 */
 	private RenameRule(Builder builder) {
 		this.name = builder.name;
+		this.skipCustomNamed = builder.skipCustomNamed;
 		this.loreSections = safeList(builder.loreSections);
 		this.enchantments = safeSet(builder.enchantments);
 		this.dechantments = safeSet(builder.dechantments);
@@ -81,6 +83,7 @@ public class RenameRule {
 	 */
 	public static class Builder {
 		private String name;
+		private boolean skipCustomNamed;
 		private Collection<String> loreSections;
 		private Set<LeveledEnchantment> enchantments;
 		private Set<LeveledEnchantment> dechantments;
@@ -92,6 +95,7 @@ public class RenameRule {
 		private Builder(RenameRule template) {
 			// Note that the enchantments themselves are never NULL
 			name(template.name);
+			skipCustomNamed(template.skipCustomNamed);
 			loreSections(template.loreSections);
 			enchantments(template.enchantments);
 			dechantments(template.dechantments);
@@ -104,6 +108,19 @@ public class RenameRule {
 		 */
 		public Builder name(String name) {
 			this.name = name;
+			return this;
+		}
+		
+		/**
+		 * Set whether or not to skip items that already have a custom name or lore lines.
+		 * <p>
+		 * This is implicitly set by the damage lookup (TRUE) and explicit lookup (FALSE), and will 
+		 * not persist through serialization.
+		 * @param skipNamed - TRUE to skip items with custom name or lore, FALSE otherwise.
+		 * @return This builder, for chaining. 
+		 */
+		public Builder skipCustomNamed(boolean skipNamed) {
+			this.skipCustomNamed = skipNamed;
 			return this;
 		}
 		
@@ -266,10 +283,30 @@ public class RenameRule {
 	public ImmutableSet<LeveledEnchantment> getDechantments() {
 		return dechantments;
 	}
+	
+	/**
+	 * Determine if this rename rule will skip items with custom name or lore.
+	 * @return TRUE it the rule will skip those items, FALSE otherwise.
+	 */
+	public boolean isSkippingCustomNamed() {
+		return skipCustomNamed;
+	}
 
+	/**
+	 * Retrieve a rename rule with the given skip rule.
+	 * @param skipCustomNamed - whether or not to skip names that have a custom name or lore.
+	 * @return The same rename rule with this skip rule.
+	 */
+	public RenameRule withSkipRule(boolean skipCustomNamed) {
+		if (this.skipCustomNamed == skipCustomNamed)
+			return this;
+		else
+			return newBuilder(this).skipCustomNamed(skipCustomNamed).build();
+	}
+	
 	@Override
 	public int hashCode() {
-		return Objects.hashCode(name, loreSections, enchantments, dechantments);
+		return Objects.hashCode(name, skipCustomNamed, loreSections, enchantments, dechantments);
 	}
 
 	@Override
@@ -281,7 +318,7 @@ public class RenameRule {
 		if (obj instanceof RenameRule) {
 			RenameRule other = (RenameRule) obj;
 
-			if (!Objects.equal(name, other.getName()))
+			if (!Objects.equal(name, other.getName()) || skipCustomNamed != other.isSkippingCustomNamed())
 				return false;
 			return CollectionsUtil.equalsMany(loreSections, other.getLoreSections())
 					&& CollectionsUtil.equalsMany(enchantments, other.getEnchantments())
@@ -321,11 +358,12 @@ public class RenameRule {
 	 * @return TRUE if it is, FALSE otherwise.
 	 */
 	public boolean isIdentity() {
-		return name == null && CollectionsUtil.isEmpty(loreSections)
+		return this == IDENTITY || 
+				(name == null && CollectionsUtil.isEmpty(loreSections)
 				&& CollectionsUtil.isEmpty(enchantments)
-				&& CollectionsUtil.isEmpty(dechantments);
+				&& CollectionsUtil.isEmpty(dechantments));
 	}
-
+	
 	/**
 	 * Merge two item rename rules such that the priority rule overrides the fallback in name. 
 	 * <p>
@@ -362,6 +400,6 @@ public class RenameRule {
 	 * @return TRUE if it is, FALSE otherwise.
 	 */
 	public static boolean isIdentity(RenameRule rule) {
-		return rule == null || rule == IDENTITY || rule.isIdentity();
+		return rule == null || rule.isIdentity();
 	}
 }

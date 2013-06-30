@@ -157,7 +157,9 @@ class MemoryDamageLookup implements DamageLookup {
 	public void setRule(int damage, RenameRule rule) {
 		if (damage < 0)
 			throw new IllegalArgumentException("Damage cannot be less than zero.");
-		
+		if (!RenameRule.isIdentity(rule))
+			rule = rule.withSkipRule(true);
+	
 		modCount++;
 		tree.put(damage, damage, rule);
 	}
@@ -168,6 +170,8 @@ class MemoryDamageLookup implements DamageLookup {
 			throw new IllegalArgumentException("Damage cannot be less than zero.");
 		if (lowerDamage > upperDamage)
 			throw new IllegalArgumentException("Lower damage must be less than upper damage.");
+		if (!RenameRule.isIdentity(rule))
+			rule = rule.withSkipRule(true);
 		
 		modCount++;
 		tree.put(lowerDamage, upperDamage, rule);
