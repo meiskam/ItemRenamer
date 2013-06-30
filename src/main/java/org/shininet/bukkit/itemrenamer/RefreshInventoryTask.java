@@ -9,7 +9,7 @@ class RefreshInventoryTask implements Runnable {
 	private static final int TICKS_PER_SECOND = 20;
 	private static final int DELAY = TICKS_PER_SECOND * 2;	
 	
-	private int lastModCount;
+	private int lastModCount = -1;
 	private int taskID;
 	
 	private final ItemRenamerConfiguration config;
