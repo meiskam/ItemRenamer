@@ -248,7 +248,7 @@ class ItemRenamerCommands implements CommandExecutor {
 		String worldPack = config.getWorldPack(worldName);
 		
 		// Select the current world too
-		if (selectedPacks.hasSelected(sender)) {
+		if (!selectedPacks.hasSelected(sender)) {
 			if (worldPack != null)
 				selectedPacks.selectPack(sender, worldPack);
 			else
