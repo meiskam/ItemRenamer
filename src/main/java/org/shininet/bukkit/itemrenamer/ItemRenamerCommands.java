@@ -643,7 +643,7 @@ class ItemRenamerCommands implements CommandExecutor {
 		String world = args.poll();
 		
 		// Retrieve world pack
-		return "Item pack for " + world + ": " + config.getEffectiveWorldPack(world);
+		return "Item pack for " + world + ": " + config.getWorldPack(world);
 	}
 	/**
 	 * Set the default world pack.
