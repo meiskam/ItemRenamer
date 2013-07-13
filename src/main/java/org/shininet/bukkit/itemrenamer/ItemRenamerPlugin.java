@@ -5,11 +5,13 @@
 package org.shininet.bukkit.itemrenamer;
 
 import java.io.File;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import net.milkbowl.vault.chat.Chat;
 
+import org.bukkit.World;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredServiceProvider;
@@ -105,9 +107,14 @@ public class ItemRenamerPlugin extends JavaPlugin {
 		
 		// Initialize the API
 		renamerAPI = new ItemRenamerAPI(config, processor);
+		checkWorlds();
+	}
+	
+	private void checkWorlds() {
+		Set<String> specifiedWorlds = config.getWorldKeys();
 		
 		// Warn if a world cannot be found
-		for (String world : config.getWorldKeys()) {
+		for (String world : specifiedWorlds) {
 			if (getServer().getWorld(world) == null) {
 				logger.warning("Unable to find world " + world + ". Config may be invalid.");
 			} else {
@@ -118,6 +125,15 @@ public class ItemRenamerPlugin extends JavaPlugin {
 					logger.info("Item renaming enabled for world " + world);
 				else
 					logger.warning("Cannot find pack " + pack + " for world " + world);
+			}
+		}
+		
+		// "Load" default packs as well
+		if (config.getDefaultPack() != null) {
+			for (World world : getServer().getWorlds()) {
+				if (!specifiedWorlds.contains(world.getName())) {
+					logger.info("Item renaming enabled for world " + world.getName());
+				}
 			}
 		}
 	}
