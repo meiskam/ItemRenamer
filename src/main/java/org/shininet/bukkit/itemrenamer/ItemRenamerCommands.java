@@ -49,6 +49,8 @@ class ItemRenamerCommands implements CommandExecutor {
 	public enum Commands {
 		GET_AUTO_UPDATE,
 		SET_AUTO_UPDATE,
+		SET_DEFAULT_PACK,
+		GET_DEFAULT_PACK,
 		GET_WORLD_PACK, 
 		SET_WORLD_PACK,
 		GET_ITEM,
@@ -108,6 +110,8 @@ class ItemRenamerCommands implements CommandExecutor {
 		output.registerCommand(Commands.SET_AUTO_UPDATE, PERM_SET, "set", "setting", "autoupdate");
 		output.registerCommand(Commands.GET_WORLD_PACK, PERM_GET, "get", "world");
 		output.registerCommand(Commands.SET_WORLD_PACK, PERM_SET, "set", "world");
+		output.registerCommand(Commands.GET_DEFAULT_PACK, PERM_GET, "get", "default");
+		output.registerCommand(Commands.SET_DEFAULT_PACK, PERM_SET, "set", "default");
 		output.registerCommand(Commands.ADD_PACK, PERM_SET, "add", "pack");
 		output.registerCommand(Commands.GET_SELECTED, PERM_GET, "get", "selected");
 		output.registerCommand(Commands.DELETE_PACK, PERM_SET, "delete", "pack");
@@ -177,6 +181,12 @@ class ItemRenamerCommands implements CommandExecutor {
 				case SET_WORLD_PACK:
 					expectCommandCount(args, 2, "Need a world name and a world pack name.");
 					return setWorldPack(args);
+				case GET_DEFAULT_PACK: 
+					expectCommandCount(args, 0, "No arguments needed.");
+					return getDefaultPack();
+				case SET_DEFAULT_PACK:
+					expectCommandCount(args, 1, "Need a pack name.");
+					return setDefaultPack(args);
 				case ADD_PACK:
 					expectCommandCount(args, 1, "Need a world pack name.");
 					return addWorldPack(sender, args);
@@ -231,7 +241,7 @@ class ItemRenamerCommands implements CommandExecutor {
 		}
 		throw new CommandErrorException("Unrecognized sub command: " + command);
 	}
-
+	
 	/**
 	 * Perform the "select hand" command. This will use the current items ID and durability,
 	 * or the item itself.
@@ -620,12 +630,31 @@ class ItemRenamerCommands implements CommandExecutor {
 		if (expected != args.size())
 			throw new CommandErrorException("Error: " + error);
 	}
+
+	private String getDefaultPack() {
+		if (config.getDefaultPack() == null)
+			return "No default item pack.";
+		else
+			return "Default item pack: " + config.getDefaultPack();
+	}
+
 	
 	private String getWorldPack(Deque<String> args) {
 		String world = args.poll();
 		
 		// Retrieve world pack
 		return "Item pack for " + world + ": " + config.getEffectiveWorldPack(world);
+	}
+	/**
+	 * Set the default world pack.
+	 * @param args - the input arguments.
+	 * @return The message to return to the player.
+	 */
+	public String setDefaultPack(Deque<String> args) {
+		String pack = args.poll();;
+		
+		config.setDefaultPack(pack);
+		return "Set the default item pack to " + pack;
 	}
 
 	/**
