@@ -13,6 +13,7 @@ import org.shininet.bukkit.itemrenamer.configuration.DamageLookup;
 import org.shininet.bukkit.itemrenamer.configuration.ItemRenamerConfiguration;
 import org.shininet.bukkit.itemrenamer.configuration.RenameConfiguration;
 import org.shininet.bukkit.itemrenamer.configuration.RenameRule;
+import org.shininet.bukkit.itemrenamer.meta.CompoundStore;
 import org.shininet.bukkit.itemrenamer.wrappers.LeveledEnchantment;
 
 import com.comphenix.protocol.reflect.StructureModifier;
@@ -24,10 +25,6 @@ import com.comphenix.protocol.wrappers.nbt.NbtFactory;
 import com.google.common.collect.Lists;
 
 public class RenameProcessor {
-	/**
-	 * Storage of the original ItemMeta.
-	 */
-	private static final String KEY_ORIGINAL = "com.comphenix.original";
 	private final ItemRenamerConfiguration config;
 	
 	// This should really have been in ProtocolLib
@@ -168,6 +165,9 @@ public class RenameProcessor {
 		packName(itemMeta, rule);
 		packLore(itemMeta, rule);
 		input.setItemMeta(itemMeta);
+	
+		// Add a simple marker allowing us to restore the ItemMeta
+		input = CompoundStore.getDisplayNameStore(input).saveCompound(original);
 		
 		// Remove or add enchantments
 		for (LeveledEnchantment removed : rule.getDechantments()) {
@@ -176,12 +176,10 @@ public class RenameProcessor {
 		for (LeveledEnchantment added : rule.getEnchantments()) {
 			input = added.getEnchanter().enchant(input);
 		}
-		
-		// Add a simple marker allowing us to restore the ItemMeta
-		getCompound(input).put(KEY_ORIGINAL, original);
+
 		return input;
 	}
-	
+
 	/**
 	 * Undo a item rename, or leave as is.
 	 * @param input - the stack to undo.
@@ -190,11 +188,11 @@ public class RenameProcessor {
 	public boolean unprocess(ItemStack input) {
 		if (input != null) {
 			// This will only be invoked for creative players
-			NbtCompound data = getCompound(input);
-			
-			// Check for our marker
-			if (data.containsKey(KEY_ORIGINAL)) {
-				saveNbt(input, data.getCompound(KEY_ORIGINAL));
+			NbtCompound data = CompoundStore.getDisplayNameStore(input).loadCompound();
+
+			// See if there is something to restore
+			if (data != null) {
+				saveNbt(input, data);
 				return true;
 			}
 		}
