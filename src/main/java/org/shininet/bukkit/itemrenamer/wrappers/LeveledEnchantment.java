@@ -4,6 +4,7 @@ import java.util.Deque;
 import java.util.Map;
 
 import org.bukkit.enchantments.Enchantment;
+import org.shininet.bukkit.itemrenamer.enchants.HideAttributesEnchanter;
 import org.shininet.bukkit.itemrenamer.enchants.VanillaEnchanter;
 import org.shininet.bukkit.itemrenamer.enchants.GlowEnchanter;
 import org.shininet.bukkit.itemrenamer.enchants.Enchanter;
@@ -22,7 +23,12 @@ public class LeveledEnchantment {
 		/**
 		 * Represents an enchantment that preserves the enchantment glow, but does not show up client side.
 		 */
-		GLOW;
+		GLOW,
+		
+		/**
+		 * Represents an enchantment that removes all the attribute lines in 1.6.1 and 1.6.2.
+		 */
+		NO_ATTRIBUTES;
 		
 		/**
 		 * Retrieve the parsed custom enchantment, or NULL if not found.
@@ -136,6 +142,8 @@ public class LeveledEnchantment {
 				enchanter = new VanillaEnchanter(enchantment, level);
 			else if (custom == CustomEnchantment.GLOW)
 				enchanter = new GlowEnchanter();
+			else if (custom == CustomEnchantment.NO_ATTRIBUTES)
+				enchanter = new HideAttributesEnchanter();
 			else
 				throw new IllegalStateException("Invalid custom enchantment: " + custom);
 		}
