@@ -60,6 +60,14 @@ public abstract class RenamerAPI {
 	public abstract String getRenamePack(@Nonnull World world);
 	
 	/**
+	 * Retrieve the default rename pack.
+	 * <p>
+	 * This is used if a world's rename pack is undefined.
+	 * @return Default rename pack, or NULL if not found.
+	 */
+	public abstract String getDefaultPack();
+	
+	/**
 	 * Retrieve the rename rule associated with a particular item stack.
 	 * @param pack - the rename pack.
 	 * @param stack - the stack we are looking for.

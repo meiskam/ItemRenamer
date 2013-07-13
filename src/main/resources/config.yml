@@ -1,6 +1,7 @@
 # LanguagePack Configuration
 autoupdate: true
 stackrestrictor: true
+default: example
 
 worlds:
   world: example

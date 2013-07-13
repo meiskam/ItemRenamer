@@ -112,7 +112,7 @@ public class ItemRenamerPlugin extends JavaPlugin {
 				logger.warning("Unable to find world " + world + ". Config may be invalid.");
 			} else {
 				// Is the pack valid
-				String pack = config.getWorldPack(world);
+				String pack = config.getEffectiveWorldPack(world);
 				
 				if (config.getRenameConfig().hasPack(pack))
 					logger.info("Item renaming enabled for world " + world);

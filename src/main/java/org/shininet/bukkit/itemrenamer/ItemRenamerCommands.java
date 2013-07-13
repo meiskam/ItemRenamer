@@ -245,7 +245,7 @@ class ItemRenamerCommands implements CommandExecutor {
 		Player player = (Player) sender;
 		
 		String worldName = player.getWorld().getName();
-		String worldPack = config.getWorldPack(worldName);
+		String worldPack = config.getEffectiveWorldPack(worldName);
 		
 		// Select the current world too
 		if (!selectedPacks.hasSelected(sender)) {
@@ -625,7 +625,7 @@ class ItemRenamerCommands implements CommandExecutor {
 		String world = args.poll();
 		
 		// Retrieve world pack
-		return "Item pack for " + world + ": " + config.getWorldPack(world);
+		return "Item pack for " + world + ": " + config.getEffectiveWorldPack(world);
 	}
 
 	/**

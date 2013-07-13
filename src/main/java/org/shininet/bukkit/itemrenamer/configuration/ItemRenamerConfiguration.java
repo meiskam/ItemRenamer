@@ -16,6 +16,7 @@ public class ItemRenamerConfiguration {
 	private static final String AUTO_UPDATE = "autoupdate";
 	private static final String STACK_RESTRICTOR = "stackrestrictor";
 	private static final String WORLD_PACKS = "worlds";
+	private static final String DEFAULT_PACK = "default";
 	
 	private RenameConfiguration renameConfig;
 	private FileConfiguration config;
@@ -107,6 +108,23 @@ public class ItemRenamerConfiguration {
 	}
 	
 	/**
+	 * Set the default world pack.
+	 * @param pack - the default world pack.
+	 */
+	public void setDefaultPack(String pack) {
+		modCount++;
+		config.set(DEFAULT_PACK, pack);
+	}
+	
+	/**
+	 * Retrieve the default world pack.
+	 * @return Default pack, or NULL.
+	 */
+	public String getDefaultPack() {
+		return config.getString(DEFAULT_PACK);
+	}
+	
+	/**
 	 * Set whether or not the plugin will automatically check for updates.
 	 * @param value - TRUE if it should, FALSE otherwise.
 	 */
@@ -132,6 +150,22 @@ public class ItemRenamerConfiguration {
 	 */
 	public String getWorldPack(String world) {
 		return config.getString(WORLD_PACKS + "." + world);
+	}
+	
+	/**
+	 * Retrieve the effective rename pack for a world.
+	 * <p>
+	 * If a specific world pack is missing, fall back to the default rename pack.
+	 * @param world - the world to lookup.
+	 * @return The effective world pack.
+	 */
+	public String getEffectiveWorldPack(String world) {
+		String pack = getWorldPack(world);
+		
+		if (pack == null) {
+			pack = getDefaultPack();
+		}
+		return pack;
 	}
 	
 	/**

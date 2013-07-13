@@ -52,6 +52,11 @@ class ItemRenamerAPI extends RenamerAPI {
 	}
 
 	@Override
+	public String getDefaultPack() {
+		return config.getDefaultPack();
+	}
+
+	@Override
 	public RenameRule getRule(@Nonnull String pack, @Nonnull ItemStack stack) {
 		Preconditions.checkNotNull(pack, "pack cannot be NULL.");
 		Preconditions.checkNotNull(stack, "stack cannot be NULL.");

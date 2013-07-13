@@ -250,7 +250,7 @@ public class RenameProcessor {
 			if (pack != null && pack.length() > 0)
 				return pack;
 		}
-		return config.getWorldPack(player.getWorld().getName());
+		return config.getEffectiveWorldPack(player.getWorld().getName());
 	}
 	
 	/**
