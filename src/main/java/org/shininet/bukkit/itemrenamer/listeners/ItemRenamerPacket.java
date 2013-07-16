@@ -9,6 +9,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -18,6 +19,8 @@ import org.bukkit.plugin.Plugin;
 import org.shininet.bukkit.itemrenamer.RenameProcessor;
 import org.shininet.bukkit.itemrenamer.merchant.MerchantRecipe;
 import org.shininet.bukkit.itemrenamer.merchant.MerchantRecipeList;
+import org.shininet.bukkit.itemrenamer.meta.CharCodeStore;
+import org.shininet.bukkit.itemrenamer.meta.CompoundStore;
 
 import com.comphenix.net.sf.cglib.proxy.Factory;
 import com.comphenix.protocol.Packets;
@@ -29,6 +32,7 @@ import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.reflect.FieldAccessException;
 import com.comphenix.protocol.reflect.StructureModifier;
+import com.google.common.io.ByteStreams;
 
 public class ItemRenamerPacket {
 	private final RenameProcessor processor;
@@ -74,9 +78,10 @@ public class ItemRenamerPacket {
 						break;
 				
 					case 0xFA:
+						String packetName = packet.getStrings().read(0);
+						
 						// Make sure this is a merchant list
-						if (packet.getStrings().read(0).equals("MC|TrList")) {
-							
+						if (packetName.equals("MC|TrList")) {	
 							try {
 								byte[] result = processMerchantList(player, packet.getByteArrays().read(0));
 								packet.getIntegers().write(0, result.length);
@@ -84,7 +89,7 @@ public class ItemRenamerPacket {
 							} catch (IOException e) {
 								logger.log(Level.WARNING, "Cannot read merchant list!", e);
 							}
-						}
+						}						
 						break;
 					}
 				} catch (FieldAccessException e) {
@@ -110,6 +115,62 @@ public class ItemRenamerPacket {
 				if (event.getPacketID() == Packets.Client.SET_CREATIVE_SLOT) {
 					// Do the opposite
 					processor.unprocess(event.getPacket().getItemModifier().read(0));
+				}
+			}
+		});
+		
+		
+		protocolManager.addPacketListener(new PacketAdapter(
+				plugin, ConnectionSide.CLIENT_SIDE, ListenerPriority.LOW, 
+				Packets.Client.WINDOW_CLICK, Packets.Client.CUSTOM_PAYLOAD) {
+			
+			@Override
+			public void onPacketReceiving(PacketEvent event) {
+				switch (event.getPacketID()) {
+					case Packets.Client.WINDOW_CLICK :
+						// Do the opposite
+						processor.unprocess(event.getPacket().getItemModifier().read(0));
+						break;
+
+					case Packets.Client.CUSTOM_PAYLOAD:
+						PacketContainer packet = event.getPacket();
+						String name = packet.getStrings().read(0);
+						
+						if ("MC|ItemName".equals(name)) {
+							byte[] data = packet.getByteArrays().read(0);
+							
+							// No need to modify NULL arrays
+							if (data == null) {
+								return;
+							}
+
+							// Read each segment without decompressing any data
+							CharCodeStore store = new CharCodeStore(CompoundStore.PLUGIN_ID) {
+								protected byte[] getPayload(int uncompressedSize, DataInputStream input) throws IOException {
+									byte[] output = new byte[uncompressedSize];
+									
+									// Only read as much as we can
+									ByteStreams.readFully(input, output, 0, Math.min(uncompressedSize, input.available()));
+									return output;
+								}
+								
+								@Override
+								protected OutputStream getPayloadOutputStream(OutputStream storage) {
+									return storage;
+								}
+							};
+						
+							store.parse(new String(data));
+
+							// Remove any stored information by our plugin
+							if (store.hasData()) {
+								String newData = store.toString();
+								packet.getByteArrays().write(0, newData.getBytes());
+							}
+						}
+						
+					default :
+						break;
 				}
 			}
 		});

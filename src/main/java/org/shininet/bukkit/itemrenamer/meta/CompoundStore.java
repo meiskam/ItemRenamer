@@ -4,13 +4,10 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.lang.reflect.Method;
 
+import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.shininet.bukkit.itemrenamer.meta.CharCodeEncoder.Segment;
 
-import com.comphenix.protocol.injector.BukkitUnwrapper;
 import com.comphenix.protocol.utility.MinecraftReflection;
 import com.comphenix.protocol.wrappers.nbt.NbtCompound;
 import com.comphenix.protocol.wrappers.nbt.NbtFactory;
@@ -18,7 +15,7 @@ import com.comphenix.protocol.wrappers.nbt.io.NbtBinarySerializer;
 import com.google.common.base.Preconditions;
 
 public abstract class CompoundStore {
-	private static Method GET_NAME_METHOD = null;
+	public static final int PLUGIN_ID = 0x79fe4647;
 	
 	protected ItemStack stack;
 	
@@ -96,64 +93,53 @@ public abstract class CompoundStore {
 	}
 	
 	/** 
-	 * Retrieve a compound store that saves and loads compounds from invisible data in the display name.
-	 * @param stack - the item stack whose display name will be used to load and save data.
+	 * Retrieve a compound store that saves and loads compounds from invisible data in the display name or lore.
+	 * @param stack - the item stack whose display name or lore will be used to load and save data.
 	 * @return The compound store.
 	 */
-	public static CompoundStore getDisplayNameStore(ItemStack stack) {
+	public static CompoundStore getItemMetaStore(ItemStack stack) {
 		return new CompoundStore(stack) {
 			// Unique for this kind of store
-			private CharCodeEncoder encoder = new CharCodeEncoder(0x79fe4647);
+			private CharCodeStore encoder = 
+					(isNamingItem(stack) || stack.getItemMeta().hasLore()) ? 
+					CharCodeFactory.fromLore(PLUGIN_ID, stack) : 
+					CharCodeFactory.fromDisplayName(PLUGIN_ID, stack);
+					
 			private NbtBinarySerializer serializer = new NbtBinarySerializer();
-			private BukkitUnwrapper unwrapper = new BukkitUnwrapper();
 			
 			@Override
 			public ItemStack saveCompound(NbtCompound compound) {
 				ByteArrayOutputStream store = new ByteArrayOutputStream();
-				ItemMeta meta = stack.getItemMeta();
-				
-				// Retrieve compound as a byte array and store it in the name
+
 				serializer.serialize(compound, new DataOutputStream(store));
-				meta.setDisplayName(getName() + encoder.encode(store.toByteArray()));
-				stack.setItemMeta(meta);
-				
+				encoder.getData().setBytes(store.toByteArray());
+				encoder.save();
 				return stack;
 			}
 			
 			@Override
 			public NbtCompound loadCompound() {
-				ItemMeta meta = stack.getItemMeta();
-				
-				if (meta.hasDisplayName()) {
-					Segment[] segments = encoder.decode(meta.getDisplayName());
+				if (encoder.hasData()) {
+					ByteArrayInputStream input = new ByteArrayInputStream(encoder.getData().getBytes());
 					
 					// Retrieve the stored NbtCompound
-					if (segments.length > 0) {
-						ByteArrayInputStream input = new ByteArrayInputStream(segments[0].getData());
-						return serializer.deserializeCompound(new DataInputStream(input));
-					}
+					return serializer.deserializeCompound(new DataInputStream(input));
 				}
 				return null;
 			}
-			
-			private String getName() {
-				Object nmsStack = unwrapper.unwrapItem(stack);
-				
-				if (GET_NAME_METHOD == null) {
-					try {
-						GET_NAME_METHOD = nmsStack.getClass().getMethod("getName");
-					} catch (Exception e) {
-						throw new IllegalStateException("Unable to find " + nmsStack.getClass() + ".getName()", e);
-					}
-				}
-				
-				// Attempt to get the item name
-				try {
-					return (String) GET_NAME_METHOD.invoke(nmsStack);
-				} catch (Exception e) {
-					throw new IllegalStateException("Unable to look up item name for " + stack);
-				}
-			}
 		};
+	}
+	
+	/**
+	 * Determine if the display name of the given item is used to set the name of a mob in any way.
+	 * <p>
+	 * This includes spawner eggs and naming tags.
+	 * @stack - the stack to check. 
+	 * @return TRUE if it does, FALSE otherwise.
+	 */
+	private static boolean isNamingItem(ItemStack stack) {
+		return stack.getType() == Material.MONSTER_EGG || 
+			   stack.getType() == Material.MONSTER_EGGS || 
+			   stack.getType() == Material.NAME_TAG;
 	}
 }
