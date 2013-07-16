@@ -155,7 +155,7 @@ public class CharCodeStore {
 		
 		@Override
 		public void pipeTo(StringBuilder output, Segment previous) {
-			if (!(previous.needDelimiter()))
+			if (!(previous != null && previous.needDelimiter()))
 				output.append(SEGMENT_DELIMITER);
 			
 			encode(output, pluginId, data);
