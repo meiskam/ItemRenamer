@@ -163,9 +163,95 @@ public class CharCodeStore {
 		}
 	}
 	
-	private final int pluginId;
-	private List<Segment> segments = Lists.newArrayList();
-	private Map<Integer, DataSegment> lookup = Maps.newHashMap();
+	/**
+	 * Represents a generic converter between the stored payload and the actual payload.
+	 * 
+	 * @author Kristian
+	 */
+	public interface PayloadStore {
+		/**
+		 * Retrieve the output stream that is used to compress the payload.
+		 * @param storage - the payload byte array as a stream.
+		 * @return The output stream that will be used to compress the payload.
+		 */
+		public OutputStream getPayloadOutputStream(OutputStream storage);
+		
+		/**
+		 * Retrieve the input stream that is used to decompress the payload.
+		 * @param storage - the payload byte array as a stream.
+		 * @return The input stream that will be used to decompress the payload.
+		 */
+		public InputStream getPayloadInputStream(InputStream input);
+		
+		/***
+		 * Retrieve the payload from a given input stream.
+		 * @param uncompressedSize - the uncompressed size of the payload.
+		 * @param input - the input stream.
+		 * @return The payload itself.
+		 * @throws IOException If anything went wrong.
+		 */
+		public byte[] getPayload(int uncompressedSize, DataInputStream input) throws IOException;
+	}
+	
+	/**
+	 * Yields access to compressed payload.
+	 * @author Kristian
+	 */
+	public static class CompressedPayloadStore implements PayloadStore {
+		public static final CompressedPayloadStore INSTANCE = new CompressedPayloadStore();
+		
+		@Override
+		public OutputStream getPayloadOutputStream(OutputStream storage) {
+			return new DeflaterOutputStream(storage);
+		}
+		
+		@Override
+		public InputStream getPayloadInputStream(InputStream input) {
+			return new InflaterInputStream(input);
+		}
+		
+		@Override
+		public byte[] getPayload(int uncompressedSize, DataInputStream input) throws IOException {
+			InputStream payload = getPayloadInputStream(input);
+			byte[] result = new byte[uncompressedSize];
+			
+			ByteStreams.readFully(payload, result);
+			return result;
+		}
+	}
+	
+	/**
+	 * Yields access to uncompressed payload.
+	 * @author Kristian
+	 */
+	public static class RawPayloadStore implements PayloadStore {
+		public static final RawPayloadStore INSTANCE = new RawPayloadStore();
+		
+		@Override
+		public OutputStream getPayloadOutputStream(OutputStream storage) {
+			return storage;
+		}
+		
+		@Override
+		public InputStream getPayloadInputStream(InputStream input) {
+			return input;
+		}
+		
+		@Override
+		public byte[] getPayload(int uncompressedSize, DataInputStream input) throws IOException {
+			byte[] output = new byte[uncompressedSize];
+			
+			// Only read as much as we can
+			ByteStreams.readFully(input, output, 0, Math.min(uncompressedSize, input.available()));
+			return output;
+		}
+	}
+	
+	protected final int pluginId;
+	protected List<Segment> segments = Lists.newArrayList();
+	protected Map<Integer, DataSegment> lookup = Maps.newHashMap();
+	
+	protected PayloadStore payloadStore = CompressedPayloadStore.INSTANCE;
 		
 	/**
 	 * Construct a new encoder with the given plugin ID. 
@@ -177,6 +263,16 @@ public class CharCodeStore {
 	 */
 	public CharCodeStore(int pluginId) {
 		this.pluginId = pluginId;
+	}
+	
+	/**
+	 * Construct a new encoder with the given plugin ID. 
+	 * @param pluginId - a unique ID identifying the owner plugin.
+	 * @param payloadStore - how to transform the payload data.
+	 */
+	public CharCodeStore(int pluginId, PayloadStore store) {
+		this.pluginId = pluginId;
+		this.payloadStore = store;
 	}
 		
 	/**
@@ -309,38 +405,7 @@ public class CharCodeStore {
 		return Iterables.filter(segments, DataSegment.class);
 	}
 	
-	/**
-	 * Retrieve the output stream that is used to compress the payload.
-	 * @param storage - the payload byte array as a stream.
-	 * @return The output stream that will be used to compress the payload.
-	 */
-	protected OutputStream getPayloadOutputStream(OutputStream storage) {
-		return new DeflaterOutputStream(storage);
-	}
-	
-	/**
-	 * Retrieve the input stream that is used to decompress the payload.
-	 * @param storage - the payload byte array as a stream.
-	 * @return The input stream that will be used to decompress the payload.
-	 */
-	protected InputStream getPayloadInputStream(InputStream input) {
-		return new InflaterInputStream(input);
-	}
-	
-	/***
-	 * Retrieve the payload from a given input stream.
-	 * @param uncompressedSize - the uncompressed size of the payload.
-	 * @param input - the input stream.
-	 * @return The payload itself.
-	 * @throws IOException If anything went wrong.
-	 */
-	protected byte[] getPayload(int uncompressedSize, DataInputStream input) throws IOException {
-		InputStream payload = getPayloadInputStream(input);
-		byte[] result = new byte[uncompressedSize];
-		
-		ByteStreams.readFully(payload, result);
-		return result;
-	}
+
 	
 	/**
 	 * Encode an array of bytes into a CharCoded text.
@@ -350,7 +415,7 @@ public class CharCodeStore {
 	private void encode(StringBuilder result, int pluginId, byte[] data) {
 		try {
 			ByteArrayOutputStream storage = new ByteArrayOutputStream();
-			OutputStream output = getPayloadOutputStream(storage);
+			OutputStream output = payloadStore.getPayloadOutputStream(storage);
 			
 			output.write(data);
 			output.close();
@@ -489,7 +554,7 @@ public class CharCodeStore {
 				
 				int uncompressed = input.readShort();
 				int pluginId = input.readInt();
-				byte[] payload = getPayload(uncompressed, input);
+				byte[] payload = payloadStore.getPayload(uncompressed, input);
 				
 				input.close();
 				return new DataSegment(pluginId, payload);

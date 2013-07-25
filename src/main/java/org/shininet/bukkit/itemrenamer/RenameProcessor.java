@@ -167,7 +167,7 @@ public class RenameProcessor {
 		input.setItemMeta(itemMeta);
 	
 		// Add a simple marker allowing us to restore the ItemMeta
-		input = CompoundStore.getItemMetaStore(input).saveCompound(original);
+		input = CompoundStore.getNativeStore(input).saveCompound(original);
 		
 		// Remove or add enchantments
 		for (LeveledEnchantment removed : rule.getDechantments()) {
@@ -188,7 +188,7 @@ public class RenameProcessor {
 	public boolean unprocess(ItemStack input) {
 		if (input != null) {
 			// This will only be invoked for creative players
-			NbtCompound data = CompoundStore.getItemMetaStore(input).loadCompound();
+			NbtCompound data = CompoundStore.getNativeStore(input).loadCompound();
 
 			// See if there is something to restore
 			if (data != null) {

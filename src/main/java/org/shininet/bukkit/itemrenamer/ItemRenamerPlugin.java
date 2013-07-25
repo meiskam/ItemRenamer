@@ -17,6 +17,7 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.shininet.bukkit.itemrenamer.configuration.ItemRenamerConfiguration;
+import org.shininet.bukkit.itemrenamer.listeners.BukkitNbtScrubberFix;
 import org.shininet.bukkit.itemrenamer.listeners.ItemRenamerPacket;
 import org.shininet.bukkit.itemrenamer.listeners.ItemRenamerPlayerJoin;
 import org.shininet.bukkit.itemrenamer.listeners.ItemRenamerStackRestrictor;
@@ -43,6 +44,9 @@ public class ItemRenamerPlugin extends JavaPlugin {
 	private ItemRenamerPacket listenerPacket;
     private RefreshInventoryTask refreshTask;
 
+    // For undoing the NBT scrubber
+    private BukkitNbtScrubberFix nbtScrubberFix;
+    
     // For tracking the currently selected item
     private SelectedItemTracker selectedTracker;
     
@@ -83,12 +87,19 @@ public class ItemRenamerPlugin extends JavaPlugin {
 		PluginManager plugins = getServer().getPluginManager();
         ProtocolManager protocolManager = ProtocolLibrary.getProtocolManager();
 		
+        nbtScrubberFix = new BukkitNbtScrubberFix(this, protocolManager);
 		listenerPacket = new ItemRenamerPacket(this, processor, protocolManager, logger);
 		listenerPlayerJoin = new ItemRenamerPlayerJoin(this);
 		selectedTracker = new SelectedItemTracker();
 		
 		plugins.registerEvents(listenerPlayerJoin, this);
 		plugins.registerEvents(selectedTracker.getBukkitListener(), this);
+		
+		// Enable scrubber
+		if (nbtScrubberFix.isRequired()) {
+			nbtScrubberFix.enable();
+			logger.info("Enabled NBT scrubber.");
+		}
 		
 		// Update stack restrictor
 		if (config.hasStackRestrictor()) {
@@ -207,6 +218,7 @@ public class ItemRenamerPlugin extends JavaPlugin {
 			logger.info("Saving configuration.");
 		}
 		
+		nbtScrubberFix.disable();
 		listenerPacket.unregister(this);
 		listenerPlayerJoin.unregister();
 		refreshTask.stop();

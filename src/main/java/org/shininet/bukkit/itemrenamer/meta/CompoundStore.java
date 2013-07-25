@@ -97,6 +97,7 @@ public abstract class CompoundStore {
 	 * @param stack - the item stack whose display name or lore will be used to load and save data.
 	 * @return The compound store.
 	 */
+	@Deprecated
 	public static CompoundStore getItemMetaStore(ItemStack stack) {
 		return new CompoundStore(stack) {
 			// Unique for this kind of store

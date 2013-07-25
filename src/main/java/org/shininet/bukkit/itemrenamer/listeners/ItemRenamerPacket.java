@@ -9,7 +9,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -32,7 +31,6 @@ import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.reflect.FieldAccessException;
 import com.comphenix.protocol.reflect.StructureModifier;
-import com.google.common.io.ByteStreams;
 
 public class ItemRenamerPacket {
 	private final RenameProcessor processor;
@@ -118,8 +116,8 @@ public class ItemRenamerPacket {
 				}
 			}
 		});
-		
-		
+
+		// Remove data stored in the display name of items
 		protocolManager.addPacketListener(new PacketAdapter(
 				plugin, ConnectionSide.CLIENT_SIDE, ListenerPriority.LOW, 
 				Packets.Client.WINDOW_CLICK, Packets.Client.CUSTOM_PAYLOAD) {
@@ -145,27 +143,13 @@ public class ItemRenamerPacket {
 							}
 
 							// Read each segment without decompressing any data
-							CharCodeStore store = new CharCodeStore(CompoundStore.PLUGIN_ID) {
-								protected byte[] getPayload(int uncompressedSize, DataInputStream input) throws IOException {
-									byte[] output = new byte[uncompressedSize];
-									
-									// Only read as much as we can
-									ByteStreams.readFully(input, output, 0, Math.min(uncompressedSize, input.available()));
-									return output;
-								}
-								
-								@Override
-								protected OutputStream getPayloadOutputStream(OutputStream storage) {
-									return storage;
-								}
-							};
-						
+							CharCodeStore store = new CharCodeStore(CompoundStore.PLUGIN_ID, CharCodeStore.RawPayloadStore.INSTANCE);
 							store.parse(new String(data));
 
 							// Remove any stored information by our plugin
 							if (store.hasData()) {
-								String newData = store.toString();
-								packet.getByteArrays().write(0, newData.getBytes());
+								store.removeData(store.getPluginId());
+								packet.getByteArrays().write(0, store.toString().getBytes());
 							}
 						}
 						
