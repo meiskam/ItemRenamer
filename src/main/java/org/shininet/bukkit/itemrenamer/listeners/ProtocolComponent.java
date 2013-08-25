@@ -9,13 +9,18 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.annotation.Nonnull;
 
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import org.shininet.bukkit.itemrenamer.RenameProcessor;
+import org.shininet.bukkit.itemrenamer.component.AbstractComponent;
+import org.shininet.bukkit.itemrenamer.component.Component;
 import org.shininet.bukkit.itemrenamer.merchant.MerchantRecipe;
 import org.shininet.bukkit.itemrenamer.merchant.MerchantRecipeList;
 import org.shininet.bukkit.itemrenamer.meta.CharCodeStore;
@@ -29,25 +34,58 @@ import com.comphenix.protocol.events.ListenerPriority;
 import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
+import com.comphenix.protocol.events.PacketListener;
 import com.comphenix.protocol.reflect.FieldAccessException;
 import com.comphenix.protocol.reflect.StructureModifier;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 
-public class ItemRenamerPacket {
+/**
+ * Represents a component that handles all the ProtocolLib interfacing.
+ * @author Kristian
+ */
+public class ProtocolComponent extends AbstractComponent {
 	private final RenameProcessor processor;
 	private final ProtocolManager protocolManager;
 
 	private final Logger logger;
+	
+	// Current listeners
+	private List<PacketListener> listeners = Lists.newArrayList();
 
+	// Scrubbing creative override
+	private Component stackCleaner;
+	
 	// Possibly change to a builder
-	public ItemRenamerPacket(Plugin plugin, RenameProcessor processor, ProtocolManager protocolManager, Logger logger) {
-		this.processor = processor;
-		this.protocolManager = protocolManager;
-		this.logger = logger;
-		addListener(plugin);
+	public ProtocolComponent(RenameProcessor processor, ProtocolManager protocolManager, Logger logger) {
+		this.processor = Preconditions.checkNotNull(processor, "processor cannot be NULL.");
+		this.protocolManager = Preconditions.checkNotNull(protocolManager, "protocolManager cannot be NULL");
+		this.logger = Preconditions.checkNotNull(logger, "logger cannot be NULL");
 	}
 	
-	public void addListener(final Plugin plugin) {
-		protocolManager.addPacketListener(
+	@Override
+	protected void onRegistered(@Nonnull Plugin plugin) {
+		listeners.add(registerCommonListeners(plugin));
+		
+		// Prevent creative from overwriting the item stacks
+		listeners.add(registerCreative(plugin));
+
+		// Remove data stored in the display name of items
+		listeners.add(registerClearCharStore(plugin));
+		stackCleaner = registerStackCleaner(plugin);
+	}
+	
+	@Override
+	protected void onUnregistered(@Nonnull Plugin plugin) {
+		for (PacketListener listener : listeners) {
+			protocolManager.removePacketListener(listener);
+		}
+		listeners.clear();
+		stackCleaner.unregister(plugin);
+	}
+
+	private PacketListener registerCommonListeners(Plugin plugin) {
+		return addListener(
 				new PacketAdapter(plugin, ConnectionSide.SERVER_SIDE, ListenerPriority.HIGH, 0x67, 0x68, 0xFA) {
 			@Override
 			public void onPacketSending(PacketEvent event) {
@@ -95,10 +133,11 @@ public class ItemRenamerPacket {
 				}
 			}
 		});
-		
-		// Prevent creative from overwriting the item stacks
-		protocolManager.addPacketListener(
-				new PacketAdapter(plugin, ConnectionSide.BOTH, ListenerPriority.HIGH, Packets.Client.SET_CREATIVE_SLOT) {
+	}
+	
+	private PacketListener registerCreative(Plugin plugin) {
+		return addListener(
+				new PacketAdapter(plugin, ConnectionSide.SERVER_SIDE, ListenerPriority.HIGH, Packets.Client.SET_CREATIVE_SLOT) {
 			@Override
 			public void onPacketSending(PacketEvent event) {
 				if (event.getPacketID() == Packets.Client.SET_CREATIVE_SLOT) {
@@ -106,19 +145,11 @@ public class ItemRenamerPacket {
 					processor.process(event.getPlayer(), event.getPacket().getItemModifier().read(0));
 				}
 			}
-			
-			@Override
-			public void onPacketReceiving(PacketEvent event) {
-				// Thread safe too!
-				if (event.getPacketID() == Packets.Client.SET_CREATIVE_SLOT) {
-					// Do the opposite
-					processor.unprocess(event.getPacket().getItemModifier().read(0));
-				}
-			}
 		});
-
-		// Remove data stored in the display name of items
-		protocolManager.addPacketListener(new PacketAdapter(
+	}
+	
+	private PacketListener registerClearCharStore(Plugin plugin) {
+		return addListener(new PacketAdapter(
 				plugin, ConnectionSide.CLIENT_SIDE, ListenerPriority.LOW, 
 				Packets.Client.WINDOW_CLICK, Packets.Client.CUSTOM_PAYLOAD) {
 			
@@ -160,6 +191,26 @@ public class ItemRenamerPacket {
 		});
 	}
 	
+	private Component registerStackCleaner(Plugin plugin) {
+		// Use the intercept buffer scrubber if necessary
+		Component component = AdvancedStackCleanerComponent.isRequired() ? 
+			new AdvancedStackCleanerComponent(processor, protocolManager) : 
+			new BasicStackCleanerComponent(processor, protocolManager);
+		
+		component.register(plugin);
+		return component;
+	}
+	
+	/**
+	 * Add a particular packet listener to the manager.
+	 * @param listener - new listener to add.
+	 * @return The new listener.
+	 */
+	private PacketListener addListener(PacketListener listener) {
+		protocolManager.addPacketListener(listener);
+		return listener;
+	}
+	
 	private byte[] processMerchantList(Player player, byte[] data) throws IOException {
 		ByteArrayInputStream source = new ByteArrayInputStream(data);
 		DataInputStream input = new DataInputStream(source);
@@ -181,13 +232,5 @@ public class ItemRenamerPacket {
 		output.writeInt(containerCounter);
 		list.writeRecipiesToStream(output);
 		return buffer.toByteArray();
-	}
-
-	/**
-	 * Unregisters every packet listener.
-	 * @param plugin - our plugin reference.
-	 */
-	public void unregister(Plugin plugin) {
-		protocolManager.removePacketListeners(plugin);
 	}
 }

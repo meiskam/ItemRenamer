@@ -12,20 +12,19 @@ import java.util.logging.Logger;
 import net.milkbowl.vault.chat.Chat;
 
 import org.bukkit.World;
-import org.bukkit.event.HandlerList;
-import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.shininet.bukkit.itemrenamer.component.Component;
+import org.shininet.bukkit.itemrenamer.component.Components;
+import org.shininet.bukkit.itemrenamer.component.ToggleComponent;
 import org.shininet.bukkit.itemrenamer.configuration.ItemRenamerConfiguration;
-import org.shininet.bukkit.itemrenamer.listeners.BukkitNbtScrubberFix;
-import org.shininet.bukkit.itemrenamer.listeners.ItemRenamerPacket;
-import org.shininet.bukkit.itemrenamer.listeners.ItemRenamerPlayerJoin;
-import org.shininet.bukkit.itemrenamer.listeners.ItemRenamerStackRestrictor;
+import org.shininet.bukkit.itemrenamer.listeners.ProtocolComponent;
+import org.shininet.bukkit.itemrenamer.listeners.UpdateNotifierComponent;
+import org.shininet.bukkit.itemrenamer.listeners.StackRestrictorComponent;
 import org.shininet.bukkit.itemrenamer.metrics.BukkitMetrics;
 import org.shininet.bukkit.itemrenamer.metrics.Updater;
 
 import com.comphenix.protocol.ProtocolLibrary;
-import com.comphenix.protocol.ProtocolManager;
 
 public class ItemRenamerPlugin extends JavaPlugin {
 	private static boolean updateReady = false;
@@ -38,21 +37,19 @@ public class ItemRenamerPlugin extends JavaPlugin {
 	private static ItemRenamerAPI renamerAPI;
 	
 	private Logger logger;
-    private ItemRenamerConfiguration config;
-
-    private ItemRenamerPlayerJoin listenerPlayerJoin;
-	private ItemRenamerPacket listenerPacket;
     private RefreshInventoryTask refreshTask;
 
-    // For undoing the NBT scrubber
-    private BukkitNbtScrubberFix nbtScrubberFix;
+    private ItemRenamerConfiguration config;
+    private RenameProcessor processor;
     
     // For tracking the currently selected item
     private SelectedItemTracker selectedTracker;
     
+    // Current registered components
+    private Component compositeComponent;
+    
     // For restricting the current stack
-    private ItemRenamerStackRestrictor stackRestrictor;
-    private RenameProcessor processor;
+    private ToggleComponent toggleRestrictor;
     
     private int lastSaveCount;
 	private Chat chat;
@@ -78,28 +75,16 @@ public class ItemRenamerPlugin extends JavaPlugin {
 		if (setupChat()) {
 			logger.info("Found Vault!");
 		}
-        processor = new RenameProcessor(config, chat);
 		
 		startMetrics();
 		startUpdater();
 		
-		// Managers
-		PluginManager plugins = getServer().getPluginManager();
-        ProtocolManager protocolManager = ProtocolLibrary.getProtocolManager();
-		
-        nbtScrubberFix = new BukkitNbtScrubberFix(this, protocolManager);
-		listenerPacket = new ItemRenamerPacket(this, processor, protocolManager, logger);
-		listenerPlayerJoin = new ItemRenamerPlayerJoin(this);
+		// Initialize helpers
+        processor = new RenameProcessor(config, chat);
 		selectedTracker = new SelectedItemTracker();
 		
-		plugins.registerEvents(listenerPlayerJoin, this);
-		plugins.registerEvents(selectedTracker.getBukkitListener(), this);
-		
-		// Enable scrubber
-		if (nbtScrubberFix.isRequired()) {
-			nbtScrubberFix.enable();
-			logger.info("Enabled NBT scrubber.");
-		}
+		// The stack restrictor that can be enabled or disabled
+        toggleRestrictor = Components.asToggleable(new StackRestrictorComponent(processor));
 		
 		// Update stack restrictor
 		if (config.hasStackRestrictor()) {
@@ -107,8 +92,16 @@ public class ItemRenamerPlugin extends JavaPlugin {
 		} else {
 			logger.warning("Stack restrictor has been disabled.");
 		}
-		refreshStackRestrictor();			
-			
+		refreshStackRestrictor();
+        
+		// Packet and Bukkit listeners
+        ProtocolComponent listenerPacket = new ProtocolComponent(processor, ProtocolLibrary.getProtocolManager(), logger);
+        UpdateNotifierComponent listenerPlayerJoin = new UpdateNotifierComponent(this);
+        
+        // Every component
+        compositeComponent = Components.asComposite(toggleRestrictor, listenerPacket, listenerPlayerJoin);			
+        compositeComponent.register(this);
+        
         ItemRenamerCommands commandExecutor = new ItemRenamerCommands(this, config, selectedTracker);
 		getCommand("ItemRenamer").setExecutor(commandExecutor);
 		
@@ -153,17 +146,7 @@ public class ItemRenamerPlugin extends JavaPlugin {
 	 * Ensure that the stack restrictor is registered or not.
 	 */
 	public void refreshStackRestrictor() {
-		if (config.hasStackRestrictor()) {
-			if (stackRestrictor == null && processor != null) {
-				stackRestrictor = new ItemRenamerStackRestrictor(processor);
-				getServer().getPluginManager().registerEvents(stackRestrictor, this);
-			}
-		} else {
-			if (stackRestrictor != null) {
-				HandlerList.unregisterAll(stackRestrictor);
-				stackRestrictor = null;
-			}
-		}
+		toggleRestrictor.setEnabled(config.hasStackRestrictor());
 	}
 	
 	private void startUpdater() {
@@ -218,9 +201,7 @@ public class ItemRenamerPlugin extends JavaPlugin {
 			logger.info("Saving configuration.");
 		}
 		
-		nbtScrubberFix.disable();
-		listenerPacket.unregister(this);
-		listenerPlayerJoin.unregister();
+		compositeComponent.unregister(this);
 		refreshTask.stop();
 		
 		// Clear API

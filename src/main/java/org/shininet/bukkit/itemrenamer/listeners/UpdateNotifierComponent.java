@@ -6,30 +6,28 @@ package org.shininet.bukkit.itemrenamer.listeners;
 
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.shininet.bukkit.itemrenamer.ItemRenamerPlugin;
+import org.shininet.bukkit.itemrenamer.component.AbstractBukkitComponent;
 
-public class ItemRenamerPlayerJoin implements Listener {
-	
+/**
+ * Represents a Bukkit listener component that notifies players of an available update.
+ * @author Kristian
+ */
+public class UpdateNotifierComponent extends AbstractBukkitComponent {
 	private final ItemRenamerPlugin plugin;
 	
-	public ItemRenamerPlayerJoin(ItemRenamerPlugin plugin) {
+	public UpdateNotifierComponent(ItemRenamerPlugin plugin) {
 		this.plugin = plugin;
 	}
-	
+
 	@EventHandler
-	public void onPlayerJoin(PlayerJoinEvent event)
-	{
+	public void onPlayerJoin(PlayerJoinEvent event) {
 		Player player = event.getPlayer();
-		if(player.hasPermission("itemrenamer.update") && plugin.getUpdateReady())
-		{
+		
+		if (player.hasPermission("itemrenamer.update") && plugin.getUpdateReady()) {
 			player.sendMessage("[ItemRenamer] An update is available: " + plugin.getUpdateName() + "(" + plugin.getUpdateSize() + " bytes)");
 			player.sendMessage("[ItemRenamer] http://curse.com/server-mods/minecraft/" + ItemRenamerPlugin.updateSlug);
 		}
-	}
-	
-	public void unregister() {
-		PlayerJoinEvent.getHandlerList().unregister(this);
 	}
 }

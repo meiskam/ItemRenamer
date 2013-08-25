@@ -4,15 +4,22 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 import org.shininet.bukkit.itemrenamer.RenameProcessor;
+import org.shininet.bukkit.itemrenamer.component.AbstractBukkitComponent;
 
-public class ItemRenamerStackRestrictor implements Listener {
+/**
+ * Represents a Bukkit listener component that attempts to synchronize item stack operations 
+ * between the client and the server.
+ * <p>
+ * This is necessary because the client and the server doesn't see the same item stacks.
+ * @author Kristian
+ */
+public class StackRestrictorComponent extends AbstractBukkitComponent {
 	private final RenameProcessor processor;
 	
-	public ItemRenamerStackRestrictor(RenameProcessor processor) {
+	public StackRestrictorComponent(RenameProcessor processor) {
 		this.processor = processor;
 	}
 
