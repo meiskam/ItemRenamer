@@ -19,7 +19,7 @@ public class GlowEnchanter extends NbtEnchanter {
 	public ItemStack disenchant(ItemStack stack) {
 		if (isApplicable(stack)) {
 			NbtCompound compound = getCompound(stack = preprocess(stack));
-			compound.getValue().remove("ench");
+			compound.remove("ench");
 		}
 		return stack;
 	}

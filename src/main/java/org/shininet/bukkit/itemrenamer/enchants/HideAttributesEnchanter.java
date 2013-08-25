@@ -16,7 +16,7 @@ public class HideAttributesEnchanter extends NbtEnchanter {
 	@Override
 	public ItemStack disenchant(ItemStack stack) {
 		NbtCompound compound = getCompound(stack = preprocess(stack));
-		compound.getValue().remove("AttributeModifiers");
+		compound.remove("AttributeModifiers");
 		return stack;
 	}
 }
