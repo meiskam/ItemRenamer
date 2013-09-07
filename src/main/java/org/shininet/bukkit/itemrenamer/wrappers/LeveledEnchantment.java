@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.bukkit.enchantments.Enchantment;
 import org.shininet.bukkit.itemrenamer.enchants.HideAttributesEnchanter;
+import org.shininet.bukkit.itemrenamer.enchants.HideDurabilityEnchanter;
 import org.shininet.bukkit.itemrenamer.enchants.VanillaEnchanter;
 import org.shininet.bukkit.itemrenamer.enchants.GlowEnchanter;
 import org.shininet.bukkit.itemrenamer.enchants.Enchanter;
@@ -28,7 +29,13 @@ public class LeveledEnchantment {
 		/**
 		 * Represents an enchantment that removes all the attribute lines in 1.6.1 and 1.6.2.
 		 */
-		NO_ATTRIBUTES;
+		NO_ATTRIBUTES,
+		
+		
+		/**
+		 * Represents an enchanter that removes any visible durability on the item.
+		 */
+		NO_DURABILITY;
 		
 		/**
 		 * Retrieve the parsed custom enchantment, or NULL if not found.
@@ -144,6 +151,8 @@ public class LeveledEnchantment {
 				enchanter = new GlowEnchanter();
 			else if (custom == CustomEnchantment.NO_ATTRIBUTES)
 				enchanter = new HideAttributesEnchanter();
+			else if (custom == CustomEnchantment.NO_DURABILITY)
+				enchanter = new HideDurabilityEnchanter();
 			else
 				throw new IllegalStateException("Invalid custom enchantment: " + custom);
 		}

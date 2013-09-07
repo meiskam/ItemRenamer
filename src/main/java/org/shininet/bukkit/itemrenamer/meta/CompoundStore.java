@@ -7,8 +7,8 @@ import java.io.DataOutputStream;
 
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
+import org.shininet.bukkit.itemrenamer.utils.StackUtils;
 
-import com.comphenix.protocol.utility.MinecraftReflection;
 import com.comphenix.protocol.wrappers.nbt.NbtCompound;
 import com.comphenix.protocol.wrappers.nbt.NbtFactory;
 import com.comphenix.protocol.wrappers.nbt.io.NbtBinarySerializer;
@@ -21,12 +21,7 @@ public abstract class CompoundStore {
 	
 	protected CompoundStore(ItemStack stack) {
 		Preconditions.checkNotNull(stack, "stack cannot be NULL.");
-		
-		// Create a CraftBukkit stack, if necessary
-		if (!MinecraftReflection.isCraftItemStack(stack))
-			this.stack = MinecraftReflection.getBukkitItemStack(stack);
-		else
-			this.stack = stack;
+		this.stack = StackUtils.getCraftItemStack(stack);
 	}
 
 	/**

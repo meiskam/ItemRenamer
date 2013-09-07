@@ -1,8 +1,8 @@
 package org.shininet.bukkit.itemrenamer.enchants;
 
 import org.bukkit.inventory.ItemStack;
+import org.shininet.bukkit.itemrenamer.utils.StackUtils;
 
-import com.comphenix.protocol.utility.MinecraftReflection;
 import com.comphenix.protocol.wrappers.nbt.NbtCompound;
 import com.comphenix.protocol.wrappers.nbt.NbtFactory;
 
@@ -27,9 +27,6 @@ public abstract class NbtEnchanter implements Enchanter {
 	 * @return A CraftItemStack.
 	 */
 	protected ItemStack preprocess(ItemStack stack) {
-		if (!MinecraftReflection.isCraftItemStack(stack)) 
-			return MinecraftReflection.getBukkitItemStack(stack);
-		else
-			return stack;
+		return StackUtils.getCraftItemStack(stack);
 	}
 }

@@ -16,22 +16,17 @@ import org.shininet.bukkit.itemrenamer.configuration.RenameRule;
 import org.shininet.bukkit.itemrenamer.meta.CompoundStore;
 import org.shininet.bukkit.itemrenamer.wrappers.LeveledEnchantment;
 
-import com.comphenix.protocol.reflect.StructureModifier;
-import com.comphenix.protocol.utility.MinecraftReflection;
-import com.comphenix.protocol.wrappers.BukkitConverters;
-import com.comphenix.protocol.wrappers.nbt.NbtBase;
 import com.comphenix.protocol.wrappers.nbt.NbtCompound;
-import com.comphenix.protocol.wrappers.nbt.NbtFactory;
 import com.google.common.collect.Lists;
 
 public class RenameProcessor {
 	private final ItemRenamerConfiguration config;
 	
-	// This should really have been in ProtocolLib
-	private static StructureModifier<Object> itemStackModifier;
-	
 	// Vault
 	private final Chat chat;
+	
+	// Serialize stacks
+	private SerializeItemStack serializeStacks = new SerializeItemStack();
 	
 	/**
 	 * Construct a new rename processor.
@@ -150,7 +145,7 @@ public class RenameProcessor {
 		// May have been set by a plugin or a player
 		if (rule.isSkippingCustomNamed() && (itemMeta.hasDisplayName()) || (itemMeta.hasLore())) 
 			return input;
-		NbtCompound original = getCompound(input);
+		NbtCompound original = serializeStacks.save(input);
 		
 		// Fix a client bug
 		if (itemMeta instanceof BookMeta) {
@@ -166,7 +161,7 @@ public class RenameProcessor {
 		packLore(itemMeta, rule);
 		input.setItemMeta(itemMeta);
 	
-		// Add a simple marker allowing us to restore the ItemMeta
+		// Add a simple marker allowing us to restore the item stack
 		input = CompoundStore.getNativeStore(input).saveCompound(original);
 		
 		// Remove or add enchantments
@@ -188,34 +183,15 @@ public class RenameProcessor {
 	public boolean unprocess(ItemStack input) {
 		if (input != null) {
 			// This will only be invoked for creative players
-			NbtCompound data = CompoundStore.getNativeStore(input).loadCompound();
+			NbtCompound saved = CompoundStore.getNativeStore(input).loadCompound();
 
 			// See if there is something to restore
-			if (data != null) {
-				saveNbt(input, data);
+			if (saved != null) {
+				serializeStacks.loadInto(input, saved);
 				return true;
 			}
 		}
 		return false;
-	}
-	
-	/**
-	 * Save the given compound as TAG in the item stack,
-	 * @param stack - the source item stack.
-	 * @param compound - the compound to save.
-	 */
-	private void saveNbt(ItemStack stack, NbtCompound compound) {
-		Object nmsStack = MinecraftReflection.getMinecraftItemStack(stack);
-		
-		// Reuse reflection machinery
-		if (itemStackModifier == null) {
-			itemStackModifier = new StructureModifier<Object>(nmsStack.getClass(), Object.class, false);
-		}
-		StructureModifier<NbtBase<?>> modifier = itemStackModifier.
-				withTarget(nmsStack).
-				withType(MinecraftReflection.getNBTBaseClass(), 
-						 BukkitConverters.getNbtConverter());
-		modifier.write(0, compound);
 	}
 	
 	/**
@@ -251,15 +227,5 @@ public class RenameProcessor {
 				return pack;
 		}
 		return config.getEffectiveWorldPack(player.getWorld().getName());
-	}
-	
-	/**
-	 * Retrieve the NbtCompound that stores additional data in an ItemStack.
-	 * @param stack - the item stack.
-	 * @return The additional NbtCompound.
-	 */
-	private NbtCompound getCompound(ItemStack stack) {
-		// It should have been a compound in the API ...
-		return NbtFactory.asCompound(NbtFactory.fromItemTag(stack));
 	}
 }
