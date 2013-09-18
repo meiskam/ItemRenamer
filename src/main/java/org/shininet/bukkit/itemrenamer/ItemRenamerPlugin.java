@@ -12,12 +12,14 @@ import java.util.logging.Logger;
 import net.milkbowl.vault.chat.Chat;
 
 import org.bukkit.World;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.shininet.bukkit.itemrenamer.component.Component;
 import org.shininet.bukkit.itemrenamer.component.Components;
 import org.shininet.bukkit.itemrenamer.component.ToggleComponent;
 import org.shininet.bukkit.itemrenamer.configuration.ItemRenamerConfiguration;
+import org.shininet.bukkit.itemrenamer.listeners.ListenerCleanupComponent;
 import org.shininet.bukkit.itemrenamer.listeners.ProtocolComponent;
 import org.shininet.bukkit.itemrenamer.listeners.UpdateNotifierComponent;
 import org.shininet.bukkit.itemrenamer.listeners.StackRestrictorComponent;
@@ -42,15 +44,17 @@ public class ItemRenamerPlugin extends JavaPlugin {
     private ItemRenamerConfiguration config;
     private RenameProcessor processor;
     
-    // For tracking the currently selected item
-    private SelectedItemTracker selectedTracker;
-    
     // Current registered components
     private Component compositeComponent;
-    
+    // For tracking the currently selected item
+    private SelectedItemTracker selectedTracker;
     // For restricting the current stack
     private ToggleComponent toggleRestrictor;
     
+    // Rename listeners
+    private RenameListenerManager listenerManager;
+    
+    // Handling saving
     private int lastSaveCount;
 	private Chat chat;
 	
@@ -80,7 +84,8 @@ public class ItemRenamerPlugin extends JavaPlugin {
 		startUpdater();
 		
 		// Initialize helpers
-        processor = new RenameProcessor(new RenameListenerManager(this), config, chat);
+		listenerManager = new RenameListenerManager(this);
+        processor = new RenameProcessor(listenerManager, config, chat);
 		selectedTracker = new SelectedItemTracker();
 		
 		// The stack restrictor that can be enabled or disabled
@@ -96,10 +101,11 @@ public class ItemRenamerPlugin extends JavaPlugin {
         
 		// Packet and Bukkit listeners
         ProtocolComponent listenerPacket = new ProtocolComponent(processor, ProtocolLibrary.getProtocolManager(), logger);
+		ListenerCleanupComponent cleanupComponent = new ListenerCleanupComponent(this);
         UpdateNotifierComponent listenerPlayerJoin = new UpdateNotifierComponent(this);
         
         // Every component
-        compositeComponent = Components.asComposite(toggleRestrictor, listenerPacket, listenerPlayerJoin);			
+        compositeComponent = Components.asComposite(toggleRestrictor, listenerPacket, listenerPlayerJoin, cleanupComponent);			
         compositeComponent.register(this);
         
         ItemRenamerCommands commandExecutor = new ItemRenamerCommands(this, config, selectedTracker);
@@ -206,6 +212,14 @@ public class ItemRenamerPlugin extends JavaPlugin {
 		
 		// Clear API
 		renamerAPI = null;
+	}
+	
+	/**
+	 * Clean up every listener associated with the given plugin.
+	 * @param plugin - the plugin.
+	 */
+	public void cleanupPlugin(Plugin plugin) {
+		listenerManager.removeListeners(plugin);
 	}
 
 	public boolean getUpdateReady() {

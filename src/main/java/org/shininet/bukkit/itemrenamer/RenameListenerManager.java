@@ -19,7 +19,7 @@ import com.google.common.collect.ComparisonChain;
  * Represents a listener manager for ItemRenamer.
  * @author Kristian
  */
-public class RenameListenerManager {
+class RenameListenerManager {
 	private static class ListenerContainer implements Comparable<ListenerContainer> {
 		public final Plugin plugin;
 		public final RenamerPriority priority;
