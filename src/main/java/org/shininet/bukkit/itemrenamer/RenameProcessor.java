@@ -273,7 +273,7 @@ public class RenameProcessor {
 			// Store extra NBT data
 			if (extra != null) 
 				storeExtra(extra, tag, converted);
-			if (original[i] != null && hasChanged(original[i], converted, tag)) 
+			if (hasChanged(original[i], converted, tag)) 
 				converted = CompoundStore.getNativeStore(converted).saveCompound(original[i]);
 			inputs[i] = converted;	
 		}
@@ -286,12 +286,12 @@ public class RenameProcessor {
 	
 	private boolean hasChanged(NbtCompound savedStack, ItemStack currentStack, NbtCompound currentTag) {
 		if (savedStack.getShort("id") != currentStack.getTypeId())
-			return false;
+			return true;
 		if (savedStack.getByte("count") != currentStack.getAmount())
-			return false;
+			return true;
 		if (savedStack.getShort("damage") != currentStack.getDurability())
-			return false;
-		return Objects.equal(savedStack.getObject("tag"), currentTag);
+			return true;
+		return !Objects.equal(savedStack.getObject("tag"), currentTag);
 	}
 
 	private void storeExtra(NbtCompound source, NbtCompound destinationTag, ItemStack destinationStack) {
