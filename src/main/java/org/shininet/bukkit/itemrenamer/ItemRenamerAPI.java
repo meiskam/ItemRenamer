@@ -5,7 +5,10 @@ import javax.annotation.Nonnull;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.Plugin;
 import org.shininet.bukkit.itemrenamer.api.RenamerAPI;
+import org.shininet.bukkit.itemrenamer.api.RenamerListener;
+import org.shininet.bukkit.itemrenamer.api.RenamerPriority;
 import org.shininet.bukkit.itemrenamer.configuration.ItemRenamerConfiguration;
 import org.shininet.bukkit.itemrenamer.configuration.RenameConfiguration;
 import org.shininet.bukkit.itemrenamer.configuration.RenameRule;
@@ -77,5 +80,20 @@ class ItemRenamerAPI extends RenamerAPI {
 	@Nonnull
 	public ItemStack process(@Nonnull ItemStack stack, @Nonnull Player player) {
 		return process(stack, getRule(getRenamePack(player), stack));
+	}
+
+	@Override
+	public void addListener(@Nonnull Plugin owner, @Nonnull RenamerPriority priority, @Nonnull RenamerListener listener) {
+		processor.getListenerMananger().addListener(owner, priority, listener);
+	}
+
+	@Override
+	public boolean removeListener(@Nonnull RenamerListener listener) {
+		return processor.getListenerMananger().removeListener(listener);
+	}
+	
+	@Override
+	public boolean removeListeners(@Nonnull Plugin plugin) {
+		return processor.getListenerMananger().removeListeners(plugin);
 	}
 }

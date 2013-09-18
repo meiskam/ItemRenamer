@@ -49,8 +49,8 @@ public class StackRestrictorComponent extends AbstractBukkitComponent {
 	}
 
 	private boolean isNotValid(Player player, ItemStack current, ItemStack cursor) {
-		ItemStack modCurrent = processor.process(player, current.clone());
-		ItemStack modCursor = processor.process(player, cursor.clone());
+		ItemStack modCurrent = processor.process(player, current.clone(), player.getInventory().getHeldItemSlot());
+		ItemStack modCursor = processor.process(player, cursor.clone(), -1);
 		
 		// Disregard the count
 		modCurrent.setAmount(1);

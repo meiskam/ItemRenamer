@@ -22,7 +22,7 @@ class SerializeItemStack {
 	 */
 	public NbtCompound save(ItemStack stack) {
 		NbtCompound result = NbtFactory.ofCompound("");
-		NbtCompound data = (NbtCompound) NbtFactory.fromItemTag(StackUtils.getCraftItemStack(stack));
+		NbtCompound data = getData(stack);
 		
 		result.put("id", (short) stack.getTypeId());
 		result.put("count", (byte) stack.getAmount());
@@ -32,6 +32,13 @@ class SerializeItemStack {
 			result.put("tag", data);
 		}
 		return result;
+	}
+	
+	private NbtCompound getData(ItemStack stack) {
+		if (stack.getType() != Material.AIR) {
+			return (NbtCompound) NbtFactory.fromItemTag(StackUtils.getCraftItemStack(stack));
+		}
+		return null;
 	}
 	
 	/**

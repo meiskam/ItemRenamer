@@ -48,6 +48,10 @@ public class ProtocolComponent extends AbstractComponent {
 	private final RenameProcessor processor;
 	private final ProtocolManager protocolManager;
 
+	private static final int MERCHANT_CRAFT_1 = 0;
+	private static final int MERCHANT_CRAFT_2 = 1;
+	private static final int MERCHANT_SELL_1 = 2;
+	
 	private final Logger logger;
 	
 	// Current listeners
@@ -101,8 +105,10 @@ public class ProtocolComponent extends AbstractComponent {
 					switch (event.getPacketID()) {
 					case 0x67:
 						StructureModifier<ItemStack> sm = packet.getItemModifier();
+						int slot = packet.getIntegers().read(1);
+						
 						for (int i = 0; i < sm.size(); i++) {
-							processor.process(player, sm.read(i));
+							processor.process(player, sm.read(i), slot);
 						}
 						break;
 
@@ -141,8 +147,12 @@ public class ProtocolComponent extends AbstractComponent {
 			@Override
 			public void onPacketSending(PacketEvent event) {
 				if (event.getPacketID() == Packets.Client.SET_CREATIVE_SLOT) {
+					PacketContainer packet = event.getPacket();
+					ItemStack stack = packet.getItemModifier().read(0);
+					int slot = packet.getIntegers().read(0);
+					
 					// Process the slot data
-					processor.process(event.getPlayer(), event.getPacket().getItemModifier().read(0));
+					processor.process(event.getPlayer(), stack, slot);
 				}
 			}
 		});
@@ -220,9 +230,9 @@ public class ProtocolComponent extends AbstractComponent {
 		
 		// Process each and every item stack
 		for (MerchantRecipe recipe : list) {
-			recipe.setItemToBuy(processor.process(player, recipe.getItemToBuy()) );
-			recipe.setSecondItemToBuy(processor.process(player, recipe.getSecondItemToBuy()) );
-			recipe.setItemToSell(processor.process(player, recipe.getItemToSell()) );
+			recipe.setItemToBuy(processor.process(player, recipe.getItemToBuy(), MERCHANT_CRAFT_1) );
+			recipe.setSecondItemToBuy(processor.process(player, recipe.getSecondItemToBuy(), MERCHANT_CRAFT_2) );
+			recipe.setItemToSell(processor.process(player, recipe.getItemToSell(), MERCHANT_SELL_1) );
 		}
 		
 		// Write the result back

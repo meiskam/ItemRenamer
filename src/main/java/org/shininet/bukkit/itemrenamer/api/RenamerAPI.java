@@ -5,6 +5,7 @@ import javax.annotation.Nonnull;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.Plugin;
 import org.shininet.bukkit.itemrenamer.ItemRenamerPlugin;
 import org.shininet.bukkit.itemrenamer.configuration.ItemRenamerConfiguration;
 import org.shininet.bukkit.itemrenamer.configuration.RenameConfiguration;
@@ -42,6 +43,32 @@ public abstract class RenamerAPI {
 	 */
 	@Nonnull
 	public abstract RenameConfiguration getRenameConfiguration();
+	
+	/**
+	 * Add a given rename listener to ItemRenamer.
+	 * <p>
+	 * The listener will not be added twice if it already is present.
+	 * @param owner - the owner plugin.
+	 * @param priority - the priority.
+	 * @param listener - the listener.
+ 	 */
+	public abstract void addListener(@Nonnull Plugin owner, @Nonnull RenamerPriority priority, @Nonnull RenamerListener listener);
+	
+	/**
+	 * Remove a given rename listener from ItemRenamer.
+	 * <p>
+	 * Listeners are removed using their hashCode() and equals().
+	 * @param listener - the listener to remove.
+	 * @return TRUE if a listener was removed, FALSE otherwise.
+	 */
+	public abstract boolean removeListener(@Nonnull RenamerListener listener);
+	
+	/**
+	 * Remove every listener associated with a given plugin.
+	 * @param plugin - the owner plugin.
+	 * @return TRUE if any listeners were removed, FALSE otherwise.
+	 */
+	public abstract boolean removeListeners(@Nonnull Plugin plugin);
 	
 	/**
 	 * Retrieve the rename pack a given player is associated with.

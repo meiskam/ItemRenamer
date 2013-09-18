@@ -80,7 +80,7 @@ public class ItemRenamerPlugin extends JavaPlugin {
 		startUpdater();
 		
 		// Initialize helpers
-        processor = new RenameProcessor(config, chat);
+        processor = new RenameProcessor(new RenameListenerManager(this), config, chat);
 		selectedTracker = new SelectedItemTracker();
 		
 		// The stack restrictor that can be enabled or disabled
