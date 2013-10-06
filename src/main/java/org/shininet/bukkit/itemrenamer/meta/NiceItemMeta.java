@@ -19,7 +19,7 @@ public class NiceItemMeta {
 	protected ItemStack stack;
 	protected NbtCompound tag;
 	
-	private NiceItemMeta(ItemStack stack) {
+	protected NiceItemMeta(ItemStack stack) {
 		Preconditions.checkNotNull(stack, "stack cannot be NULL.");
 		this.stack = StackUtils.getCraftItemStack(stack);
 		this.tag = NbtFactory.asCompound(NbtFactory.fromItemTag(stack));
@@ -33,7 +33,13 @@ public class NiceItemMeta {
 	 * @return The nice ItemMeta.
 	 */
 	public static NiceItemMeta fromStack(ItemStack stack) {
-		return new NiceItemMeta(stack);
+		switch (stack.getType()) {
+			case WRITTEN_BOOK:
+			case BOOK_AND_QUILL:
+				return NiceBookMeta.fromStack(stack);
+			default :
+				return new NiceItemMeta(stack);
+		}
 	}
 	
 	/**

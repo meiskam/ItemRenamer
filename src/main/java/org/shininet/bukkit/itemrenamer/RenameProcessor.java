@@ -7,8 +7,6 @@ import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.BookMeta;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.shininet.bukkit.itemrenamer.api.RenamerListener;
 import org.shininet.bukkit.itemrenamer.api.RenamerSnapshot;
 import org.shininet.bukkit.itemrenamer.configuration.DamageLookup;
@@ -16,6 +14,7 @@ import org.shininet.bukkit.itemrenamer.configuration.ItemRenamerConfiguration;
 import org.shininet.bukkit.itemrenamer.configuration.RenameConfiguration;
 import org.shininet.bukkit.itemrenamer.configuration.RenameRule;
 import org.shininet.bukkit.itemrenamer.meta.CompoundStore;
+import org.shininet.bukkit.itemrenamer.meta.NiceBookMeta;
 import org.shininet.bukkit.itemrenamer.meta.NiceItemMeta;
 import org.shininet.bukkit.itemrenamer.utils.StackUtils;
 import org.shininet.bukkit.itemrenamer.wrappers.LeveledEnchantment;
@@ -184,21 +183,21 @@ public class RenameProcessor {
 	public ItemStack processRule(ItemStack stack, RenameRule rule) {
 		NiceItemMeta niceMeta = NiceItemMeta.fromStack(stack);
 		
+		// Fix a client bug
+		if (niceMeta instanceof NiceBookMeta) {
+			NiceBookMeta bookMeta = (NiceBookMeta) niceMeta;
+
+			// Create the pages NBT tag
+			if (bookMeta.getPageCount() == 0) {
+				bookMeta.setPages("");
+			}
+		}
+		
 		// No need to rename these types
+		if (rule == null)
+			return stack;
 		if (rule.isSkippingCustomNamed() && (niceMeta.hasDisplayName()) || (niceMeta.hasLore())) 
 			return stack;
-		
-		// Fix a client bug
-		if (stack.getType() == Material.BOOK_AND_QUILL || stack.getType() == Material.WRITTEN_BOOK) {
-			ItemMeta itemMeta = stack.getItemMeta();
-			BookMeta book = (BookMeta) itemMeta;
-			
-			// Create the pages NBT tag
-			if (book.getPageCount() == 0) {
-				book.setPages("");
-			}
-			stack.setItemMeta(itemMeta);
-		}
 		
 		// Don't overwrite custom NBT tags if we can help it
 		packName(niceMeta, rule);
@@ -242,7 +241,7 @@ public class RenameProcessor {
 					ItemStack input = snapshot.getSlot(i);
 					RenameRule rule = rules[i];
 					
-					if (!RenameRule.isIdentity(rule) && input != null) {
+					if (input != null) {
 						snapshot.setSlot(i, processRule(input, rule));
 					}
 				}
