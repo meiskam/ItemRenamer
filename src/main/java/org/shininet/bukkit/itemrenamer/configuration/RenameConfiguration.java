@@ -177,8 +177,8 @@ public class RenameConfiguration {
 	}
 	
 	/**
-	 * Determine if this configuration has changed.
-	 * @return TRUE if it has, FALSE otherwise.
+	 * Determine the number of times this configuration and its components have changed.
+	 * @return The number of individual updates.
 	 */
 	public int getModificationCount() {
 		int totalCount = modCount;

@@ -5,6 +5,10 @@ import org.bukkit.inventory.ItemStack;
 import com.comphenix.protocol.wrappers.nbt.NbtFactory;
 import com.comphenix.protocol.wrappers.nbt.NbtList;
 
+/**
+ * Represents an ItemMeta for books that doesn't remove custom NBT tags.
+ * @author Kristian
+ */
 public class NiceBookMeta extends NiceItemMeta {
 	private static final String NBT_PAGES = "pages";
 	private static final String NBT_TITLE = "title";
