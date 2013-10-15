@@ -52,7 +52,7 @@ public abstract class RenamerAPI {
 	 * @param priority - the priority.
 	 * @param listener - the listener.
  	 */
-	public abstract void addListener(@Nonnull Plugin owner, @Nonnull RenamerPriority priority, @Nonnull RenamerListener listener);
+	public abstract void addListener(@Nonnull Plugin owner, @Nonnull RenamerPriority priority, @Nonnull ItemsListener listener);
 	
 	/**
 	 * Remove a given rename listener from ItemRenamer.
@@ -61,7 +61,7 @@ public abstract class RenamerAPI {
 	 * @param listener - the listener to remove.
 	 * @return TRUE if a listener was removed, FALSE otherwise.
 	 */
-	public abstract boolean removeListener(@Nonnull RenamerListener listener);
+	public abstract boolean removeListener(@Nonnull ItemsListener listener);
 	
 	/**
 	 * Remove every listener associated with a given plugin.

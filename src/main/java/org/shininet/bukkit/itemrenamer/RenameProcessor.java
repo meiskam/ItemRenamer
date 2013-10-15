@@ -7,7 +7,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.shininet.bukkit.itemrenamer.api.RenamerListener;
+import org.shininet.bukkit.itemrenamer.api.ItemsListener;
 import org.shininet.bukkit.itemrenamer.api.RenamerSnapshot;
 import org.shininet.bukkit.itemrenamer.configuration.DamageLookup;
 import org.shininet.bukkit.itemrenamer.configuration.ItemRenamerConfiguration;
@@ -234,9 +234,9 @@ public class RenameProcessor {
 			}
 		}
 		
-		listenerMananger.setRenamerListener(new RenamerListener() {
+		listenerMananger.setRenamerListener(new ItemsListener() {
 			@Override
-			public void onItemsRenaming(Player player, RenamerSnapshot snapshot) {
+			public void onItemsSending(Player player, RenamerSnapshot snapshot) {
 				for (int i = 0; i < rules.length; i++) {
 					ItemStack input = snapshot.getSlot(i);
 					RenameRule rule = rules[i];

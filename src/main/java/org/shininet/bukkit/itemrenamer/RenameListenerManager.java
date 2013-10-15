@@ -7,7 +7,7 @@ import java.util.concurrent.ConcurrentSkipListSet;
 
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
-import org.shininet.bukkit.itemrenamer.api.RenamerListener;
+import org.shininet.bukkit.itemrenamer.api.ItemsListener;
 import org.shininet.bukkit.itemrenamer.api.RenamerPriority;
 import org.shininet.bukkit.itemrenamer.api.RenamerSnapshot;
 
@@ -23,9 +23,9 @@ class RenameListenerManager {
 	private static class ListenerContainer implements Comparable<ListenerContainer> {
 		public final Plugin plugin;
 		public final RenamerPriority priority;
-		public final RenamerListener listener;
+		public final ItemsListener listener;
 		
-		public ListenerContainer(Plugin plugin, RenamerPriority priority, RenamerListener listener) {
+		public ListenerContainer(Plugin plugin, RenamerPriority priority, ItemsListener listener) {
 			this.plugin = Preconditions.checkNotNull(plugin, "plugin cannot be NULL");
 			this.priority = Preconditions.checkNotNull(priority, "priority cannot be NULL");
 			this.listener = Preconditions.checkNotNull(listener, "listener cannot be NULL");
@@ -69,7 +69,7 @@ class RenameListenerManager {
 	
 	// The renamer
 	private Plugin renamerPlugin;
-	private RenamerListener renamerListener;
+	private ItemsListener renamerListener;
 	
 	public RenameListenerManager(Plugin renamerPlugin) {
 		this.renamerPlugin = renamerPlugin;
@@ -81,7 +81,7 @@ class RenameListenerManager {
 	 * @param priority - the priority.
 	 * @param listener
 	 */
-	public void addListener(Plugin plugin, RenamerPriority priority, RenamerListener listener) {
+	public void addListener(Plugin plugin, RenamerPriority priority, ItemsListener listener) {
 		if (plugin == renamerPlugin)
 			throw new IllegalArgumentException("Cannot add a listener beloning to ItemRenamer.");
 		listeners.add(new ListenerContainer(plugin, priority, listener));
@@ -92,7 +92,7 @@ class RenameListenerManager {
 	 * @param listener - the listener to remove.
 	 * @return TRUE if the listener was removed, FALSE otherwise.
 	 */
-	public boolean removeListener(RenamerListener listener) {
+	public boolean removeListener(ItemsListener listener) {
 		for (Iterator<ListenerContainer> it = listeners.iterator(); it.hasNext(); ) {
 			if (it.next().listener == listener) {
 				// Break here - the container should only have one listener of this type
@@ -132,12 +132,12 @@ class RenameListenerManager {
 		for (ListenerContainer container : listeners) {
 			// Should we execute ItemRenamer?
 			if (!executedRenamer && RenamerPriority.POST_NORMAL.compareTo(container.priority) <= 0) {
-				renamerListener.onItemsRenaming(player, snapshot);
+				renamerListener.onItemsSending(player, snapshot);
 				executedRenamer = true;
 			}
 			
 			try {
-				container.listener.onItemsRenaming(player, snapshot);
+				container.listener.onItemsSending(player, snapshot);
 			} catch (Throwable e) {
 				// Use ProtocolLib to report the error
 				ProtocolLibrary.getErrorReporter().reportMinimal(container.plugin, "ItemRenamer.onItemsRenaming()", e);
@@ -145,7 +145,7 @@ class RenameListenerManager {
 		}
 		
 		if (!executedRenamer) {
-			renamerListener.onItemsRenaming(player, snapshot);
+			renamerListener.onItemsSending(player, snapshot);
 		}
 	}
 	
@@ -153,7 +153,7 @@ class RenameListenerManager {
 	 * Set the ItemRenamer listener that will be executed explicitly.
 	 * @param renamerListener - the renamer listener.
 	 */
-	public void setRenamerListener(RenamerListener renamerListener) {
+	public void setRenamerListener(ItemsListener renamerListener) {
 		this.renamerListener = renamerListener;
 	}
 }

@@ -9,11 +9,11 @@ import org.bukkit.entity.Player;
  * not they need to be executed before or after ItemRenamer's standard rename operation. 
  * @author Kristian
  */
-public interface RenamerListener {
+public interface ItemsListener {
 	/**
 	 * Invoked when a snapshot of items from an inventory are being renamed by plugins and ItemRenamer.
 	 * @param player - the current player.
 	 * @param snapshot - the snapshot of items to rename.
 	 */
-	public void onItemsRenaming(Player player, RenamerSnapshot snapshot);
+	public void onItemsSending(Player player, RenamerSnapshot snapshot);
 }
