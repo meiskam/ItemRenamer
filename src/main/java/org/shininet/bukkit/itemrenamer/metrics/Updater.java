@@ -411,8 +411,11 @@ public class Updater {
     private boolean versionCheck(String title) {
         if (this.type != UpdateType.NO_VERSION_CHECK) {
             final String version = this.plugin.getDescription().getVersion();
-            if (title.split(" v").length == 2) {
-                final String remoteVersion = title.split(" v")[1].split(" ")[0]; // Get the newest file's version number
+            final String[] splitTitle = title.split(" ");
+            
+			if (splitTitle.length == 2) {
+				// Get the newest file's version number
+                final String remoteVersion = splitTitle[1].split("-")[0]; 
 
                 if (this.hasTag(version) || version.equalsIgnoreCase(remoteVersion)) {
                     // We already have the latest version, or this build is tagged for no-update
@@ -423,7 +426,7 @@ public class Updater {
                 // The file's name did not contain the string 'vVersion'
                 final String authorInfo = this.plugin.getDescription().getAuthors().size() == 0 ? "" : " (" + this.plugin.getDescription().getAuthors().get(0) + ")";
                 this.plugin.getLogger().warning("The author of this plugin" + authorInfo + " has misconfigured their Auto Update system");
-                this.plugin.getLogger().warning("File versions should follow the format 'PluginName vVERSION'");
+                this.plugin.getLogger().warning("File versions should follow the format 'PluginName VERSION[-SNAPSHOT]'");
                 this.plugin.getLogger().warning("Please notify the author of this error.");
                 this.result = Updater.UpdateResult.FAIL_NOVERSION;
                 return false;
