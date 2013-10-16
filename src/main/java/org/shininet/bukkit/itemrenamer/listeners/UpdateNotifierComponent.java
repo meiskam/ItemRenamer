@@ -4,7 +4,7 @@
 
 package org.shininet.bukkit.itemrenamer.listeners;
 
-import org.bukkit.entity.Player;
+import org.bukkit.command.CommandSender;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.shininet.bukkit.itemrenamer.ItemRenamerPlugin;
@@ -23,11 +23,17 @@ public class UpdateNotifierComponent extends AbstractBukkitComponent {
 
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent event) {
-		Player player = event.getPlayer();
-		
-		if (player.hasPermission("itemrenamer.update") && plugin.getUpdateReady()) {
-			player.sendMessage("[ItemRenamer] An update is available: " + plugin.getUpdateName());
-			player.sendMessage("[ItemRenamer] http://curse.com/server-mods/minecraft/" + ItemRenamerPlugin.BUKKIT_DEV_SLUG);
+		notifySender(event.getPlayer());
+	}
+	
+	/**
+	 * Notify the given sender of an update.
+	 * @param sender - the sender.
+	 */
+	public void notifySender(CommandSender sender) {
+		if (sender.hasPermission("itemrenamer.update") && plugin.getUpdateReady()) {
+			sender.sendMessage("[ItemRenamer] An update is available: " + plugin.getUpdateName());
+			sender.sendMessage("[ItemRenamer] http://curse.com/server-mods/minecraft/" + ItemRenamerPlugin.BUKKIT_DEV_SLUG);
 		}
 	}
 }

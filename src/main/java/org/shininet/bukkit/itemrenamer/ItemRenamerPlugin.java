@@ -11,6 +11,7 @@ import java.util.logging.Logger;
 
 import net.milkbowl.vault.chat.Chat;
 
+import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.RegisteredServiceProvider;
@@ -25,6 +26,7 @@ import org.shininet.bukkit.itemrenamer.listeners.UpdateNotifierComponent;
 import org.shininet.bukkit.itemrenamer.listeners.StackRestrictorComponent;
 import org.shininet.bukkit.itemrenamer.metrics.BukkitMetrics;
 import org.shininet.bukkit.itemrenamer.metrics.Updater;
+import org.shininet.bukkit.itemrenamer.metrics.Updater.UpdateResult;
 
 import com.comphenix.protocol.ProtocolLibrary;
 
@@ -41,12 +43,12 @@ public class ItemRenamerPlugin extends JavaPlugin {
 	 * The current BukkitDev slug. May change in the future.
 	 */
 	public static final String BUKKIT_DEV_SLUG = "itemrenamer";
-	
-	private static boolean updateReady = false;
-	private static String updateName = "";
 
 	// The current API
-	private static ItemRenamerAPI renamerAPI;
+	private static ItemRenamerAPI RENAMER_API;
+	
+	// The current updater
+	private Updater updater;
 	
 	private Logger logger;
     private RefreshInventoryTask refreshTask;
@@ -55,7 +57,9 @@ public class ItemRenamerPlugin extends JavaPlugin {
     private RenameProcessor processor;
     
     // Current registered components
+    private UpdateNotifierComponent updateNotifyComponent;
     private Component compositeComponent;
+    
     // For tracking the currently selected item
     private SelectedItemTracker selectedTracker;
     // For restricting the current stack
@@ -73,7 +77,7 @@ public class ItemRenamerPlugin extends JavaPlugin {
 	 * @return The renamer API.
 	 */
 	public static ItemRenamerAPI getRenamerAPI() {
-		return renamerAPI;
+		return RENAMER_API;
 	}
 	
 	@Override
@@ -112,10 +116,10 @@ public class ItemRenamerPlugin extends JavaPlugin {
 		// Packet and Bukkit listeners
         ProtocolComponent listenerPacket = new ProtocolComponent(processor, ProtocolLibrary.getProtocolManager(), logger);
 		ListenerCleanupComponent cleanupComponent = new ListenerCleanupComponent(this);
-        UpdateNotifierComponent listenerPlayerJoin = new UpdateNotifierComponent(this);
+        updateNotifyComponent = new UpdateNotifierComponent(this);
         
         // Every component
-        compositeComponent = Components.asComposite(toggleRestrictor, listenerPacket, listenerPlayerJoin, cleanupComponent);			
+        compositeComponent = Components.asComposite(toggleRestrictor, listenerPacket, updateNotifyComponent, cleanupComponent);			
         compositeComponent.register(this);
         
         ItemRenamerCommands commandExecutor = new ItemRenamerCommands(this, config, selectedTracker);
@@ -126,7 +130,7 @@ public class ItemRenamerPlugin extends JavaPlugin {
 		refreshTask.start();
 		
 		// Initialize the API
-		renamerAPI = new ItemRenamerAPI(config, processor);
+		RENAMER_API = new ItemRenamerAPI(config, processor);
 		checkWorlds();
 	}
 	
@@ -167,14 +171,19 @@ public class ItemRenamerPlugin extends JavaPlugin {
 	
 	private void startUpdater() {
 		try {
-			if (config.isAutoUpdate() && !(updateReady)) {
-				
+			if (config.isAutoUpdate() && updater == null) {
 				// Start Updater but just do a version check
-				Updater updater = new Updater(this, BUKKIT_DEV_ID, this.getFile(), Updater.UpdateType.NO_DOWNLOAD, false); 
+				updater = new Updater(this, BUKKIT_DEV_ID, this.getFile(), Updater.UpdateType.NO_DOWNLOAD, false); 
+				logger.info("Checking for updates ...");
 				
-				// Determine if there is an update ready for us
-				updateReady = updater.getResult() == Updater.UpdateResult.UPDATE_AVAILABLE; 
-				updateName = updater.getLatestName(); // Get the latest version
+				// Inform the console too
+				updater.addListener(new Runnable() {
+					@Override
+					public void run() {
+						updateNotifyComponent.notifySender(Bukkit.getConsoleSender());
+					}
+				});
+				updater.start();
 			}
 		} catch (Exception e) {
 			logger.log(Level.WARNING, "Failed to start Updater", e);
@@ -220,7 +229,7 @@ public class ItemRenamerPlugin extends JavaPlugin {
 		refreshTask.stop();
 		
 		// Clear API
-		renamerAPI = null;
+		RENAMER_API = null;
 	}
 	
 	/**
@@ -232,10 +241,10 @@ public class ItemRenamerPlugin extends JavaPlugin {
 	}
 
 	public boolean getUpdateReady() {
-		return updateReady;
+		return updater != null && updater.getResult() == UpdateResult.UPDATE_AVAILABLE;
 	}
 
 	public String getUpdateName() {
-		return updateName;
+		return updater != null ? updater.getLatestName() : null;
 	}
 }

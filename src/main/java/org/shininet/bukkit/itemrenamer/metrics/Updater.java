@@ -11,6 +11,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Enumeration;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -19,6 +21,8 @@ import org.bukkit.plugin.Plugin;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
+
+import com.google.common.base.Preconditions;
 
 /**
  * Check dev.bukkit.org to find updates for a given plugin, and download the updates if needed.
@@ -38,7 +42,6 @@ import org.json.simple.JSONValue;
  */
 
 public class Updater {
-
     private Plugin plugin;
     private UpdateType type;
     private String versionName;
@@ -66,7 +69,8 @@ public class Updater {
     private YamlConfiguration config; // Config file
     private String updateFolder;// The folder that downloads will be placed in
     private Updater.UpdateResult result = Updater.UpdateResult.SUCCESS; // Used for determining the outcome of the update process
-
+    private List<Runnable> listeners = new CopyOnWriteArrayList<Runnable>();
+    
     /**
      * Gives the dev the result of the update process. Can be obtained by called getResult().
      */
@@ -128,7 +132,9 @@ public class Updater {
     }
 
     /**
-     * Initialize the updater
+     * Initialize the updater.
+     * <p>
+     * Call {@link #start()} to actually start looking (and downloading) updates.
      *
      * @param plugin   The plugin that is checking for an update.
      * @param id       The dev.bukkit.org id of the project
@@ -196,11 +202,35 @@ public class Updater {
             this.result = UpdateResult.FAIL_BADID;
             e.printStackTrace();
         }
-
+    }
+    
+    /**
+     * Begin looking for updates.
+     */
+    public void start() {
         this.thread = new Thread(new UpdateRunnable());
         this.thread.start();
     }
 
+    /**
+     * Add a listener to be executed when we have determined if an update is available.
+     * <p>
+     * The listener will be executed on the main thread.
+     * @param listener - the listener to add.
+     */
+    public void addListener(Runnable listener) {
+    	listeners.add(Preconditions.checkNotNull(listener, "listener cannot be NULL"));
+    }
+    
+    /**
+     * Remove a listener.
+     * @param listener - the listener to remove.
+     * @return TRUE if the listener was removed, FALSE otherwise.
+     */
+    public boolean removeListener(Runnable listener) {
+    	return listeners.remove(listener);
+    }
+    
     /**
      * Get the result of the update process.
      */
@@ -492,27 +522,42 @@ public class Updater {
     }
 
     private class UpdateRunnable implements Runnable {
-
         @Override
         public void run() {
-            if (Updater.this.url != null) {
-                // Obtain the results of the project's file feed
-                if (Updater.this.read()) {
-                    if (Updater.this.versionCheck(Updater.this.versionName)) {
-                        if ((Updater.this.versionLink != null) && (Updater.this.type != UpdateType.NO_DOWNLOAD)) {
-                            String name = Updater.this.file.getName();
-                            // If it's a zip file, it shouldn't be downloaded as the plugin's name
-                            if (Updater.this.versionLink.endsWith(".zip")) {
-                                final String[] split = Updater.this.versionLink.split("/");
-                                name = split[split.length - 1];
-                            }
-                            Updater.this.saveFile(new File(Updater.this.plugin.getDataFolder().getParent(), Updater.this.updateFolder), name, Updater.this.versionLink);
-                        } else {
-                            Updater.this.result = UpdateResult.UPDATE_AVAILABLE;
-                        }
-                    }
-                }
-            }
+        	try {
+	            if (Updater.this.url != null) {
+	                // Obtain the results of the project's file feed
+	                if (Updater.this.read()) {
+	                    if (Updater.this.versionCheck(Updater.this.versionName)) {
+	                        performUpdate();
+	                    }
+	                }
+	            }
+        	} finally {
+        		// Invoke the listeners on the main thread
+        		for (Runnable listener : listeners) {
+        			plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, listener);
+        		}
+        	}
         }
+
+		private void performUpdate() {
+			if ((Updater.this.versionLink != null) && (Updater.this.type != UpdateType.NO_DOWNLOAD)) {
+			    String name = Updater.this.file.getName();
+			    
+			    // If it's a zip file, it shouldn't be downloaded as the plugin's name
+			    if (Updater.this.versionLink.endsWith(".zip")) {
+			        final String[] split = Updater.this.versionLink.split("/");
+			        name = split[split.length - 1];
+			    }
+			    Updater.this.saveFile(
+			    	new File(Updater.this.plugin.getDataFolder().getParent(), Updater.this.updateFolder), 
+			    	name, 
+			    	Updater.this.versionLink
+			    );
+			} else {
+			    Updater.this.result = UpdateResult.UPDATE_AVAILABLE;
+			}
+		}
     }
 }
