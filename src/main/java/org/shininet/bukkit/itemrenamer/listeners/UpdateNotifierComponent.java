@@ -26,8 +26,8 @@ public class UpdateNotifierComponent extends AbstractBukkitComponent {
 		Player player = event.getPlayer();
 		
 		if (player.hasPermission("itemrenamer.update") && plugin.getUpdateReady()) {
-			player.sendMessage("[ItemRenamer] An update is available: " + plugin.getUpdateName() + "(" + plugin.getUpdateSize() + " bytes)");
-			player.sendMessage("[ItemRenamer] http://curse.com/server-mods/minecraft/" + ItemRenamerPlugin.updateSlug);
+			player.sendMessage("[ItemRenamer] An update is available: " + plugin.getUpdateName());
+			player.sendMessage("[ItemRenamer] http://curse.com/server-mods/minecraft/" + ItemRenamerPlugin.BUKKIT_DEV_SLUG);
 		}
 	}
 }

@@ -29,12 +29,22 @@ import org.shininet.bukkit.itemrenamer.metrics.Updater;
 import com.comphenix.protocol.ProtocolLibrary;
 
 public class ItemRenamerPlugin extends JavaPlugin {
+	/**
+	 * The BukkitDev project ID for ItemRenamer.
+	 * <p>
+	 * This can be retrieved using the 
+	 * <a href="https://api.curseforge.com/servermods/projects?search=itemrenamer">Curse API</a>
+	 */
+	public static final int BUKKIT_DEV_ID = 46933;
+
+	/**
+	 * The current BukkitDev slug. May change in the future.
+	 */
+	public static final String BUKKIT_DEV_SLUG = "itemrenamer";
+	
 	private static boolean updateReady = false;
 	private static String updateName = "";
-	private static long updateSize = 0;
 
-	public static final String updateSlug = "itemrenamer";
-	
 	// The current API
 	private static ItemRenamerAPI renamerAPI;
 	
@@ -160,12 +170,11 @@ public class ItemRenamerPlugin extends JavaPlugin {
 			if (config.isAutoUpdate() && !(updateReady)) {
 				
 				// Start Updater but just do a version check
-				Updater updater = new Updater(this, updateSlug, this.getFile(), Updater.UpdateType.NO_DOWNLOAD, false); 
+				Updater updater = new Updater(this, BUKKIT_DEV_ID, this.getFile(), Updater.UpdateType.NO_DOWNLOAD, false); 
 				
 				// Determine if there is an update ready for us
 				updateReady = updater.getResult() == Updater.UpdateResult.UPDATE_AVAILABLE; 
-				updateName = updater.getLatestVersionString(); // Get the latest version
-				updateSize = updater.getFileSize(); // Get latest size
+				updateName = updater.getLatestName(); // Get the latest version
 			}
 		} catch (Exception e) {
 			logger.log(Level.WARNING, "Failed to start Updater", e);
@@ -228,9 +237,5 @@ public class ItemRenamerPlugin extends JavaPlugin {
 
 	public String getUpdateName() {
 		return updateName;
-	}
-
-	public long getUpdateSize() {
-		return updateSize;
 	}
 }
