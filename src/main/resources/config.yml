@@ -1,6 +1,8 @@
-# LanguagePack Configuration
+# Automatically detect new versions
 autoupdate: true
+# Items that are renamed look identical on the server side. Prevent it from combining otherwise different items. 
 stackrestrictor: true
+# The default renamer pack for any world not specified below
 default: example
 
 worlds:
@@ -74,7 +76,6 @@ packs:
         lore:
         - The mighty diamond
         - Look how it shines
-        packs:
     '276':
       0-10:
         lore:
