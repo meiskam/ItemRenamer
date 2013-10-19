@@ -477,7 +477,7 @@ class ItemRenamerCommands implements CommandExecutor {
 				};
 			}
 		});
-		return String.format("Added the enchantment '%s' to every item.", LeveledEnchantment.parse(args));
+		return String.format("Added enchantment to every selected item.");
 	}
 	
 	private String addDechantment(CommandSender sender, final Deque<String> args) {
@@ -499,7 +499,7 @@ class ItemRenamerCommands implements CommandExecutor {
 				};
 			}
 		});
-		return String.format("Dechanted '%s' for every item.", LeveledEnchantment.parse(args));
+		return String.format("Dechanted every selected item.");
 	}
 	
 	/**

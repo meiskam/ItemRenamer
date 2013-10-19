@@ -1,13 +1,13 @@
 package org.shininet.bukkit.itemrenamer.configuration;
 
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Set;
 
 import javax.annotation.Nonnull;
 
 import org.shininet.bukkit.itemrenamer.utils.CollectionsUtil;
 import org.shininet.bukkit.itemrenamer.wrappers.LeveledEnchantment;
-
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -168,10 +168,14 @@ public class RenameRule {
 		public Builder mergeEnchantments(@Nonnull Collection<LeveledEnchantment> enchantments) {
 			Preconditions.checkNotNull(enchantments, "enchantments cannot be NULL.");
 			
-			if (this.enchantments != null)
+			if (this.enchantments != null) {
+				for (LeveledEnchantment enchantment : enchantments)
+					removeByType(this.enchantments, enchantment);
+				
 				this.enchantments.addAll(enchantments);
-			else
+			} else {
 				enchantments(enchantments);
+			}
 			return this;
 		}
 		
@@ -193,11 +197,28 @@ public class RenameRule {
 		public Builder mergeDechantments(@Nonnull Collection<LeveledEnchantment> dechantments) {
 			Preconditions.checkNotNull(dechantments, "dechantments cannot be NULL.");
 
-			if (this.dechantments != null)
+			if (this.dechantments != null) {
+				for (LeveledEnchantment enchantment : enchantments)
+					removeByType(this.enchantments, enchantment);
+			
 				this.dechantments.addAll(dechantments);
-			else
+			} else {
 				dechantments(dechantments);
+			}
 			return this;
+		}
+		
+		/**
+		 * Remove all enchantments of the same type (custom or a specific vanilla enchantments).
+		 * @param source - the source set.
+		 * @param other - the other enchantment.
+		 */
+		private void removeByType(Set<LeveledEnchantment> source, LeveledEnchantment other) {
+			for (Iterator<LeveledEnchantment> it = source.iterator(); it.hasNext(); ) {
+				if (other.sameType(it.next())) {
+					it.remove();
+				}
+			}
 		}
 		
 		/**

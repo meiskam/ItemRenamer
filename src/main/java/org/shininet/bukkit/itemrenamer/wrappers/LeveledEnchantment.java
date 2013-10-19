@@ -152,7 +152,7 @@ public class LeveledEnchantment {
 			else if (custom == CustomEnchantment.NO_ATTRIBUTES)
 				enchanter = new HideAttributesEnchanter();
 			else if (custom == CustomEnchantment.NO_DURABILITY)
-				enchanter = new HideDurabilityEnchanter();
+				enchanter = new HideDurabilityEnchanter(level);
 			else
 				throw new IllegalStateException("Invalid custom enchantment: " + custom);
 		}
@@ -165,6 +165,18 @@ public class LeveledEnchantment {
 	 */
 	public int getLevel() {
 		return level;
+	}
+	
+	/**
+	 * Determine if the given leveled enchantment is of the same type.
+	 * @param other - the other enchantment.
+	 * @return TRUE if it is, FALSE otherwise.
+	 */
+	public boolean sameType(LeveledEnchantment other) {
+		if (hasCustomEnchantment())
+			return other.hasCustomEnchantment() && other.getCustom() == custom;
+		else
+			return !other.hasCustomEnchantment() && other.getEnchantment() == enchantment;
 	}
 	
 	/**
