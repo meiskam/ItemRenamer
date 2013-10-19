@@ -6,6 +6,7 @@ import net.milkbowl.vault.chat.Chat;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 import org.shininet.bukkit.itemrenamer.api.ItemsListener;
 import org.shininet.bukkit.itemrenamer.api.RenamerSnapshot;
@@ -103,8 +104,22 @@ public class RenameProcessor {
 	 * @return The processed item stack.
 	 */
 	public ItemStack process(Player player, ItemStack input, int offset) {
+		return process(player, player.getOpenInventory(), input, offset);
+	}
+	
+	/**
+	 * Apply a player's associated rename rules to a given stack.
+	 * <p>
+	 * The rename rules are referenced by the world the player is in or by the player itself.
+	 * @param player - the player.
+	 * @param InventoyView - the current inventory view.
+	 * @param input - the item to rename.
+	 * @param slotIndex - index of the item in the inventory view we want to rename.
+	 * @return The processed item stack.
+	 */
+	public ItemStack process(Player player, InventoryView view, ItemStack input, int offset) {
 		ItemStack[] temporary = new ItemStack[] { input };
-		return process(player, getPack(player), temporary, offset)[0];
+		return process(player, view, getPack(player), temporary, offset)[0];
 	}
 	
 	/**
@@ -117,7 +132,7 @@ public class RenameProcessor {
 		String pack = getPack(player);
 		
 		if (input != null) {
-			return process(player, pack, input, 0);
+			return process(player, player.getOpenInventory(), pack, input, 0);
 		}
 		return null;
 	}
@@ -125,11 +140,12 @@ public class RenameProcessor {
 	/**
 	 * Apply rename rules to a given item stack.
 	 * @param pack - the current rename package.
+	 * @param view - the current inventory view.
 	 * @param input - the item to process.
 	 * @param offset - the current offset.
 	 * @return The processed item.
 	 */
-	private ItemStack[] process(Player player, String pack, ItemStack[] input, int offset) {
+	private ItemStack[] process(Player player, InventoryView view, String pack, ItemStack[] input, int offset) {
 		RenameRule[] rules = new RenameRule[input.length];
 		
 		// Retrieve the rename rule for each item stack
@@ -138,7 +154,7 @@ public class RenameProcessor {
 		}
 		
 		// Just return it - for chaining
-		return processRules(player, input, rules, offset);
+		return processRules(player, view, input, rules, offset);
 	}
 	
 	/**
@@ -216,12 +232,14 @@ public class RenameProcessor {
 
 	/**
 	 * Rename or append lore to the given item stack.
+	 * @param player - the current player.
 	 * @param input - the item stack.
-	 * @param rule - the rename rule to apply.
+	 * @param rules - the rename rules to apply.
+	 * @param offset - offset to the items we are renaming in the inventory view.
 	 * @return The renamed item stacks.
 	 */
-	private ItemStack[] processRules(Player player, ItemStack[] inputs, final RenameRule[] rules, final int offset) {		
-		RenamerSnapshot snapshot = new RenamerSnapshot(inputs, player.getOpenInventory(), offset);
+	private ItemStack[] processRules(Player player, InventoryView view, ItemStack[] inputs, final RenameRule[] rules, final int offset) {		
+		RenamerSnapshot snapshot = new RenamerSnapshot(inputs, view, offset);
 
 		// Save the original NBT tag
 		NbtCompound[] original = new NbtCompound[inputs.length];

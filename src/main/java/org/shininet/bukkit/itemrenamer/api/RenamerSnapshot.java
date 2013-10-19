@@ -108,6 +108,8 @@ public class RenamerSnapshot implements Iterable<ItemStack> {
 	
 	/**
 	 * Retrieve the index of the first slot in the inventory view that matches this snapshot.
+	 * <p>
+	 * This is negative if we're dealing with the cursor item.
 	 * @return The snapshot offset.
 	 */
 	public int getInventoryOffset() {

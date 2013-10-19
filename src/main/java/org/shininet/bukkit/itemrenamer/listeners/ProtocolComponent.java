@@ -15,7 +15,10 @@ import java.util.logging.Logger;
 
 import javax.annotation.Nonnull;
 
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import org.shininet.bukkit.itemrenamer.RenameProcessor;
@@ -90,7 +93,8 @@ public class ProtocolComponent extends AbstractComponent {
 
 	private PacketListener registerCommonListeners(Plugin plugin) {
 		return addListener(
-				new PacketAdapter(plugin, ConnectionSide.SERVER_SIDE, ListenerPriority.HIGH, 0x67, 0x68, 0xFA) {
+				new PacketAdapter(plugin, ConnectionSide.SERVER_SIDE, ListenerPriority.HIGH, 
+					Packets.Server.SET_SLOT, Packets.Server.WINDOW_ITEMS, Packets.Server.CUSTOM_PAYLOAD, Packets.Server.ENTITY_EQUIPMENT) {
 			@Override
 			public void onPacketSending(PacketEvent event) {
 				PacketContainer packet = event.getPacket();
@@ -103,7 +107,7 @@ public class ProtocolComponent extends AbstractComponent {
 					Player player = event.getPlayer();
 					
 					switch (event.getPacketID()) {
-					case 0x67:
+					case Packets.Server.SET_SLOT:
 						StructureModifier<ItemStack> sm = packet.getItemModifier();
 						int slot = packet.getIntegers().read(1);
 						
@@ -112,14 +116,14 @@ public class ProtocolComponent extends AbstractComponent {
 						}
 						break;
 
-					case 0x68:
+					case Packets.Server.WINDOW_ITEMS:
 						StructureModifier<ItemStack[]> smArray = packet.getItemArrayModifier();
 						for (int i = 0; i < smArray.size(); i++) {
 							processor.process(player, smArray.read(i));
 						}
 						break;
 				
-					case 0xFA:
+					case Packets.Server.CUSTOM_PAYLOAD:
 						String packetName = packet.getStrings().read(0);
 						
 						// Make sure this is a merchant list
@@ -133,14 +137,36 @@ public class ProtocolComponent extends AbstractComponent {
 							}
 						}						
 						break;
-					}
+						
+					case Packets.Server.ENTITY_EQUIPMENT:
+						ItemStack stack = packet.getItemModifier().read(0);
+						Entity entity = packet.getEntityModifier(event).read(0);
+						int equipmentSlot = packet.getIntegers().read(1);
+						
+						// The custom inventory view we will pass on in the API
+						Inventory inventory = null;
+						
+						if (entity instanceof LivingEntity) {
+							LivingEntity targetLiving = (LivingEntity) entity;
+							inventory = new EquipmentAdapter(targetLiving.getEquipment(), targetLiving, player);
+							
+						} else {
+							throw new IllegalArgumentException("Unexpected entity sent equipment: " + entity);
+						}
+						
+						// Now we're ready to process the item stack
+						processor.process(player, 
+							new EquipmentInventoryView(inventory, player.getInventory(), player), 
+							stack, equipmentSlot);
+						break;
+					}	
 				} catch (FieldAccessException e) {
 					logger.log(Level.WARNING, "Couldn't access field.", e);
 				}
 			}
 		});
 	}
-	
+
 	private PacketListener registerCreative(Plugin plugin) {
 		return addListener(
 				new PacketAdapter(plugin, ConnectionSide.SERVER_SIDE, ListenerPriority.HIGH, Packets.Client.SET_CREATIVE_SLOT) {
