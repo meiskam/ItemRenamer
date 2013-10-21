@@ -7,8 +7,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 import javax.annotation.Nonnull;
-
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.plugin.Plugin;
 import org.shininet.bukkit.itemrenamer.RenameProcessor;
 import org.shininet.bukkit.itemrenamer.component.AbstractComponent;
@@ -22,7 +22,6 @@ import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.events.PacketListener;
 import com.comphenix.protocol.utility.StreamSerializer;
 import com.google.common.base.Preconditions;
-import com.google.common.primitives.Bytes;
 
 /**
  * Represents an ItemStack unprocessor 
@@ -60,11 +59,11 @@ class BasicStackCleanerComponent extends AbstractComponent {
 						if ("MC|BEdit".equals(channel) || "MC|BSign".equals(channel)) {
 							byte[] data = packet.getByteArrays().read(0);
 							
-							// Attempt to unprocess this item stack
+							// Handle signing books
 							try {
-								packet.getByteArrays().write(0, unprocessByteStack(data));
+								packet.getByteArrays().write(0, unprocessBook(event, data));
 							} catch (Exception e) {
-								throw new RuntimeException("Unable to handle byte array: " + Bytes.asList(data));
+								throw new RuntimeException("Unable to process the incoming book change.", e);
 							}
 						}
 						break;
@@ -88,19 +87,32 @@ class BasicStackCleanerComponent extends AbstractComponent {
 	}
 	
 	/**
-	 * Unprocess an item stack transmitted as a byte array in the custom data payload packet.
+	 * Unprocess a book transmitted as an ItemStack.
 	 * @param data - the data.
-	 * @return The unprocessed item stack.
+	 * @return The unprocessed book.
 	 * @throws IOException If anything went wrong.
 	 */
-	protected byte[] unprocessByteStack(byte[] data) throws IOException {
+	protected byte[] unprocessBook(PacketEvent event, byte[] data) throws IOException {
 		ByteArrayOutputStream output = new ByteArrayOutputStream();
-		ItemStack stack = serializer.deserializeItemStack(
+		ItemStack original = event.getPlayer().getItemInHand().clone();
+		ItemStack altered = serializer.deserializeItemStack(
 			new DataInputStream(new ByteArrayInputStream(data))
 		);
 		
-		processor.unprocess(stack);
-		serializer.serializeItemStack(new DataOutputStream(output), stack);
+		if (original == null)
+			throw new IllegalStateException("Empty hand. Cannot deduce book changes.");
+		
+		// Use the original item to process the new
+		BookMeta originalMeta = (BookMeta) original.getItemMeta();
+		BookMeta alteredMeta = (BookMeta) altered.getItemMeta();
+		
+		originalMeta.setPages(alteredMeta.getPages());
+		originalMeta.setTitle(alteredMeta.getTitle());
+		originalMeta.setAuthor(alteredMeta.getAuthor());
+		original.setItemMeta(originalMeta);
+		original.setType(altered.getType());
+
+		serializer.serializeItemStack(new DataOutputStream(output), original);
 		return output.toByteArray();
 	}
 	
