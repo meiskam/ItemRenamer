@@ -10,6 +10,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import org.shininet.bukkit.itemrenamer.RenameProcessor;
 
+import com.comphenix.protocol.Packets;
 import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.events.PacketAdapter.AdapterParameteters;
@@ -60,7 +61,11 @@ class AdvancedStackCleanerComponent extends BasicStackCleanerComponent {
 
 		try {
 			// Read slot
-			input.readShort();
+			if (event.getPacketID() == Packets.Client.SET_CREATIVE_SLOT)
+				input.skipBytes(2);
+			else if (event.getPacketID() == Packets.Client.PLACE)
+				input.skipBytes(10);
+			
 			ItemStack stack = readItemStack(input, new StreamSerializer());
 
 			// Now we can properly unprocess it
