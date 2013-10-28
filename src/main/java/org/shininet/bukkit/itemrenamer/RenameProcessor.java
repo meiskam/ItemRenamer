@@ -8,6 +8,7 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
+import org.shininet.bukkit.itemrenamer.SerializeItemStack.StackField;
 import org.shininet.bukkit.itemrenamer.api.ItemsListener;
 import org.shininet.bukkit.itemrenamer.api.RenamerSnapshot;
 import org.shininet.bukkit.itemrenamer.configuration.DamageLookup;
@@ -33,7 +34,7 @@ public class RenameProcessor {
 	private final Chat chat;
 	
 	// Serialize stacks
-	private SerializeItemStack serializeStacks = new SerializeItemStack();
+	private SerializeItemStack serializeStacks = createSerializer();
 	
 	// Listeners
 	private RenameListenerManager listenerMananger;
@@ -53,6 +54,16 @@ public class RenameProcessor {
 		this.listenerMananger = listenerMananger;
 		this.config = config;
 		this.chat = chat;
+	}
+	
+	/**
+	 * Create a item stack serializer that doesn't preserve the count field.
+	 * @return The serializer.
+	 */
+	private static SerializeItemStack createSerializer() {
+		SerializeItemStack serializer = new SerializeItemStack();
+		serializer.removeField(StackField.COUNT);
+		return serializer;
 	}
 
 	/**
@@ -304,8 +315,6 @@ public class RenameProcessor {
 	private boolean hasChanged(NbtCompound savedStack, ItemStack currentStack, NbtCompound currentTag) {
 		if (savedStack.getShort("id") != currentStack.getTypeId())
 			return true;
-		if (savedStack.getByte("count") != currentStack.getAmount())
-			return true;
 		if (savedStack.getShort("damage") != currentStack.getDurability())
 			return true;
 		return !Objects.equal(savedStack.getObject("tag"), currentTag);
@@ -331,7 +340,7 @@ public class RenameProcessor {
 
 			// See if there is something to restore
 			if (saved != null) {
-				serializeStacks.loadInto(input, saved);
+				serializeStacks.loadInto(input, saved, true);
 				return true;
 			}
 		}
