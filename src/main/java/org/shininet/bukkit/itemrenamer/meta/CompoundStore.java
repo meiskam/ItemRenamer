@@ -48,18 +48,14 @@ public abstract class CompoundStore {
 	/**
 	 * Retrieve a compound store that saves and loads the compound directly in the NbtCompound tag.
 	 * @param stack - the ItemStack whose tag will be used to save and load NbtCompounds.
+	 * @param key - the compound key.
 	 * @return The compound store.
 	 */
-	public static CompoundStore getNativeStore(ItemStack stack) {
+	public static CompoundStore getNativeStore(ItemStack stack, final String key) {
 		return new CompoundStore(stack) {
-			/**
-			 * Storage of the original ItemMeta.
-			 */
-			private static final String KEY_ORIGINAL = "com.comphenix.original";
-
 			@Override
 			public ItemStack saveCompound(NbtCompound compound) {
-				getCompound(stack).put(KEY_ORIGINAL, compound);
+				getCompound(stack).put(key, compound);
 				return stack;
 			}
 			
@@ -68,8 +64,8 @@ public abstract class CompoundStore {
 				NbtCompound data = getCompound(stack);
 				
 				// Check for our marker
-				if (data.containsKey(KEY_ORIGINAL)) {
-					return data.getCompound(KEY_ORIGINAL);
+				if (data.containsKey(key)) {
+					return data.getCompound(key);
 				} else {
 					return null;
 				}

@@ -10,7 +10,7 @@ import javax.annotation.Nonnull;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.plugin.Plugin;
-import org.shininet.bukkit.itemrenamer.RenameProcessor;
+import org.shininet.bukkit.itemrenamer.AbstractRenameProcessor;
 import org.shininet.bukkit.itemrenamer.component.AbstractComponent;
 
 import com.comphenix.protocol.Packets;
@@ -28,13 +28,13 @@ import com.google.common.base.Preconditions;
  * @author Kristian
  */
 class BasicStackCleanerComponent extends AbstractComponent {
-	protected final RenameProcessor processor;
+	protected final AbstractRenameProcessor processor;
 	protected final ProtocolManager protocolManager;
 	
 	protected StreamSerializer serializer = new StreamSerializer();
 	protected PacketListener listener;
 	
-	public BasicStackCleanerComponent(@Nonnull RenameProcessor processor, @Nonnull ProtocolManager protocolManager) {
+	public BasicStackCleanerComponent(@Nonnull AbstractRenameProcessor processor, @Nonnull ProtocolManager protocolManager) {
 		this.processor = Preconditions.checkNotNull(processor, "processor cannot be NULL");
 		this.protocolManager = Preconditions.checkNotNull(protocolManager, "protocolManager cannot be NULL");
 	}

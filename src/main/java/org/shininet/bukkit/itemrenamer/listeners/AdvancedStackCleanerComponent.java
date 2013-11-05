@@ -8,8 +8,7 @@ import javax.annotation.Nonnull;
 import org.bukkit.Bukkit;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
-import org.shininet.bukkit.itemrenamer.RenameProcessor;
-
+import org.shininet.bukkit.itemrenamer.AbstractRenameProcessor;
 import com.comphenix.protocol.Packets;
 import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.events.PacketEvent;
@@ -30,7 +29,7 @@ class AdvancedStackCleanerComponent extends BasicStackCleanerComponent {
 	 */
 	private static final MinecraftVersion REQUIRED_VERSION = new MinecraftVersion(1, 6, 1);
 	
-	public AdvancedStackCleanerComponent(@Nonnull RenameProcessor processor, @Nonnull ProtocolManager manager) {
+	public AdvancedStackCleanerComponent(@Nonnull AbstractRenameProcessor processor, @Nonnull ProtocolManager manager) {
 		super(processor, manager);
 	}
 

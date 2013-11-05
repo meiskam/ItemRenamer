@@ -17,7 +17,7 @@ import com.comphenix.protocol.wrappers.nbt.NbtFactory;
  * @author Kristian
  *
  */
-class SerializeItemStack {
+public class SerializeItemStack {
 	/**
 	 * Represents the different fields that we may save.
 	 * @author Kristian

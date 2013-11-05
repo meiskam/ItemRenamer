@@ -6,7 +6,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
-import org.shininet.bukkit.itemrenamer.RenameProcessor;
+import org.shininet.bukkit.itemrenamer.AbstractRenameProcessor;
 import org.shininet.bukkit.itemrenamer.component.AbstractBukkitComponent;
 
 /**
@@ -17,9 +17,9 @@ import org.shininet.bukkit.itemrenamer.component.AbstractBukkitComponent;
  * @author Kristian
  */
 public class StackRestrictorComponent extends AbstractBukkitComponent {
-	private final RenameProcessor processor;
+	private final AbstractRenameProcessor processor;
 	
-	public StackRestrictorComponent(RenameProcessor processor) {
+	public StackRestrictorComponent(AbstractRenameProcessor processor) {
 		this.processor = processor;
 	}
 

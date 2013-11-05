@@ -21,7 +21,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
-import org.shininet.bukkit.itemrenamer.RenameProcessor;
+import org.shininet.bukkit.itemrenamer.AbstractRenameProcessor;
 import org.shininet.bukkit.itemrenamer.component.AbstractComponent;
 import org.shininet.bukkit.itemrenamer.component.Component;
 import org.shininet.bukkit.itemrenamer.merchant.MerchantRecipe;
@@ -48,7 +48,7 @@ import com.google.common.collect.Lists;
  * @author Kristian
  */
 public class ProtocolComponent extends AbstractComponent {
-	private final RenameProcessor processor;
+	private final AbstractRenameProcessor processor;
 	private final ProtocolManager protocolManager;
 
 	private static final int MERCHANT_CRAFT_1 = 0;
@@ -64,7 +64,7 @@ public class ProtocolComponent extends AbstractComponent {
 	private Component stackCleaner;
 	
 	// Possibly change to a builder
-	public ProtocolComponent(RenameProcessor processor, ProtocolManager protocolManager, Logger logger) {
+	public ProtocolComponent(AbstractRenameProcessor processor, ProtocolManager protocolManager, Logger logger) {
 		this.processor = Preconditions.checkNotNull(processor, "processor cannot be NULL.");
 		this.protocolManager = Preconditions.checkNotNull(protocolManager, "protocolManager cannot be NULL");
 		this.logger = Preconditions.checkNotNull(logger, "logger cannot be NULL");
