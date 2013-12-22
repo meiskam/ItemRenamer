@@ -13,7 +13,7 @@ import org.bukkit.plugin.Plugin;
 import org.shininet.bukkit.itemrenamer.AbstractRenameProcessor;
 import org.shininet.bukkit.itemrenamer.component.AbstractComponent;
 
-import com.comphenix.protocol.Packets;
+import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketAdapter.AdapterParameteters;
@@ -45,34 +45,29 @@ class BasicStackCleanerComponent extends AbstractComponent {
 			@Override
 			public void onPacketReceiving(PacketEvent event) {
 				final PacketContainer packet = event.getPacket();
-				
-				switch (event.getPacketID()) {
-					case Packets.Client.PLACE:
-					case Packets.Client.SET_CREATIVE_SLOT:
-						// Do the opposite
-						unprocessFieldStack(event, packet.getItemModifier().read(0));
-						break;
+				final PacketType type = event.getPacketType();
 
-					case Packets.Client.CUSTOM_PAYLOAD:
-						String channel = event.getPacket().getStrings().read(0);
+				if (type == PacketType.Play.Client.BLOCK_PLACE || 
+					type == PacketType.Play.Client.SET_CREATIVE_SLOT) {
+					
+					// Do the opposite
+					unprocessFieldStack(event, packet.getItemModifier().read(0));
+					
+				} else if (type == PacketType.Play.Client.CUSTOM_PAYLOAD){
+					String channel = event.getPacket().getStrings().read(0);
+					
+					if ("MC|BEdit".equals(channel) || "MC|BSign".equals(channel)) {
+						byte[] data = packet.getByteArrays().read(0);
 						
-						if ("MC|BEdit".equals(channel) || "MC|BSign".equals(channel)) {
-							byte[] data = packet.getByteArrays().read(0);
-							
-							// Handle signing books
-							try {
-								packet.getByteArrays().write(0, unprocessBook(event, data));
-							} catch (Exception e) {
-								throw new RuntimeException("Unable to process the incoming book change.", e);
-							}
+						// Handle signing books
+						try {
+							packet.getByteArrays().write(0, unprocessBook(event, data));
+						} catch (Exception e) {
+							throw new RuntimeException("Unable to process the incoming book change.", e);
 						}
-						break;
-					default :
-						throw new IllegalArgumentException("Unrecognized packet: " + event.getPacketID());
-				}
-				// Thread safe too!
-				if (event.getPacketID() == Packets.Client.SET_CREATIVE_SLOT) {
-
+					}
+				} else {
+					throw new IllegalArgumentException("Unrecognized packet: " +  type);
 				}
 			}
 		});
@@ -123,7 +118,10 @@ class BasicStackCleanerComponent extends AbstractComponent {
 	 */
 	protected AdapterParameteters adapterBuilder(Plugin plugin) {
 		return PacketAdapter.params(plugin, 
-			Packets.Client.PLACE, Packets.Client.SET_CREATIVE_SLOT, Packets.Client.CUSTOM_PAYLOAD).clientSide();
+			PacketType.Play.Client.BLOCK_PLACE, 
+			PacketType.Play.Client.SET_CREATIVE_SLOT, 
+			PacketType.Play.Client.CUSTOM_PAYLOAD).
+			clientSide();
 	}
 	
 	@Override

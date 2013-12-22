@@ -30,9 +30,8 @@ import org.shininet.bukkit.itemrenamer.meta.CharCodeStore;
 import org.shininet.bukkit.itemrenamer.meta.CompoundStore;
 
 import com.comphenix.net.sf.cglib.proxy.Factory;
-import com.comphenix.protocol.Packets;
+import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolManager;
-import com.comphenix.protocol.events.ConnectionSide;
 import com.comphenix.protocol.events.ListenerPriority;
 import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketContainer;
@@ -75,7 +74,9 @@ public class ProtocolComponent extends AbstractComponent {
 		listeners.add(registerCommonListeners(plugin));
 		
 		// Prevent creative from overwriting the item stacks
-		listeners.add(registerCreative(plugin));
+		if (PacketType.Legacy.Server.SET_CREATIVE_SLOT.isSupported()) {
+			listeners.add(registerCreative(plugin));
+		}
 
 		// Remove data stored in the display name of items
 		listeners.add(registerClearCharStore(plugin));
@@ -93,8 +94,9 @@ public class ProtocolComponent extends AbstractComponent {
 
 	private PacketListener registerCommonListeners(Plugin plugin) {
 		return addListener(
-				new PacketAdapter(plugin, ConnectionSide.SERVER_SIDE, ListenerPriority.HIGH, 
-					Packets.Server.SET_SLOT, Packets.Server.WINDOW_ITEMS, Packets.Server.CUSTOM_PAYLOAD, Packets.Server.ENTITY_EQUIPMENT) {
+				new PacketAdapter(plugin, ListenerPriority.HIGH, 
+					PacketType.Play.Server.SET_SLOT, PacketType.Play.Server.WINDOW_ITEMS, 
+					PacketType.Play.Server.CUSTOM_PAYLOAD, PacketType.Play.Server.ENTITY_EQUIPMENT) {
 			@Override
 			public void onPacketSending(PacketEvent event) {
 				PacketContainer packet = event.getPacket();
@@ -105,40 +107,42 @@ public class ProtocolComponent extends AbstractComponent {
 				
 				try {
 					Player player = event.getPlayer();
+					PacketType type = event.getPacketType();
 					
-					switch (event.getPacketID()) {
-					case Packets.Server.SET_SLOT:
+					if (type == PacketType.Play.Server.SET_SLOT) {
 						StructureModifier<ItemStack> sm = packet.getItemModifier();
 						int slot = packet.getIntegers().read(1);
 						
 						for (int i = 0; i < sm.size(); i++) {
 							processor.process(player, sm.read(i), slot);
 						}
-						break;
-
-					case Packets.Server.WINDOW_ITEMS:
+						
+					} else if (type == PacketType.Play.Server.WINDOW_ITEMS) {
 						StructureModifier<ItemStack[]> smArray = packet.getItemArrayModifier();
+						
 						for (int i = 0; i < smArray.size(); i++) {
 							processor.process(player, smArray.read(i));
 						}
-						break;
-				
-					case Packets.Server.CUSTOM_PAYLOAD:
+						
+					} else if (type == PacketType.Play.Server.CUSTOM_PAYLOAD) {
 						String packetName = packet.getStrings().read(0);
 						
 						// Make sure this is a merchant list
 						if (packetName.equals("MC|TrList")) {	
 							try {
 								byte[] result = processMerchantList(player, packet.getByteArrays().read(0));
-								packet.getIntegers().write(0, result.length);
 								packet.getByteArrays().write(0, result);
+								
+								// Not needed in 1.7.2
+								if (packet.getIntegers().size() > 0) {
+									packet.getIntegers().write(0, result.length);
+								}
 							} catch (IOException e) {
 								logger.log(Level.WARNING, "Cannot read merchant list!", e);
 							}
-						}						
-						break;
+						}
 						
-					case Packets.Server.ENTITY_EQUIPMENT:
+					} else if (type == PacketType.Play.Server.ENTITY_EQUIPMENT) {
 						ItemStack stack = packet.getItemModifier().read(0);
 						Entity entity = packet.getEntityModifier(event).read(0);
 						int equipmentSlot = packet.getIntegers().read(1);
@@ -149,7 +153,6 @@ public class ProtocolComponent extends AbstractComponent {
 						if (entity instanceof LivingEntity) {
 							LivingEntity targetLiving = (LivingEntity) entity;
 							inventory = new EquipmentAdapter(targetLiving.getEquipment(), targetLiving, player);
-							
 						} else {
 							throw new IllegalArgumentException("Unexpected entity sent equipment: " + entity);
 						}
@@ -158,7 +161,6 @@ public class ProtocolComponent extends AbstractComponent {
 						processor.process(player, 
 							new EquipmentInventoryView(inventory, player.getInventory(), player), 
 							stack, equipmentSlot);
-						break;
 					}	
 				} catch (FieldAccessException e) {
 					logger.log(Level.WARNING, "Couldn't access field.", e);
@@ -169,10 +171,10 @@ public class ProtocolComponent extends AbstractComponent {
 
 	private PacketListener registerCreative(Plugin plugin) {
 		return addListener(
-				new PacketAdapter(plugin, ConnectionSide.SERVER_SIDE, ListenerPriority.HIGH, Packets.Client.SET_CREATIVE_SLOT) {
+				new PacketAdapter(plugin, ListenerPriority.HIGH, PacketType.Legacy.Server.SET_CREATIVE_SLOT) {
 			@Override
 			public void onPacketSending(PacketEvent event) {
-				if (event.getPacketID() == Packets.Client.SET_CREATIVE_SLOT) {
+				if (event.getPacketType() == PacketType.Legacy.Server.SET_CREATIVE_SLOT) {
 					PacketContainer packet = event.getPacket();
 					ItemStack stack = packet.getItemModifier().read(0);
 					int slot = packet.getIntegers().read(0);
@@ -186,42 +188,39 @@ public class ProtocolComponent extends AbstractComponent {
 	
 	private PacketListener registerClearCharStore(Plugin plugin) {
 		return addListener(new PacketAdapter(
-				plugin, ConnectionSide.CLIENT_SIDE, ListenerPriority.LOW, 
-				Packets.Client.WINDOW_CLICK, Packets.Client.CUSTOM_PAYLOAD) {
+				plugin, ListenerPriority.LOW, 
+				PacketType.Play.Client.WINDOW_CLICK, PacketType.Play.Client.CUSTOM_PAYLOAD) {
 			
 			@Override
 			public void onPacketReceiving(PacketEvent event) {
-				switch (event.getPacketID()) {
-					case Packets.Client.WINDOW_CLICK :
-						// Do the opposite
-						processor.unprocess(event.getPacket().getItemModifier().read(0));
-						break;
-
-					case Packets.Client.CUSTOM_PAYLOAD:
-						PacketContainer packet = event.getPacket();
-						String name = packet.getStrings().read(0);
+				PacketType type = event.getPacketType();
+				
+				if (type == PacketType.Play.Client.WINDOW_CLICK) {
+					// Do the opposite
+					processor.unprocess(event.getPacket().getItemModifier().read(0));
+					
+				} else if (type == PacketType.Play.Client.CUSTOM_PAYLOAD) {
+					PacketContainer packet = event.getPacket();
+					String name = packet.getStrings().read(0);
+					
+					if ("MC|ItemName".equals(name)) {
+						byte[] data = packet.getByteArrays().read(0);
 						
-						if ("MC|ItemName".equals(name)) {
-							byte[] data = packet.getByteArrays().read(0);
-							
-							// No need to modify NULL arrays
-							if (data == null) {
-								return;
-							}
-
-							// Read each segment without decompressing any data
-							CharCodeStore store = new CharCodeStore(CompoundStore.PLUGIN_ID, CharCodeStore.RawPayloadStore.INSTANCE);
-							store.parse(new String(data));
-
-							// Remove any stored information by our plugin
-							if (store.hasData()) {
-								store.removeData(store.getPluginId());
-								packet.getByteArrays().write(0, store.toString().getBytes());
-							}
+						// No need to modify NULL arrays
+						if (data == null) {
+							return;
 						}
-						
-					default :
-						break;
+
+						// Read each segment without decompressing any data
+						CharCodeStore store = new CharCodeStore(CompoundStore.PLUGIN_ID, CharCodeStore.RawPayloadStore.INSTANCE);
+						store.parse(new String(data));
+
+						// Remove any stored information by our plugin
+						if (store.hasData()) {
+							store.removeData(store.getPluginId());
+							packet.getByteArrays().write(0, store.toString().getBytes());
+						}
+					}
 				}
 			}
 		});
