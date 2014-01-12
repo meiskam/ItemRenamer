@@ -1,5 +1,7 @@
 package org.shininet.bukkit.itemrenamer.listeners;
 
+import java.util.logging.Level;
+
 import javax.annotation.Nonnull;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -54,7 +56,7 @@ public class DisguiseComponent extends AbstractBukkitComponent {
 		super.onRegistered(plugin, bus);
 		this.api = DisguiseCraft.getAPI();
 
-		System.out.println("Loading DisguiseCraft component.");
+		plugin.getLogger().log(Level.INFO, "Adding compatibility for DisguiseCraft.");
 		
 		// Prepare all existing disguises
 		for (Player player : api.getOnlineDisguisedPlayers()) {
