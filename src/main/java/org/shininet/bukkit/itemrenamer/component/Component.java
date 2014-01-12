@@ -2,6 +2,8 @@ package org.shininet.bukkit.itemrenamer.component;
 
 import org.bukkit.plugin.Plugin;
 
+import com.google.common.eventbus.EventBus;
+
 /**
  * Represents a component that can be registered with a plugin.
  * @author Kristian
@@ -12,9 +14,10 @@ public interface Component {
 	 * <p>
 	 * This will throw an exception if the component has already been registered.
 	 * @param plugin - the plugin. Cannot be NULL.
+	 * @param eventBus - the event bus.
 	 * @return This registered component.
 	 */
-	public Component register(Plugin plugin);
+	public Component register(Plugin plugin, EventBus bus);
 	
 	/**
 	 * Attempt to unregister the current component.

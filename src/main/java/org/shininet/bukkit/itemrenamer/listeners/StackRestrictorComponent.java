@@ -57,4 +57,14 @@ public class StackRestrictorComponent extends AbstractBukkitComponent {
 		modCursor.setAmount(1);
 		return !modCurrent.equals(modCursor);
 	}
+
+	@Override
+	protected boolean requireBukkit() {
+		return true;
+	}
+
+	@Override
+	protected boolean requireEventBus() {
+		return false;
+	}
 }

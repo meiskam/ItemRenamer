@@ -6,6 +6,7 @@ import org.bukkit.plugin.Plugin;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
+import com.google.common.eventbus.EventBus;
 
 /**
  * Represents a component that can be registered with a plugin.
@@ -17,14 +18,20 @@ public abstract class AbstractComponent implements Component {
 	 */
 	protected Plugin registered;
 	
+	/**
+	 * The current event bus.
+	 */
+	protected EventBus bus;
+	
 	@Override
-	public final Component register(@Nonnull Plugin plugin) {
+	public Component register(Plugin plugin, EventBus bus) {
 		// We don't permit double registeration
 		Preconditions.checkNotNull(plugin, "plugin cannot be NULL.");
 		Preconditions.checkState(!isRegistered(), "Cannot register component: Registered with " + registered);
 		
-		registered = plugin;
-		onRegistered(plugin);
+		this.bus = bus;
+		this.registered = plugin;
+		onRegistered(plugin, bus);
 		return this;
 	}
 	
@@ -37,6 +44,7 @@ public abstract class AbstractComponent implements Component {
 			// In case the unregister method uses "registered"
 			onUnregistered(plugin);
 			this.registered = null;
+			this.bus = null;
 			return true;
 		}
 		return false;
@@ -50,8 +58,9 @@ public abstract class AbstractComponent implements Component {
 	/**
 	 * Invoked when a component is ready to be registred.
 	 * @param plugin - the target plugin.
+	 * @param bus - the current evente bus.
 	 */
-	protected abstract void onRegistered(@Nonnull Plugin plugin);
+	protected abstract void onRegistered(@Nonnull Plugin plugin, EventBus bus);
 	
 	/**
 	 * Invoked when a component is ready to be unregistered.

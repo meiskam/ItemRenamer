@@ -24,4 +24,14 @@ public class ListenerCleanupComponent extends AbstractBukkitComponent {
 			owner.cleanupPlugin(event.getPlugin());
 		}
 	}
+
+	@Override
+	protected boolean requireBukkit() {
+		return true;
+	}
+
+	@Override
+	protected boolean requireEventBus() {
+		return false;
+	}
 }

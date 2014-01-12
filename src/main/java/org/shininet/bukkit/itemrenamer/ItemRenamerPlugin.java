@@ -18,8 +18,10 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.shininet.bukkit.itemrenamer.component.Component;
 import org.shininet.bukkit.itemrenamer.component.Components;
+import org.shininet.bukkit.itemrenamer.component.PluginComponent;
 import org.shininet.bukkit.itemrenamer.component.ToggleComponent;
 import org.shininet.bukkit.itemrenamer.configuration.ItemRenamerConfiguration;
+import org.shininet.bukkit.itemrenamer.listeners.DisguiseComponent;
 import org.shininet.bukkit.itemrenamer.listeners.ListenerCleanupComponent;
 import org.shininet.bukkit.itemrenamer.listeners.ProtocolComponent;
 import org.shininet.bukkit.itemrenamer.listeners.UpdateNotifierComponent;
@@ -29,6 +31,7 @@ import org.shininet.bukkit.itemrenamer.metrics.Updater;
 import org.shininet.bukkit.itemrenamer.metrics.Updater.UpdateResult;
 
 import com.comphenix.protocol.ProtocolLibrary;
+import com.google.common.eventbus.EventBus;
 
 public class ItemRenamerPlugin extends JavaPlugin {
 	/**
@@ -71,6 +74,9 @@ public class ItemRenamerPlugin extends JavaPlugin {
     // Handling saving
     private int lastSaveCount;
 	private Chat chat;
+	
+	// Common event bus
+	private EventBus bus = new EventBus();
 	
 	/**
 	 * Retrieve the renamer API.
@@ -118,9 +124,14 @@ public class ItemRenamerPlugin extends JavaPlugin {
 		ListenerCleanupComponent cleanupComponent = new ListenerCleanupComponent(this);
         updateNotifyComponent = new UpdateNotifierComponent(this);
         
+        // Components that will only be enabled if a corresponding plugin is enabled
+        PluginComponent pluginComponent = new PluginComponent();
+        pluginComponent.add("DisguiseCraft", DisguiseComponent.class);
+        
         // Every component
-        compositeComponent = Components.asComposite(toggleRestrictor, listenerPacket, updateNotifyComponent, cleanupComponent);			
-        compositeComponent.register(this);
+        compositeComponent = Components.asComposite(toggleRestrictor, listenerPacket, 
+        		updateNotifyComponent, cleanupComponent, pluginComponent);			
+        compositeComponent.register(this, bus);
         
         ItemRenamerCommands commandExecutor = new ItemRenamerCommands(this, config, selectedTracker);
 		getCommand("ItemRenamer").setExecutor(commandExecutor);

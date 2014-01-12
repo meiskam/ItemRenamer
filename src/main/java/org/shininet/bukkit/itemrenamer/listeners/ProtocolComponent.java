@@ -15,6 +15,7 @@ import java.util.logging.Logger;
 
 import javax.annotation.Nonnull;
 
+import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -31,22 +32,51 @@ import org.shininet.bukkit.itemrenamer.meta.CompoundStore;
 
 import com.comphenix.net.sf.cglib.proxy.Factory;
 import com.comphenix.protocol.PacketType;
+import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.events.ListenerPriority;
 import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.events.PacketListener;
-import com.comphenix.protocol.reflect.FieldAccessException;
 import com.comphenix.protocol.reflect.StructureModifier;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import com.google.common.eventbus.EventBus;
 
 /**
  * Represents a component that handles all the ProtocolLib interfacing.
  * @author Kristian
  */
 public class ProtocolComponent extends AbstractComponent {
+	/**
+	 * Represents an event bus object for determining the entity of an entity ID.
+	 * <p>
+	 * This is used by DisguiseComponent.
+	 * @author Kristian
+	 */
+	public class LookupEntity {
+		private final int entityId;
+		private Entity entity;
+		
+		private LookupEntity(World world, int entityId) {
+			this.entityId = entityId;
+			this.entity = protocolManager.getEntityFromID(world, entityId);
+		}
+
+		public Entity getEntity() {
+			return entity;
+		}
+		
+		public void setEntity(Entity entity) {
+			this.entity = entity;
+		}
+		
+		public int getEntityId() {
+			return entityId;
+		}
+	}
+	
 	private final AbstractRenameProcessor processor;
 	private final ProtocolManager protocolManager;
 
@@ -70,7 +100,7 @@ public class ProtocolComponent extends AbstractComponent {
 	}
 	
 	@Override
-	protected void onRegistered(@Nonnull Plugin plugin) {
+	protected void onRegistered(@Nonnull Plugin plugin, EventBus bus) {
 		listeners.add(registerCommonListeners(plugin));
 		
 		// Prevent creative from overwriting the item stacks
@@ -104,71 +134,83 @@ public class ProtocolComponent extends AbstractComponent {
 				// Skip temporary players
 				if (event.getPlayer() instanceof Factory)
 					return;
+				Player player = event.getPlayer();
+				PacketType type = event.getPacketType();
 				
-				try {
-					Player player = event.getPlayer();
-					PacketType type = event.getPacketType();
-					
-					if (type == PacketType.Play.Server.SET_SLOT) {
-						StructureModifier<ItemStack> sm = packet.getItemModifier();
-						int slot = packet.getIntegers().read(1);
-						
-						for (int i = 0; i < sm.size(); i++) {
-							processor.process(player, sm.read(i), slot);
-						}
-						
-					} else if (type == PacketType.Play.Server.WINDOW_ITEMS) {
-						StructureModifier<ItemStack[]> smArray = packet.getItemArrayModifier();
-						
-						for (int i = 0; i < smArray.size(); i++) {
-							processor.process(player, smArray.read(i));
-						}
-						
-					} else if (type == PacketType.Play.Server.CUSTOM_PAYLOAD) {
-						String packetName = packet.getStrings().read(0);
-						
-						// Make sure this is a merchant list
-						if (packetName.equals("MC|TrList")) {	
-							try {
-								byte[] result = processMerchantList(player, packet.getByteArrays().read(0));
-								packet.getByteArrays().write(0, result);
-								
-								// Not needed in 1.7.2
-								if (packet.getIntegers().size() > 0) {
-									packet.getIntegers().write(0, result.length);
-								}
-							} catch (IOException e) {
-								logger.log(Level.WARNING, "Cannot read merchant list!", e);
-							}
-						}
-						
-					} else if (type == PacketType.Play.Server.ENTITY_EQUIPMENT) {
-						ItemStack stack = packet.getItemModifier().read(0);
-						Entity entity = packet.getEntityModifier(event).read(0);
-						int equipmentSlot = packet.getIntegers().read(1);
-						
-						// The custom inventory view we will pass on in the API
-						Inventory inventory = null;
-						
-						if (entity instanceof LivingEntity) {
-							LivingEntity targetLiving = (LivingEntity) entity;
-							inventory = new EquipmentAdapter(targetLiving.getEquipment(), targetLiving, player);
-						} else {
-							throw new IllegalArgumentException("Unexpected entity sent equipment: " + entity);
-						}
-						
-						// Now we're ready to process the item stack
-						processor.process(player, 
-							new EquipmentInventoryView(inventory, player.getInventory(), player), 
-							stack, equipmentSlot);
-					}	
-				} catch (FieldAccessException e) {
-					logger.log(Level.WARNING, "Couldn't access field.", e);
-				}
+				if (type == PacketType.Play.Server.SET_SLOT) {
+					handleSlot(packet, player);
+				} else if (type == PacketType.Play.Server.WINDOW_ITEMS) {
+					handleWindowItems(packet, player);
+				} else if (type == PacketType.Play.Server.CUSTOM_PAYLOAD) {
+					handleCustomPayload(packet, player);
+				} else if (type == PacketType.Play.Server.ENTITY_EQUIPMENT) {
+					handleEntityEquipment(event, packet, player);
+				}	
 			}
 		});
 	}
 
+	private void handleEntityEquipment(PacketEvent event, PacketContainer packet, Player player) {
+		ItemStack stack = packet.getItemModifier().read(0);
+		LookupEntity lookup = new LookupEntity(event.getPlayer().getWorld(), 
+				packet.getIntegers().read(0));
+		int equipmentSlot = packet.getIntegers().read(1);
+		
+		// Use EventBus, as we don't want plugins to interfer with this
+		bus.post(lookup);
+		
+		// The custom inventory view we will pass on in the API
+		Inventory inventory = null;
+		
+		if (lookup.getEntity() instanceof LivingEntity) {
+			LivingEntity targetLiving = (LivingEntity) lookup.getEntity();
+			inventory = new EquipmentAdapter(targetLiving.getEquipment(), targetLiving, player);
+		} else {
+			throw new IllegalArgumentException("Unexpected entity sent equipment: " + lookup.getEntity());
+		}
+		
+		// Now we're ready to process the item stack
+		processor.process(player, 
+			new EquipmentInventoryView(inventory, player.getInventory(), player), 
+			stack, equipmentSlot);
+	}
+
+	private void handleCustomPayload(PacketContainer packet, Player player) {
+		String packetName = packet.getStrings().read(0);
+		
+		// Make sure this is a merchant list
+		if (packetName.equals("MC|TrList")) {	
+			try {
+				byte[] result = processMerchantList(player, packet.getByteArrays().read(0));
+				packet.getByteArrays().write(0, result);
+				
+				// Not needed in 1.7.2
+				if (packet.getIntegers().size() > 0) {
+					packet.getIntegers().write(0, result.length);
+				}
+			} catch (IOException e) {
+				logger.log(Level.WARNING, "Cannot read merchant list!", e);
+			}
+		}
+	}
+
+	private void handleWindowItems(PacketContainer packet, Player player) {
+		StructureModifier<ItemStack[]> smArray = packet.getItemArrayModifier();
+		
+		for (int i = 0; i < smArray.size(); i++) {
+			processor.process(player, smArray.read(i));
+		}
+	}
+
+	private void handleSlot(PacketContainer packet, Player player) {
+		StructureModifier<ItemStack> sm = packet.getItemModifier();
+		int slot = packet.getIntegers().read(1);
+		
+		for (int i = 0; i < sm.size(); i++) {
+			processor.process(player, sm.read(i), slot);
+		}
+	}
+	
 	private PacketListener registerCreative(Plugin plugin) {
 		return addListener(
 				new PacketAdapter(plugin, ListenerPriority.HIGH, PacketType.Legacy.Server.SET_CREATIVE_SLOT) {
@@ -232,7 +274,7 @@ public class ProtocolComponent extends AbstractComponent {
 			new AdvancedStackCleanerComponent(processor, protocolManager) : 
 			new BasicStackCleanerComponent(processor, protocolManager);
 		
-		component.register(plugin);
+		component.register(plugin, bus);
 		return component;
 	}
 	

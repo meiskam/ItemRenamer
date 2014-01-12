@@ -22,6 +22,7 @@ import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.events.PacketListener;
 import com.comphenix.protocol.utility.StreamSerializer;
 import com.google.common.base.Preconditions;
+import com.google.common.eventbus.EventBus;
 
 /**
  * Represents an ItemStack unprocessor 
@@ -40,7 +41,7 @@ class BasicStackCleanerComponent extends AbstractComponent {
 	}
 	
 	@Override
-	protected void onRegistered(@Nonnull Plugin plugin) {
+	protected void onRegistered(@Nonnull Plugin plugin, EventBus bus) {
 		protocolManager.addPacketListener(listener = new PacketAdapter(adapterBuilder(plugin)) {			
 			@Override
 			public void onPacketReceiving(PacketEvent event) {

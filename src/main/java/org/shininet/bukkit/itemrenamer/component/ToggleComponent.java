@@ -4,6 +4,8 @@ import javax.annotation.Nonnull;
 
 import org.bukkit.plugin.Plugin;
 
+import com.google.common.eventbus.EventBus;
+
 /**
  * Represents a registerable that can be enabled or disabled at will.
  * <p>
@@ -34,7 +36,7 @@ public class ToggleComponent extends AbstractComponent {
 		// We have to update the state
 		if (isRegistered() && this.enabled != enabled) {
 			if (enabled) {
-				delegate.register(registered);
+				delegate.register(registered, bus);
 			} else {
 				delegate.unregister(registered);
 			}
@@ -61,9 +63,9 @@ public class ToggleComponent extends AbstractComponent {
 	}
 	
 	@Override
-	protected void onRegistered(@Nonnull Plugin plugin) {
+	protected void onRegistered(@Nonnull Plugin plugin, EventBus bus) {
 		if (enabled) {
-			delegate.register(plugin);
+			delegate.register(plugin, bus);
 		}
 	}
 	

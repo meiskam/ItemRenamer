@@ -36,4 +36,14 @@ public class UpdateNotifierComponent extends AbstractBukkitComponent {
 			sender.sendMessage("[ItemRenamer] http://curse.com/server-mods/minecraft/" + ItemRenamerPlugin.BUKKIT_DEV_SLUG);
 		}
 	}
+	
+	@Override
+	protected boolean requireBukkit() {
+		return true;
+	}
+
+	@Override
+	protected boolean requireEventBus() {
+		return false;
+	}
 }

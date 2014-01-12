@@ -4,6 +4,8 @@ import javax.annotation.Nonnull;
 
 import org.bukkit.plugin.Plugin;
 
+import com.google.common.eventbus.EventBus;
+
 public final class Components {	
 	private Components() {
 		// Don't make it constructable
@@ -17,9 +19,9 @@ public final class Components {
 	public static Component asComposite(final Component... components) {
 		return new AbstractComponent() {
 			@Override
-			protected void onRegistered(@Nonnull Plugin plugin) {
+			protected void onRegistered(@Nonnull Plugin plugin, EventBus bus) {
 				for (Component registerable : components) {
-					registerable.register(plugin);
+					registerable.register(plugin, bus);
 				}
 			}
 			
