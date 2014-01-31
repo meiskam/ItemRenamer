@@ -87,7 +87,7 @@ public class ItemRenamerPlugin extends JavaPlugin {
 	}
 	
 	@Override
-	public void onEnable() {
+	public void onLoad() {
 		logger = getLogger();
 		config = new ItemRenamerConfiguration(this, new File(getDataFolder(), "config.yml").getAbsolutePath()) {
 			protected void onSynchronized() {
@@ -99,9 +99,6 @@ public class ItemRenamerPlugin extends JavaPlugin {
 		if (setupChat()) {
 			logger.info("Found Vault!");
 		}
-		
-		startMetrics();
-		startUpdater();
 		
 		// Initialize helpers
 		listenerManager = new RenameListenerManager(this);
@@ -118,7 +115,7 @@ public class ItemRenamerPlugin extends JavaPlugin {
 			logger.warning("Stack restrictor has been disabled.");
 		}
 		refreshStackRestrictor();
-        
+		
 		// Packet and Bukkit listeners
         ProtocolComponent listenerPacket = new ProtocolComponent(processor, ProtocolLibrary.getProtocolManager(), logger);
 		ListenerCleanupComponent cleanupComponent = new ListenerCleanupComponent(this);
@@ -130,18 +127,28 @@ public class ItemRenamerPlugin extends JavaPlugin {
         
         // Every component
         compositeComponent = Components.asComposite(toggleRestrictor, listenerPacket, 
-        		updateNotifyComponent, cleanupComponent, pluginComponent);			
+        		updateNotifyComponent, cleanupComponent, pluginComponent);	
+        		
+		// Initialize the API
+		RENAMER_API = new ItemRenamerAPI(config, processor);
+		getLogger().info("Loaded ItemRenamer API.");
+	}
+	
+	@Override
+	public void onEnable() {
+		startMetrics();
+		startUpdater();
+
+		// Start every component
         compositeComponent.register(this, bus);
         
+        // Prepare commands
         ItemRenamerCommands commandExecutor = new ItemRenamerCommands(this, config, selectedTracker);
 		getCommand("ItemRenamer").setExecutor(commandExecutor);
-		
+        
 		// Tasks
 		refreshTask = new RefreshInventoryTask(getServer().getScheduler(), this, config);
 		refreshTask.start();
-		
-		// Initialize the API
-		RENAMER_API = new ItemRenamerAPI(config, processor);
 		checkWorlds();
 	}
 	
