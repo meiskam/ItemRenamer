@@ -198,8 +198,8 @@ public class RenameRule {
 			Preconditions.checkNotNull(dechantments, "dechantments cannot be NULL.");
 
 			if (this.dechantments != null) {
-				for (LeveledEnchantment enchantment : enchantments)
-					removeByType(this.enchantments, enchantment);
+				for (LeveledEnchantment dechantment : dechantments)
+					removeByType(this.dechantments, dechantment);
 			
 				this.dechantments.addAll(dechantments);
 			} else {
