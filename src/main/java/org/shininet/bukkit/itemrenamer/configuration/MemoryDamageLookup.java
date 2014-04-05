@@ -73,6 +73,9 @@ class MemoryDamageLookup implements DamageLookup {
 
 	@Override
 	public void setAllRule(RenameRule rule) {
+		if (!RenameRule.isIdentity(rule))
+			rule = rule.withSkipRule(true);
+		
 		this.modCount++;
 		this.all = rule;
 	}
@@ -84,6 +87,9 @@ class MemoryDamageLookup implements DamageLookup {
 	
 	@Override
 	public void setOtherRule(RenameRule rule) {
+		if (!RenameRule.isIdentity(rule))
+			rule = rule.withSkipRule(true);
+		
 		this.modCount++;
 		this.other = rule;
 	}
