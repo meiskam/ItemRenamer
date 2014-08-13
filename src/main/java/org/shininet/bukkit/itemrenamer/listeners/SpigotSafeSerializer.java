@@ -1,6 +1,7 @@
 package org.shininet.bukkit.itemrenamer.listeners;
 
 import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Collections;
@@ -9,6 +10,7 @@ import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.shininet.bukkit.itemrenamer.meta.CompoundStore;
 
+import com.comphenix.protocol.utility.MinecraftReflection;
 import com.comphenix.protocol.utility.StreamSerializer;
 import com.comphenix.protocol.wrappers.nbt.NbtCompound;
 import com.comphenix.protocol.wrappers.nbt.NbtFactory;
@@ -25,11 +27,11 @@ public class SpigotSafeSerializer extends StreamSerializer {
 	private static volatile Boolean IS_REQUIRED;
 	
 	/**
-	 * Retrieve a SpigotSafeSerializer if it is required, otherwise use the default serializer.
+	 * Retrieve the default Spigot safe serializer.
 	 * @return The appropriate default serializer.
 	 */
-	public static StreamSerializer getDefault() {
-		return isRequired() ? DEFAULT : StreamSerializer.getDefault();
+	public static SpigotSafeSerializer getDefault() {
+		return DEFAULT;
 	}
 	
 	/**
@@ -51,12 +53,15 @@ public class SpigotSafeSerializer extends StreamSerializer {
 			ItemStack source = new ItemStack(Material.IRON_AXE);
 			ItemStack stored = CompoundStore.getNativeStore(source, "com.comphenix.test").saveCompound(proof);
 			
-			StreamSerializer serializer = new StreamSerializer();
-			ItemStack roundTrip = serializer.deserializeItemStack(serializer.serializeItemStack(stored));
-				
+			StreamSerializer rawSerializer = new StreamSerializer();
+			SpigotSafeSerializer safeSerializer = new SpigotSafeSerializer();
+			
+			// We are testing the raw serializer here
+			ItemStack roundTrip = safeSerializer.deserializeItemStack(rawSerializer.serializeItemStack(stored));
+			NbtCompound extracted = CompoundStore.getNativeStore(roundTrip, "com.comphenix.test").loadCompound();
+			
 			// Did it survive unscathed?
-			result = !Objects.equal(proof, 
-				CompoundStore.getNativeStore(roundTrip, "com.comphenix.test").loadCompound());
+			result = !Objects.equal(proof, extracted);
 			IS_REQUIRED = result;
 			return result;
 			
@@ -65,8 +70,39 @@ public class SpigotSafeSerializer extends StreamSerializer {
 		}
 	}
 	
+	/**
+	 * Read an ItemStack from a input stream without "scrubbing" the NBT content.
+	 * @param input - the input stream.
+	 * @return The deserialized item stack.
+	 * @throws IOException If anything went wrong.
+	 */
+	@Override
+	public ItemStack deserializeItemStack(DataInputStream input) throws IOException {
+		ItemStack result = null;
+		short type = input.readShort();
+
+		if (type >= 0) {
+			byte amount = input.readByte();
+			short damage = input.readShort();
+
+			result = new ItemStack(type, amount, damage);
+			NbtCompound tag = super.deserializeCompound(input);
+
+			if (tag != null) {
+				result = MinecraftReflection.getBukkitItemStack(result);
+				NbtFactory.setItemTag(result, tag);
+			}
+		}
+		return result;
+	}
+	
 	@Override
 	public void serializeItemStack(DataOutputStream output, ItemStack stack) throws IOException {
+		// Speed things up if the workaround is not required
+		if (!isRequired()) {
+			super.serializeItemStack(output, stack);
+			return;
+		}
 		NbtCompound tag = stack != null && stack.getType() != Material.AIR ? 
 				NbtFactory.asCompound(NbtFactory.fromItemTag(stack)) : null;
 

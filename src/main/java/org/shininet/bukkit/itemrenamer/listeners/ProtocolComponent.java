@@ -126,8 +126,13 @@ public class ProtocolComponent extends AbstractComponent {
 			protocolManager.removePacketListener(listener);
 		}
 		listeners.clear();
-		stackCleaner.unregister(plugin);
-		spigotWorkaround.unregister(plugin);
+		
+		if (stackCleaner != null) {
+			stackCleaner.unregister(plugin);
+		}
+		if (spigotWorkaround != null) {
+			spigotWorkaround.unregister(plugin);
+		}
 	}
 
 	private PacketListener registerCommonListeners(Plugin plugin) {

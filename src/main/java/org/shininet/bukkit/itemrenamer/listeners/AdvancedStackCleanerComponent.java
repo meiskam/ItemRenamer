@@ -14,11 +14,7 @@ import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.events.PacketAdapter.AdapterParameteters;
-import com.comphenix.protocol.utility.MinecraftReflection;
 import com.comphenix.protocol.utility.MinecraftVersion;
-import com.comphenix.protocol.utility.StreamSerializer;
-import com.comphenix.protocol.wrappers.nbt.NbtCompound;
-import com.comphenix.protocol.wrappers.nbt.NbtFactory;
 
 /**
  * Represents an item stack unprocessor or cleaner that is required in Minecraft 1.6.1 and above.
@@ -66,7 +62,7 @@ class AdvancedStackCleanerComponent extends BasicStackCleanerComponent {
 			else if (event.getPacketType() == PacketType.Play.Client.BLOCK_PLACE)
 				input.skipBytes(10);
 			
-			ItemStack stack = readItemStack(input, new StreamSerializer());
+			ItemStack stack = SpigotSafeSerializer.getDefault().deserializeItemStack(input);
 
 			// Now we can properly unprocess it
 			processor.unprocess(stack);
@@ -78,31 +74,5 @@ class AdvancedStackCleanerComponent extends BasicStackCleanerComponent {
 			// Just let ProtocolLib handle it
 			throw new RuntimeException("Cannot undo NBT scrubber.", e);
 		}
-	}
-	
-	/**
-	 * Read an ItemStack from a input stream without "scrubbing" the NBT content.
-	 * @param input - the input stream.
-	 * @param serializer - methods for serializing Minecraft object.
-	 * @return The deserialized item stack.
-	 * @throws IOException If anything went wrong.
-	 */
-	private ItemStack readItemStack(DataInputStream input, StreamSerializer serializer) throws IOException {
-		ItemStack result = null;
-		short type = input.readShort();
-
-		if (type >= 0) {
-			byte amount = input.readByte();
-			short damage = input.readShort();
-
-			result = new ItemStack(type, amount, damage);
-			NbtCompound tag = serializer.deserializeCompound(input);
-
-			if (tag != null) {
-				result = MinecraftReflection.getBukkitItemStack(result);
-				NbtFactory.setItemTag(result, tag);
-			}
-		}
-		return result;
 	}
 }
