@@ -32,7 +32,7 @@ class BasicStackCleanerComponent extends AbstractComponent {
 	protected final AbstractRenameProcessor processor;
 	protected final ProtocolManager protocolManager;
 	
-	protected StreamSerializer serializer = new StreamSerializer();
+	protected StreamSerializer serializer = SpigotSafeSerializer.getDefault();
 	protected PacketListener listener;
 	
 	public BasicStackCleanerComponent(@Nonnull AbstractRenameProcessor processor, @Nonnull ProtocolManager protocolManager) {
@@ -47,9 +47,9 @@ class BasicStackCleanerComponent extends AbstractComponent {
 			public void onPacketReceiving(PacketEvent event) {
 				final PacketContainer packet = event.getPacket();
 				final PacketType type = event.getPacketType();
-
 				if (type == PacketType.Play.Client.BLOCK_PLACE || 
 					type == PacketType.Play.Client.SET_CREATIVE_SLOT) {
+
 					
 					// Do the opposite
 					unprocessFieldStack(event, packet.getItemModifier().read(0));

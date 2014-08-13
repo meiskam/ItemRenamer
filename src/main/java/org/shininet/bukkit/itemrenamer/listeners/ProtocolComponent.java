@@ -32,7 +32,6 @@ import org.shininet.bukkit.itemrenamer.meta.CompoundStore;
 
 import com.comphenix.net.sf.cglib.proxy.Factory;
 import com.comphenix.protocol.PacketType;
-import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.events.ListenerPriority;
 import com.comphenix.protocol.events.PacketAdapter;
@@ -92,6 +91,9 @@ public class ProtocolComponent extends AbstractComponent {
 	// Scrubbing creative override
 	private Component stackCleaner;
 	
+	// Spigot workaround
+	private Component spigotWorkaround;
+	
 	// Possibly change to a builder
 	public ProtocolComponent(AbstractRenameProcessor processor, ProtocolManager protocolManager, Logger logger) {
 		this.processor = Preconditions.checkNotNull(processor, "processor cannot be NULL.");
@@ -111,6 +113,11 @@ public class ProtocolComponent extends AbstractComponent {
 		// Remove data stored in the display name of items
 		listeners.add(registerClearCharStore(plugin));
 		stackCleaner = registerStackCleaner(plugin);
+		
+		if (SpigotStackWriterComponent.isRequired()) {
+			spigotWorkaround = new SpigotStackWriterComponent(protocolManager);
+			spigotWorkaround.register(plugin, bus);
+		}
 	}
 	
 	@Override
@@ -120,6 +127,7 @@ public class ProtocolComponent extends AbstractComponent {
 		}
 		listeners.clear();
 		stackCleaner.unregister(plugin);
+		spigotWorkaround.unregister(plugin);
 	}
 
 	private PacketListener registerCommonListeners(Plugin plugin) {
