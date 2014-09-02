@@ -111,16 +111,13 @@ public class SpigotSafeSerializer extends StreamSerializer {
 		if (tag != null) {
 			ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
 			DataOutputStream dataStream = new DataOutputStream(byteStream);
-			NbtFactory.setItemTag(stack, null);
+			ItemStack withoutTag = new ItemStack(stack.getType(), stack.getAmount(), stack.getDurability());
 			
 			// This will write the stack as normal, without its tag compound and the tag field length
-			super.serializeItemStack(dataStream, stack);
+			super.serializeItemStack(dataStream, withoutTag);
 			output.write(byteStream.toByteArray(), 0, byteStream.size() - 2);
 			serializeCompound(output, tag);
-			
-			// Finally, revert the tag
-			NbtFactory.setItemTag(stack, tag);
-			
+
 		} else {
 			// Write the stack as normal
 			super.serializeItemStack(output, stack);
