@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.shininet.bukkit</groupId>
   <artifactId>ItemRenamer</artifactId>
-  <version>2.2.3-SNAPSHOT</version>
+  <version>2.2.4-SNAPSHOT</version>
   <packaging>jar</packaging>
   <description>Change the name of every item or block on the server.</description>
   
