@@ -13,7 +13,6 @@ import org.shininet.bukkit.itemrenamer.utils.ConfigurationUtils;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Range;
-import com.google.common.collect.Ranges;
 
 /**
  * Serialize and deserialize a damage lookup from a configuration file.
@@ -120,9 +119,9 @@ public class DamageSerializer {
 		try {
 			// Parse the range
 			if (values.length == 1) {
-				return Ranges.singleton(Integer.parseInt(values[0].trim()));
+				return Range.singleton(Integer.parseInt(values[0].trim()));
 			} else if (values.length == 2) {
-				return Ranges.closed(
+				return Range.closed(
 						Integer.parseInt(values[0].trim()), 
 						Integer.parseInt(values[1].trim())
 				);

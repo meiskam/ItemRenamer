@@ -31,7 +31,7 @@ import org.shininet.bukkit.itemrenamer.wrappers.LeveledEnchantment;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Ranges;
+import com.google.common.collect.Range;
 
 class ItemRenamerCommands implements CommandExecutor {
 	// Different permissions
@@ -563,7 +563,7 @@ class ItemRenamerCommands implements CommandExecutor {
 	
 	private int getItemID(Deque<String> args) {
 		try {
-			List<Integer> result = ConfigParsers.getIntegers(args, 1, Ranges.closed(0, 4096));
+			List<Integer> result = ConfigParsers.getIntegers(args, 1, Range.closed(0, 4096));
 			
 			if (result.size() == 1) {
 				return result.get(0);
