@@ -39,7 +39,6 @@ class RefreshInventoryTask implements Runnable {
 		scheduler.cancelTask(taskID);
 	}
 	
-	@SuppressWarnings("deprecation")
 	public void forceRefresh() {
 		for (Player player : plugin.getServer().getOnlinePlayers()) {
 			player.updateInventory();

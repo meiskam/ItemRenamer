@@ -176,6 +176,7 @@ public abstract class AbstractRenameProcessor {
 	 */
 	protected boolean hasChanged(NbtCompound savedStack, ItemStack currentStack, NbtCompound currentTag) {
 		if (savedStack.getShort("id") != currentStack.getTypeId())
+		//if (savedStack.getValue("Type") != currentStack.getType())
 			return true;
 		if (savedStack.getShort("damage") != currentStack.getDurability())
 			return true;
