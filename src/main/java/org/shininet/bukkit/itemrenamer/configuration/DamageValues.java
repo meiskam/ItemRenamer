@@ -4,7 +4,6 @@ import java.util.Deque;
 import java.util.List;
 
 import com.google.common.collect.Range;
-import com.google.common.collect.Ranges;
 
 /**
  * Can represent a range of damage values, or one of the two special types.
@@ -22,7 +21,7 @@ public class DamageValues {
 	 * @param key - special damage value.
 	 */
 	private DamageValues(byte key) {
-		this.range = Ranges.singleton((int) key);
+		this.range = Range.singleton((int) key);
 	}
 	
 	public DamageValues(int value) {
@@ -33,7 +32,7 @@ public class DamageValues {
 		validateValue(minimumValue, "minimumValue");
 		validateValue(maximumValue, "maximumValue");
 		
-		this.range = Ranges.closed(minimumValue, maximumValue);
+		this.range = Range.closed(minimumValue, maximumValue);
 	}
 	
 	private void validateValue(int value, String name) {
@@ -66,7 +65,7 @@ public class DamageValues {
 			arguments.pollFirst();
 			return OTHER;
 		} else {
-			List<Integer> range = ConfigParsers.getIntegers(arguments, 2, Ranges.closed(0, (int) Short.MAX_VALUE));
+			List<Integer> range = ConfigParsers.getIntegers(arguments, 2, Range.closed(0, (int) Short.MAX_VALUE));
 			
 			if (range.size() == 1)
 				return new DamageValues(range.get(0));

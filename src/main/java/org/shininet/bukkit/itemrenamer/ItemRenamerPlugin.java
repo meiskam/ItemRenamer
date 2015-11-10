@@ -140,6 +140,7 @@ public class ItemRenamerPlugin extends JavaPlugin {
 		startUpdater();
 
 		// Start every component
+		getLogger().info("registering " + this.getName() + "\n");
         compositeComponent.register(this, bus);
         
         // Prepare commands
